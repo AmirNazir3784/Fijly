@@ -8,6 +8,8 @@
    - Exactly one <video> exists at any moment. Selecting another clip pauses and
      tears down the previous element before the next one is created, so a paused
      player never keeps buffering in the background.
+   - The sidebar lists only the clips you are not watching, so it holds
+     clips.length - 1 items and never needs its own scrollbar.
    - Rail thumbnails use real <img loading="lazy"> only when a poster path is
      supplied; otherwise they fall back to the same CSS placeholder.
 
@@ -95,7 +97,7 @@
   };
 
   /* ---- state ---------------------------------------------------------- */
-  var panels = {};          // key -> { rail: DocumentFragment cache, buttons: [] }
+  var panels = {};          // key -> { buttons: [] }, built once per category
   var current = null;       // { key, index }
   var player = document.getElementById('vgal-player');
   var rail = document.getElementById('vgal-rail');
@@ -104,6 +106,7 @@
   var elEyebrow = document.getElementById('vgal-eyebrow');
   var elNow = document.getElementById('vgal-now');
   var elRuntime = document.getElementById('vgal-runtime');
+  var elFlag = document.getElementById('vgal-flag');
   var lastTrigger = null;
 
   /* ---- player --------------------------------------------------------- */
@@ -149,28 +152,29 @@
     video.preload = 'metadata';
     if (item.poster) video.poster = item.poster;
     video.src = item.src;
+    // Deliberately not autoplayed: the viewer presses play on the new clip.
     player.appendChild(video);
-    var playing = video.play();
-    if (playing && playing.catch) playing.catch(function () { /* autoplay blocked */ });
   }
 
   /* ---- rail ----------------------------------------------------------- */
-  function select(key, index, focusRail) {
+  /* The sidebar lists the clips you are NOT watching, so the active one is
+     identified under the player instead of inside the list. Exactly
+     clips.length - 1 items are shown, which is what keeps the rail free of an
+     internal scrollbar at every supported height. */
+  function select(key, index) {
     var cat = CATEGORIES[key];
     var item = cat.clips[index];
     current = { key: key, index: index };
 
     buildPlayer(item);
     elNow.textContent = item.title;
-    elRuntime.textContent = item.src ? item.runtime : item.runtime + ' · preview pending';
+    elRuntime.textContent = item.src ? item.runtime : item.runtime + ' · Preview pending';
+    elFlag.textContent = item.src ? 'NOW PLAYING' : 'SELECTED';
 
-    panels[key].buttons.forEach(function (btn, i) {
-      var on = i === index;
-      btn.classList.toggle('is-active', on);
-      btn.setAttribute('aria-selected', String(on));
-      btn.tabIndex = on ? 0 : -1;
-    });
-    if (focusRail) panels[key].buttons[index].focus();
+    // The cached buttons keep their listeners, so re-appending the subset is
+    // enough; the active clip's button is simply left out of the DOM.
+    var others = panels[key].buttons.filter(function (btn, i) { return i !== index; });
+    rail.replaceChildren.apply(rail, others);
   }
 
   function buildRail(key) {
@@ -181,9 +185,7 @@
       var btn = document.createElement('button');
       btn.type = 'button';
       btn.className = 'vgal__thumb';
-      btn.setAttribute('role', 'tab');
-      btn.setAttribute('aria-selected', 'false');
-      btn.tabIndex = -1;
+      btn.setAttribute('aria-label', 'Play ' + item.title + ', ' + item.runtime);
 
       var shot = document.createElement('span');
       shot.className = 'vgal__shot vgal__shot--' + item.tone;
@@ -197,10 +199,10 @@
         img.height = 180;
         shot.appendChild(img);
       }
-      var flag = document.createElement('span');
-      flag.className = 'vgal__flag';
-      flag.textContent = 'NOW PLAYING';
-      shot.appendChild(flag);
+      var cue = document.createElement('span');
+      cue.className = 'vgal__cue';
+      cue.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m9 6 9 6-9 6V6Z"/></svg>';
+      shot.appendChild(cue);
 
       var meta = document.createElement('span');
       meta.className = 'vgal__thumb-meta';
@@ -213,27 +215,12 @@
       meta.append(t, r);
 
       btn.append(shot, meta);
-      btn.addEventListener('click', function () { select(key, i, false); });
+      btn.addEventListener('click', function () { select(key, i); });
       buttons.push(btn);
     });
 
     panels[key] = { buttons: buttons };
   }
-
-  /* Roving focus across the rail, as expected for a tablist. */
-  rail.addEventListener('keydown', function (e) {
-    if (!current) return;
-    var n = CATEGORIES[current.key].clips.length;
-    var i = current.index;
-    var next = null;
-    if (e.key === 'ArrowDown' || e.key === 'ArrowRight') next = (i + 1) % n;
-    else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') next = (i - 1 + n) % n;
-    else if (e.key === 'Home') next = 0;
-    else if (e.key === 'End') next = n - 1;
-    if (next === null) return;
-    e.preventDefault();
-    select(current.key, next, true);
-  });
 
   /* ---- open / close --------------------------------------------------- */
   function open(key, trigger) {
@@ -245,14 +232,11 @@
     elDesc.textContent = cat.desc;
 
     if (!panels[key]) buildRail(key);
-    // The cached buttons keep their listeners; only one category is shown at a
-    // time, so moving the same nodes back into the rail is enough.
-    rail.replaceChildren.apply(rail, panels[key].buttons);
 
     lastTrigger = trigger || null;
     dialog.showModal();
     document.body.classList.add('vgal-open');
-    select(key, 0, false);
+    select(key, 0);
   }
 
   triggers.forEach(function (btn) {
