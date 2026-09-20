@@ -285,7 +285,7 @@
           <li class="card step-card">
             <div class="step-card__head">
               <span class="step-card__no">03</span>
-              <span class="step-card__icon"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path d="M12 2v3M12 19v3M4 4l2 2M18 18l2 2M2 12h3M19 12h3"/></svg></span>
+              <span class="step-card__icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/><circle cx="11" cy="11" r="2"/></svg></span>
             </div>
             <h3 class="step-card__title">Design &amp; animate</h3>
             <p class="step-card__desc">Senior motion designers build your product in pixel-perfect detail.</p>
@@ -293,7 +293,7 @@
           <li class="card step-card">
             <div class="step-card__head">
               <span class="step-card__no">04</span>
-              <span class="step-card__icon"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg></span>
+              <span class="step-card__icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M10 8.5l5.5 3.5-5.5 3.5z"/></svg></span>
             </div>
             <h3 class="step-card__title">Review &amp; launch</h3>
             <p class="step-card__desc">Two rounds of revisions, then delivery in every format you need.</p>
@@ -462,14 +462,14 @@
           <h3 id="form-title">Tell us about your project</h3>
           <p class="contact-form__help" id="contact-help">Complete your brief below, then send it using your email app. Direct form delivery is not connected yet.</p>
           <div class="contact-form__row">
-            <div class="form-field"><label for="contact-name">Name <span>(required)</span></label><input id="contact-name" name="name" autocomplete="name" required maxlength="100"></div>
-            <div class="form-field"><label for="contact-email">Work email <span>(required)</span></label><input id="contact-email" name="email" type="email" autocomplete="email" required maxlength="254"></div>
+            <div class="form-field"><label for="contact-name">Name <span class="required-star" aria-hidden="true">*</span></label><input id="contact-name" name="name" autocomplete="name" required maxlength="100"></div>
+            <div class="form-field"><label for="contact-email">Work email <span class="required-star" aria-hidden="true">*</span></label><input id="contact-email" name="email" type="email" autocomplete="email" required maxlength="254"></div>
           </div>
           <div class="contact-form__row">
-            <div class="form-field"><label for="contact-company">Company <span>(optional)</span></label><input id="contact-company" name="company" autocomplete="organization" maxlength="150"></div>
-            <div class="form-field"><label for="contact-type">What do you need?</label><select id="contact-type" name="project_type" required><option value="">Choose a video type</option><option>SaaS Launch Videos</option><option>Product Promo Videos</option><option>Product Demo Videos</option><option>Explainer Videos</option><option>Tutorial Videos</option><option>Homepage Videos</option><option>Recurring video production</option><option>Help choosing a format</option></select></div>
+            <div class="form-field"><label for="contact-company">Company</label><input id="contact-company" name="company" autocomplete="organization" maxlength="150"></div>
+            <div class="form-field"><label for="contact-type">What do you need? <span class="required-star" aria-hidden="true">*</span></label><select id="contact-type" name="project_type" required><option value="">Choose a video type</option><option>SaaS Launch Videos</option><option>Product Promo Videos</option><option>Product Demo Videos</option><option>Explainer Videos</option><option>Tutorial Videos</option><option>Homepage Videos</option><option>Recurring video production</option><option>Help choosing a format</option></select></div>
           </div>
-          <div class="form-field"><label for="contact-message">Project details <span>(required)</span></label><textarea id="contact-message" name="message" rows="4" required minlength="20" maxlength="4000" placeholder="What does your product do, who is it for, and what is your goal or timeline?"></textarea></div>
+          <div class="form-field"><label for="contact-message">Project details <span class="required-star" aria-hidden="true">*</span></label><textarea id="contact-message" name="message" rows="4" required minlength="20" maxlength="4000" placeholder="What does your product do, who is it for, and what is your goal or timeline?"></textarea></div>
           <input type="hidden" name="plan" id="contact-plan" value="">
           <p class="contact-form__plan" id="contact-plan-note" hidden></p>
           <button class="btn btn-primary btn--block" type="submit" disabled>Prepare Project Email <span aria-hidden="true">↗</span></button>
