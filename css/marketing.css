@@ -579,13 +579,13 @@ section[id] {
 .results {
   --results-accent: #5548E7;
   --results-text: #17182B;
-  --results-muted: #55576C;
-  --results-border: #DEDCF6;
+  --results-muted: #484A5C;   /* 8.0:1 on the panel, was 6.5:1 */
+  --results-border: #E8E6FA;  /* lighter hairline divider */
   color: var(--results-text);
 }
 
 .results__panel {
-  padding: 34px 28px 18px;
+  padding: 28px 28px 26px;
   border: 1px solid #E4E2F7;
   border-radius: 28px;
   background: #F5F4FF;
@@ -611,7 +611,7 @@ section[id] {
 .results__grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  margin-top: 32px;
+  margin-top: 26px;
 }
 
 .result {
@@ -625,7 +625,7 @@ section[id] {
 
 .result__value {
   color: var(--results-accent);
-  font-size: clamp(40px, 4.4vw, 56px);
+  font-size: clamp(36px, 3.9vw, 50px);
   font-weight: 700;
   font-variant-numeric: lining-nums tabular-nums;
   line-height: 1.15;
@@ -658,9 +658,9 @@ section[id] {
 }
 
 .results__note {
-  margin-top: 20px;
+  margin-top: 8px;
   color: #6C6E80;
-  font-size: 10px;
+  font-size: 11px;
   line-height: 1.5;
 }
 
@@ -992,20 +992,20 @@ section[id] {
   .step__icon { width: 44px; height: 44px; }
   .step__no { font-size: 30px; }
 
-  .results__panel { padding: 26px 16px 16px; border-radius: 22px; }
+  .results__panel { padding: 22px 16px 20px; border-radius: 22px; }
   .results__head { max-width: 340px; margin-inline: auto; }
   .results__eyebrow { font-size: 10px; }
   .results__grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    margin-top: 26px;
+    margin-top: 22px;
   }
   .result { padding: 20px 10px; }
   .result:nth-child(3) { border-left: 0; }
   .result:nth-child(n + 3) { border-top: 1px solid var(--results-border); }
-  .result__value { font-size: clamp(32px, 7vw, 46px); }
+  .result__value { font-size: clamp(30px, 6.4vw, 42px); }
   .result__label { margin-top: 10px; font-size: 12px; }
   .result__detail { font-size: 11px; }
-  .results__note { margin-top: 8px; }
+  .results__note { margin-top: 6px; font-size: 10.5px; }
 
   .testimonial { padding-block: 64px; }
   .testimonial__quote p { font-size: 21px; }
