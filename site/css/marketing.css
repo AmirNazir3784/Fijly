@@ -331,7 +331,7 @@ section[id] {
   align-items: center;
   gap: 38px;
   padding-right: 38px;
-  font-size: 20px;
+  font-size: 22px;
   font-weight: 800;
   letter-spacing: -.02em;
   color: var(--text-muted);
@@ -1293,7 +1293,7 @@ section[id] {
   .hero-frame__sidebar { width: 30px; }
   .hero-frame__icon { width: 18px; height: 18px; }
   .trust { margin-top: 2px; }
-  .trust__label { font-size: 10px; margin-bottom: 14px; }
+  .trust__label { font-size: 12px; margin-bottom: 14px; }
   .marquee__list { font-size: 18px; gap: 28px; padding-right: 28px; }
   .services { padding: 36px 0 48px; }
   .section, .process, .testimonial, .faq { padding-block: 48px; }
