@@ -433,6 +433,7 @@
 .thumb {
   flex: none;
   display: block;
+  overflow: hidden;
 }
 
 /* ==========================================================================
@@ -823,6 +824,7 @@
   font-family: var(--font-mono);
   font-size: 10px;
   font-weight: 700;
+  pointer-events: none;
 }
 
 /* Timeline */
@@ -871,10 +873,11 @@
   position: absolute;
   top: 0;
   left: 0;
-  width: 38%;
+  width: 100%;
   height: 100%;
   border-radius: 99px;
   background: var(--primary);
+  transform-origin: left;
 }
 
 .timeline__knob {
@@ -1051,8 +1054,9 @@
   flex-direction: column;
   justify-content: space-between;
   align-items: flex-start;
-  height: 118px;
-  padding: 12px;
+  height: auto;
+  padding: 0;
+  gap: 0;
 }
 
 .media-tag {
@@ -1397,6 +1401,7 @@
 .assets-grid--2 {
   grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
   margin-top: 18px;
+  align-items: start;
 }
 
 .logo-stage {
@@ -1526,21 +1531,23 @@
 
 .shots {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(2,minmax(0,1fr));
   gap: 11px;
 }
 
 .shot {
   position: relative;
-  aspect-ratio: 4 / 3;
+  aspect-ratio: auto;
   overflow: hidden;
   border-radius: var(--radius-md);
-  border: 1px solid rgba(0, 0, 0, .05);
+  border: 1px solid var(--border-default);
+  height: auto;
+  background: var(--surface-light);
 }
 
 .shot::before,
 .shot::after {
-  content: "";
+  content: none;
   position: absolute;
   left: 8px;
 }
@@ -2180,10 +2187,6 @@
     flex-direction: column;
   }
 
-  .shots {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
   .chart-head {
     flex-wrap: wrap;
   }
@@ -2207,13 +2210,12 @@
 /* Sample workspace context and purpose-designed production stills. */
 .studio-demo-note { padding: 12px 30px; background: var(--primary-tint); border-bottom: 1px solid var(--border-default); color: var(--text-muted); font-size: 12px; line-height: 1.6; }
 .studio-demo-note a { display: inline-block; font-weight: 700; margin-left: 8px; }
-.project-card__media { height: auto; padding: 0; gap: 0; }
+
 .project-card__media .media-tag { margin: 10px 12px 0; font-size: 9px; }
 .project-concept { width: 100%; height: auto; }
-.shots { grid-template-columns: repeat(2,minmax(0,1fr)); }
-.assets-grid--2 { align-items: start; }
+
 .team-grid { grid-template-columns: repeat(3,minmax(0,1fr)); }
-.thumb { overflow: hidden; }
+
 .thumb img { width: 100%; height: 100%; object-fit: cover; }
 .table-hint { display: none; color: var(--text-muted); font-size: 12px; line-height: 1.6; padding: 12px 16px; border-bottom: 1px solid var(--border-light); }
 @media (max-width: 1120px) { .table-hint { display: block; } }
@@ -2221,12 +2223,10 @@
   .assets-grid.assets-grid--2 { grid-template-columns: minmax(0,1fr); }
 }
 @media (max-width: 900px) { .search { display: none; } }
-.shot { height: auto; aspect-ratio: auto; overflow: hidden; background: var(--surface-light); border: 1px solid var(--border-default); }
-.shot::before, .shot::after { content: none; }
+
 .shot img { width: 100%; height: auto; }
 .shot figcaption { padding: 10px; font-size: 11px; font-weight: 600; }
-.canvas__rec { pointer-events: none; }
-.timeline__fill { width: 100%; transform-origin: left; }
+
 .preview .app-kpi__bar span { animation: demo-bar 4s ease-in-out infinite paused; transform-origin: left; }
 .preview .bubble--out { animation: demo-response 8s ease-in-out infinite paused; }
 .preview .typing span { animation: demo-dot 1.2s ease-in-out infinite paused; }
