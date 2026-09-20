@@ -470,27 +470,17 @@ section[id] {
 .step__no {
   font-family: var(--font-body);
   font-size: 34px;
-  font-weight: 700;
+  font-weight: 600;
   line-height: 1;
   letter-spacing: -.04em;
-  /* A tint of --primary: reads as a large numeral without competing with the
-     step title. #E0DAF4 was effectively invisible at 1.35:1. */
-  color: #B3A5E2;
-}
-
-.step__day {
-  align-self: flex-start;
-  padding: 4px 10px;
-  border-radius: var(--radius-full);
-  background: #F1EEFD;
-  color: #5A4FB8;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: .01em;
+  /* Full-strength brand purple at 5.06:1 on the card. Semibold and no opacity
+     so it stays crisp, while the near-black title keeps the stronger weight
+     and contrast and remains the primary read. */
+  color: #6554F6;
 }
 
 .step__title {
-  margin-top: 12px;
+  margin-top: 0;
   font-size: 16.5px;
   font-weight: 700;
   line-height: 1.35;
