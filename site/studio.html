@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+  <link rel="icon" href="assets/favicon.ico" sizes="32x32">
+  <link rel="apple-touch-icon" href="assets/favicon.svg">
+  <meta name="theme-color" content="#5B4BF5">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FIJLY Studio — Dashboard</title>
+  <meta name="description" content="FIJLY Studio client dashboard — manage your video production projects, requests, assets, and team.">
+  <meta name="robots" content="noindex, nofollow">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/dashboard.css">
+</head>
+<body class="studio-body">
+<a class="skip-link" href="#studio-content">Skip to content</a>
+<div class="studio-layout" id="studio">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar" aria-label="Studio navigation">
+    <div class="sidebar-header">
+      <span class="sidebar-logo__mark"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M8 5v14l11-7z" fill="#fff"/></svg></span>
+      <span class="sidebar-logo__text">
+        <span class="sidebar-logo__word">FIJLY</span>
+        <span class="sidebar-logo__sub">STUDIO</span>
+      </span>
+      <button class="sidebar-close" type="button" aria-label="Close menu" data-sidebar-close>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+
+    <div class="sidebar-label" id="sidebar-label">WORKSPACE</div>
+    <nav class="sidebar-nav" aria-labelledby="sidebar-label">
+      <ul>
+        <li><a class="sidebar-link" href="#overview" data-screen="overview" aria-current="page">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/></svg>
+          <span>Overview</span>
+        </a></li>
+        <li><a class="sidebar-link" href="#projects" data-screen="projects">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+          <span>Projects</span>
+        </a></li>
+        <li><a class="sidebar-link" href="#requests" data-screen="requests">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="5" width="14" height="14" rx="2.5"/><path d="M17 10l4-2v8l-4-2"/></svg>
+          <span>Video Requests</span>
+          <span class="sidebar-badge" aria-label="3 open requests">3</span>
+        </a></li>
+        <li><a class="sidebar-link" href="#assets" data-screen="assets">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="8.5" cy="9.5" r="1.4" fill="currentColor" stroke="none"/><circle cx="15.5" cy="9.5" r="1.4" fill="currentColor" stroke="none"/><circle cx="9" cy="15" r="1.4" fill="currentColor" stroke="none"/></svg>
+          <span>Brand Assets</span>
+        </a></li>
+        <li><a class="sidebar-link" href="#scripts" data-screen="scripts">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M7 3h7l5 5v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M13 3v6h6"/></svg>
+          <span>Scripts</span>
+        </a></li>
+        <li><a class="sidebar-link" href="#analytics" data-screen="analytics">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>
+          <span>Analytics</span>
+        </a></li>
+        <li><a class="sidebar-link" href="#team" data-screen="team">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 20c0-3.3 2.5-5.5 5.5-5.5s5.5 2.2 5.5 5.5"/><path d="M16 5.2a3.2 3.2 0 0 1 0 6.1M18 14.8c2 .7 3.4 2.6 3.4 5.2"/></svg>
+          <span>Team</span>
+        </a></li>
+        <li><a class="sidebar-link" href="#settings" data-screen="settings">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg>
+          <span>Settings</span>
+        </a></li>
+      </ul>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="sidebar-plan">
+        <div class="sidebar-plan__title">Pro plan</div>
+        <div class="sidebar-plan__text">14 of 20 video credits used this month</div>
+        <div class="progress-bar" role="progressbar" aria-label="Video credits used" aria-valuenow="70" aria-valuemin="0" aria-valuemax="100"><div class="progress-bar__fill"></div></div>
+      </div>
+
+      <div class="sidebar-user">
+        <span class="avatar" aria-hidden="true">A</span>
+        <div class="sidebar-user__meta">
+          <div class="sidebar-user__name">Alex Rivera</div>
+          <div class="sidebar-user__email">alex@northbeam.io</div>
+        </div>
+      </div>
+
+      <a class="sidebar-link sidebar-link--site" href="index.html">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.5 2.5 15 0 18M12 3c-2.5 2.5-2.5 15 0 18"/></svg>
+        <span>View website</span>
+      </a>
+    </div>
+  </aside>
+  <div class="sidebar-backdrop" data-sidebar-close></div>
+
+  <!-- MAIN -->
+  <main class="studio-main">
+    <p class="studio-demo-note" id="studio-demo-note">Sample workspace · Explore the production workflow. Changes are temporary; no client data or requests are sent. <a href="index.html#contact">Start a real project ↗</a></p>
+    <header class="studio-topbar">
+      <button class="icon-btn studio-topbar__menu" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="sidebar" data-sidebar-open>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      </button>
+      <p class="studio-topbar__title" id="topbar-title">Overview</p>
+
+      <label class="search">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+        <span class="visually-hidden">Search</span>
+        <input type="search" readonly aria-disabled="true" aria-describedby="studio-demo-note" placeholder="Search projects, scripts, assets…">
+        <span class="search__shortcut" aria-hidden="true">⌘K</span>
+      </label>
+
+      <a class="btn btn-outline btn--xs btn--semibold studio-topbar__site" href="index.html">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.5 2.5 15 0 18M12 3c-2.5 2.5-2.5 15 0 18"/></svg>
+        View site
+      </a>
+      <button class="icon-btn" type="button" aria-label="Notifications (unread)" aria-disabled="true" aria-describedby="studio-demo-note" title="Unavailable in this static demo">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+        <span class="icon-btn__dot"></span>
+      </button>
+      <a class="btn btn-primary btn--xs" href="#requests" data-screen-link="requests" aria-label="New request">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+        <span class="btn__label">New request</span>
+      </a>
+    </header>
+
+    <div class="studio-content" id="studio-content" tabindex="-1">
+
+      <noscript>
+        <div style="padding:2rem;text-align:center;font-family:sans-serif;">
+          <h1>JavaScript Required</h1>
+          <p>The FIJLY Studio dashboard requires JavaScript to navigate between screens.</p>
+          <p><a href="index.html">← Back to FIJLY website</a></p>
+        </div>
+      </noscript>
+
+      <!-- ================= OVERVIEW ================= -->
+      <section class="screen" id="screen-overview" data-screen="overview" data-title="Overview" aria-labelledby="h-overview">
+        <div class="page-head page-head--row page-head--overview">
+          <div>
+            <div class="page-head__date">TUE · SEP 16</div>
+            <h1 id="h-overview">Good morning, Alex</h1>
+            <p>Here's what's happening with your video projects.</p>
+          </div>
+          <button class="btn btn-outline btn--xs btn--semibold" type="button" aria-disabled="true" aria-describedby="studio-demo-note" title="Unavailable in this static demo"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg>This month</button>
+        </div>
+
+        <!-- STATS -->
+        <div class="stats-grid">
+          <article class="stat-card">
+            <div class="stat-card__head"><h2 class="stat-card__label">Active Projects</h2><span class="stat-card__icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></span></div>
+            <div class="stat-card__value">04</div>
+            <div class="stat-card__delta">↑ 2 vs last month</div>
+          </article>
+          <article class="stat-card">
+            <div class="stat-card__head"><h2 class="stat-card__label">Videos Delivered</h2><span class="stat-card__icon stat-card__icon--success"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg></span></div>
+            <div class="stat-card__value">18</div>
+            <div class="stat-card__delta">↑ 5 this quarter</div>
+          </article>
+          <article class="stat-card">
+            <div class="stat-card__head"><h2 class="stat-card__label">In Review</h2><span class="stat-card__icon stat-card__icon--info"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span></div>
+            <div class="stat-card__value">03</div>
+            <div class="stat-card__delta stat-card__delta--muted">2 awaiting your feedback</div>
+          </article>
+          <article class="stat-card">
+            <div class="stat-card__head"><h2 class="stat-card__label">Avg. Production Time</h2><span class="stat-card__icon stat-card__icon--warning"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path d="M13 2L3 14h7l-1 8 10-12h-7z"/></svg></span></div>
+            <div class="stat-card__value">3.2<span class="stat-card__unit"> days</span></div>
+            <div class="stat-card__delta">↓ 0.6d faster</div>
+          </article>
+        </div>
+
+        <!-- VIDEO PREVIEW + STORYBOARD -->
+        <div class="overview-grid">
+
+          <!-- PREVIEW PANEL -->
+          <section class="preview" id="preview" aria-labelledby="h-preview">
+            <div class="preview__head">
+              <div class="preview__id">
+                <span class="preview__icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="#fff" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg></span>
+                <div><h2 class="preview__title" id="h-preview">AIFlow — Product Launch Video</h2><div class="preview__meta">UI MOTION DEMO · v4 · 1920×1080</div></div>
+              </div>
+              <span class="status-pill"><span class="status-pill__dot"></span>In Production · 72%</span>
+            </div>
+
+            <!-- Mock AI product UI (video canvas) -->
+            <div class="canvas">
+              <div class="browser" aria-hidden="true">
+                <div class="browser__bar">
+                  <span class="browser__dot"></span><span class="browser__dot browser__dot--yellow"></span><span class="browser__dot browser__dot--green"></span>
+                  <div class="browser__url"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg><span>app.aiflow.io</span></div>
+                </div>
+                <div class="browser__body">
+                  <div class="app-rail"><span>A</span><span></span><span></span><span></span><span></span></div>
+                  <div class="app">
+                    <div class="app__head">
+                      <div><div class="app__title">AI Assistant</div><div class="app__sub">Analyzing 4,204 customer conversations</div></div>
+                      <div class="app__actions"><span class="app__generate">✦ Generate</span><span class="app__avatar"></span></div>
+                    </div>
+                    <div class="app__kpis">
+                      <div class="app-card app-kpi"><div class="app-kpi__label">RESOLVED</div><div class="app-kpi__value">92%</div><div class="app-kpi__bar"><span></span></div></div>
+                      <div class="app-card app-kpi"><div class="app-kpi__label">AVG REPLY</div><div class="app-kpi__value">1.4s</div><div class="app-kpi__bar app-kpi__bar--primary"><span></span></div></div>
+                      <div class="app-card app-kpi"><div class="app-kpi__label">CSAT</div><div class="app-kpi__value">4.9</div><div class="app-kpi__bar app-kpi__bar--warning"><span></span></div></div>
+                    </div>
+                    <div class="app__split">
+                      <div class="app-card app-chart">
+                        <div class="app-chart__title">Automated resolutions</div>
+                        <svg viewBox="0 0 220 90" preserveAspectRatio="none" aria-hidden="true">
+                          <defs><linearGradient id="fjArea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5B4BF5" stop-opacity=".28"/><stop offset="1" stop-color="#5B4BF5" stop-opacity="0"/></linearGradient></defs>
+                          <path d="M0 70 C30 62 40 40 66 44 C92 48 104 20 132 24 C160 28 176 12 220 8 L220 90 L0 90 Z" fill="url(#fjArea)"/>
+                          <path d="M0 70 C30 62 40 40 66 44 C92 48 104 20 132 24 C160 28 176 12 220 8" fill="none" stroke="#5B4BF5" stroke-width="2.4" stroke-linecap="round"/>
+                          <circle cx="132" cy="24" r="3.4" fill="#5B4BF5" stroke="#fff" stroke-width="1.6"/>
+                        </svg>
+                      </div>
+                      <div class="app-card app-chat">
+                        <div class="bubble">How many refunds this week?</div>
+                        <div class="bubble bubble--out">142 refunds — down 12% WoW. Top reason: shipping delay.</div>
+                        <div class="typing"><span></span><span></span><span></span></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <button class="canvas__overlay" type="button" aria-label="Play preview" data-play-toggle>
+                <span class="canvas__play">
+                  <svg class="icon-pause" width="24" height="24" viewBox="0 0 24 24" fill="#fff" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>
+                  <svg class="icon-play" width="26" height="26" viewBox="0 0 24 24" fill="#fff" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
+                </span>
+              </button>
+              <span class="canvas__rec">UI MOTION DEMO</span>
+            </div>
+
+            <!-- TIMELINE -->
+            <div class="timeline">
+              <button class="timeline__play" type="button" aria-label="Play preview" data-play-toggle>
+                <svg class="icon-pause" width="14" height="14" viewBox="0 0 24 24" fill="#fff" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>
+                <svg class="icon-play" width="15" height="15" viewBox="0 0 24 24" fill="#fff" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
+              </button>
+              <span class="timeline__time">00:24</span>
+              <div class="timeline__track" role="progressbar" aria-label="Playback position" aria-valuenow="38" aria-valuemin="0" aria-valuemax="100">
+                <div class="timeline__fill"></div>
+                <div class="timeline__knob"></div>
+                <div class="timeline__marker"></div>
+                <div class="timeline__marker timeline__marker--2"></div>
+                <div class="timeline__marker timeline__marker--3"></div>
+              </div>
+              <span class="timeline__time timeline__time--end">01:04</span>
+              <div class="timeline__tools">
+                <button class="icon-btn icon-btn--sm" type="button" aria-label="Restart motion preview" data-preview-restart><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path d="M11 5L6 12l5 7M18 5l-5 7 5 7"/></svg></button>
+                <button class="icon-btn icon-btn--sm" type="button" aria-label="Fullscreen" data-fullscreen><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/></svg></button>
+              </div>
+            </div>
+          </section>
+
+          <!-- STORYBOARD -->
+          <section class="panel storyboard" aria-labelledby="h-storyboard">
+            <div class="storyboard__head">
+              <div><h2 id="h-storyboard">Video Storyboard</h2><div class="panel__sub">AIFlow · 5 scenes · 01:04</div></div>
+              <span class="version-pill">v4</span>
+            </div>
+            <ol class="scene-list">
+              <li class="scene"><span class="scene__thumb bg-grad-red">01</span><div class="scene__body"><div class="scene__title">Problem</div><div class="scene__dur">0:00 – 0:12</div></div><span class="badge badge-success">Locked</span></li>
+              <li class="scene"><span class="scene__thumb bg-grad-violet">02</span><div class="scene__body"><div class="scene__title">Solution</div><div class="scene__dur">0:12 – 0:26</div></div><span class="badge badge-success">Locked</span></li>
+              <li class="scene"><span class="scene__thumb bg-grad-ink">03</span><div class="scene__body"><div class="scene__title">Product</div><div class="scene__dur">0:26 – 0:44</div></div><span class="badge badge-warning">Editing</span></li>
+              <li class="scene"><span class="scene__thumb bg-grad-green">04</span><div class="scene__body"><div class="scene__title">Benefits</div><div class="scene__dur">0:44 – 0:56</div></div><span class="badge badge-info">Draft</span></li>
+              <li class="scene"><span class="scene__thumb bg-grad-amber">05</span><div class="scene__body"><div class="scene__title">CTA</div><div class="scene__dur">0:56 – 1:04</div></div><span class="badge badge-info">Draft</span></li>
+            </ol>
+            <button class="btn-dashed" type="button" aria-disabled="true" aria-describedby="studio-demo-note" title="Unavailable in this static demo">Open full storyboard editor</button>
+          </section>
+        </div>
+
+        <!-- PROJECTS -->
+        <div class="section-bar">
+          <h2>Active Projects</h2>
+          <a class="btn-link" href="#projects" data-screen-link="projects">View all<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+        </div>
+        <div class="project-grid">
+          <article class="project-card proj proj--aiflow">
+            <div class="project-card__media bg-grad-violet">
+              <span class="media-tag">SaaS Launch</span>
+              <img class="project-concept" src="assets/concept-aiflow.svg" alt="" width="800" height="500" loading="lazy">
+            </div>
+            <div class="project-card__body">
+              <h3 class="project-card__name">AIFlow</h3>
+              <div class="project-card__sub">Product Launch Video</div>
+              <div class="project-card__badges"><span class="badge badge-warning">In Production</span></div>
+              <div class="progress-row"><span class="progress-row__label">Progress</span><span class="progress-row__value">72%</span></div>
+              <div class="progress-bar" role="progressbar" aria-label="AIFlow progress" aria-valuenow="72" aria-valuemin="0" aria-valuemax="100"><div class="progress-bar__fill"></div></div>
+              <div class="project-card__foot"><span class="project-card__updated">2h ago</span><a class="btn-link" href="#projects" data-screen-link="projects">View<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg><span class="visually-hidden"> AIFlow</span></a></div>
+            </div>
+          </article>
+
+          <article class="project-card proj proj--clouddesk">
+            <div class="project-card__media bg-grad-blue">
+              <span class="media-tag">Homepage Video</span>
+              <img class="project-concept" src="assets/concept-clouddesk.svg" alt="" width="800" height="500" loading="lazy">
+            </div>
+            <div class="project-card__body">
+              <h3 class="project-card__name">CloudDesk</h3>
+              <div class="project-card__sub">Homepage Explainer</div>
+              <div class="project-card__badges"><span class="badge badge-info">Client Review</span></div>
+              <div class="progress-row"><span class="progress-row__label">Progress</span><span class="progress-row__value">90%</span></div>
+              <div class="progress-bar" role="progressbar" aria-label="CloudDesk progress" aria-valuenow="90" aria-valuemin="0" aria-valuemax="100"><div class="progress-bar__fill"></div></div>
+              <div class="project-card__foot"><span class="project-card__updated">5h ago</span><a class="btn-link" href="#projects" data-screen-link="projects">View<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg><span class="visually-hidden"> CloudDesk</span></a></div>
+            </div>
+          </article>
+
+          <article class="project-card proj proj--taskpilot">
+            <div class="project-card__media bg-grad-green">
+              <span class="media-tag">Product Demo</span>
+              <img class="project-concept" src="assets/concept-taskpilot.svg" alt="" width="800" height="500" loading="lazy">
+            </div>
+            <div class="project-card__body">
+              <h3 class="project-card__name">TaskPilot</h3>
+              <div class="project-card__sub">Product Demo</div>
+              <div class="project-card__badges"><span class="badge">Script Approved</span></div>
+              <div class="progress-row"><span class="progress-row__label">Progress</span><span class="progress-row__value">35%</span></div>
+              <div class="progress-bar" role="progressbar" aria-label="TaskPilot progress" aria-valuenow="35" aria-valuemin="0" aria-valuemax="100"><div class="progress-bar__fill"></div></div>
+              <div class="project-card__foot"><span class="project-card__updated">1d ago</span><a class="btn-link" href="#projects" data-screen-link="projects">View<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg><span class="visually-hidden"> TaskPilot</span></a></div>
+            </div>
+          </article>
+
+          <article class="project-card proj proj--finly">
+            <div class="project-card__media bg-grad-amber">
+              <span class="media-tag">Tutorial</span>
+              <img class="project-concept" src="assets/concept-finly.svg" alt="" width="800" height="500" loading="lazy">
+            </div>
+            <div class="project-card__body">
+              <h3 class="project-card__name">Finly</h3>
+              <div class="project-card__sub">Tutorial Series</div>
+              <div class="project-card__badges"><span class="badge badge-success">Delivered</span></div>
+              <div class="progress-row"><span class="progress-row__label">Progress</span><span class="progress-row__value">100%</span></div>
+              <div class="progress-bar" role="progressbar" aria-label="Finly progress" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"><div class="progress-bar__fill"></div></div>
+              <div class="project-card__foot"><span class="project-card__updated">3d ago</span><a class="btn-link" href="#projects" data-screen-link="projects">View<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg><span class="visually-hidden"> Finly</span></a></div>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <!-- ================= PROJECTS ================= -->
+      <section class="screen" id="screen-projects" data-screen="projects" data-title="Projects" aria-labelledby="h-projects" hidden>
+        <div class="page-head page-head--row">
+          <div><h1 id="h-projects">Projects</h1><p>Every video in production, review, and delivered.</p></div>
+          <div class="filter-bar" role="group" aria-label="Filter projects by status">
+            <button class="filter-chip" type="button" data-filter="all" aria-pressed="true">All</button>
+            <button class="filter-chip" type="button" data-filter="production" aria-pressed="false">In Production</button>
+            <button class="filter-chip" type="button" data-filter="review" aria-pressed="false">In Review</button>
+            <button class="filter-chip" type="button" data-filter="delivered" aria-pressed="false">Delivered</button>
+          </div>
+        </div>
+
+        <div class="panel panel--flush">
+          <p class="table-hint">Swipe horizontally, or focus the table and use the arrow keys, to see every column.</p>
+          <div class="table-scroll" tabindex="0" role="region" aria-label="Projects table, scroll horizontally">
+            <table class="table projects-table">
+              <caption class="visually-hidden">Projects</caption>
+              <colgroup><col><col><col><col><col></colgroup>
+              <thead>
+                <tr><th scope="col">PROJECT</th><th scope="col">TYPE</th><th scope="col">STATUS</th><th scope="col">PROGRESS</th><th scope="col">UPDATED</th></tr>
+              </thead>
+              <tbody>
+                <tr class="proj proj--aiflow" data-status="production">
+                  <td><span class="cell-project"><span class="thumb bg-grad-violet"><img src="assets/concept-aiflow.svg" alt="" width="800" height="500" loading="lazy"></span><span><span class="cell-project__name">AIFlow</span><span class="cell-project__sub">Product Launch Video</span></span></span></td>
+                  <td class="cell-type">SaaS Launch</td>
+                  <td><span class="badge badge-warning">In Production</span></td>
+                  <td><span class="cell-progress"><span class="progress-bar" role="progressbar" aria-label="AIFlow progress" aria-valuenow="72" aria-valuemin="0" aria-valuemax="100"><span class="progress-bar__fill"></span></span><span class="cell-progress__value">72%</span></span></td>
+                  <td class="cell-updated">2h ago</td>
+                </tr>
+                <tr class="proj proj--clouddesk" data-status="review">
+                  <td><span class="cell-project"><span class="thumb bg-grad-blue"><img src="assets/concept-clouddesk.svg" alt="" width="800" height="500" loading="lazy"></span><span><span class="cell-project__name">CloudDesk</span><span class="cell-project__sub">Homepage Explainer</span></span></span></td>
+                  <td class="cell-type">Homepage Video</td>
+                  <td><span class="badge badge-info">Client Review</span></td>
+                  <td><span class="cell-progress"><span class="progress-bar" role="progressbar" aria-label="CloudDesk progress" aria-valuenow="90" aria-valuemin="0" aria-valuemax="100"><span class="progress-bar__fill"></span></span><span class="cell-progress__value">90%</span></span></td>
+                  <td class="cell-updated">5h ago</td>
+                </tr>
+                <tr class="proj proj--taskpilot" data-status="approved">
+                  <td><span class="cell-project"><span class="thumb bg-grad-green"><img src="assets/concept-taskpilot.svg" alt="" width="800" height="500" loading="lazy"></span><span><span class="cell-project__name">TaskPilot</span><span class="cell-project__sub">Product Demo</span></span></span></td>
+                  <td class="cell-type">Product Demo</td>
+                  <td><span class="badge">Script Approved</span></td>
+                  <td><span class="cell-progress"><span class="progress-bar" role="progressbar" aria-label="TaskPilot progress" aria-valuenow="35" aria-valuemin="0" aria-valuemax="100"><span class="progress-bar__fill"></span></span><span class="cell-progress__value">35%</span></span></td>
+                  <td class="cell-updated">1d ago</td>
+                </tr>
+                <tr class="proj proj--finly" data-status="delivered">
+                  <td><span class="cell-project"><span class="thumb bg-grad-amber"><img src="assets/concept-finly.svg" alt="" width="800" height="500" loading="lazy"></span><span><span class="cell-project__name">Finly</span><span class="cell-project__sub">Tutorial Series</span></span></span></td>
+                  <td class="cell-type">Tutorial</td>
+                  <td><span class="badge badge-success">Delivered</span></td>
+                  <td><span class="cell-progress"><span class="progress-bar" role="progressbar" aria-label="Finly progress" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"><span class="progress-bar__fill"></span></span><span class="cell-progress__value">100%</span></span></td>
+                  <td class="cell-updated">3d ago</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="table-empty" data-empty hidden>No projects match this filter.</p>
+        </div>
+      </section>
+
+      <!-- ================= VIDEO REQUESTS ================= -->
+      <section class="screen" id="screen-requests" data-screen="requests" data-title="Video Requests" aria-labelledby="h-requests" hidden>
+        <div class="page-head"><h1 id="h-requests">Video Requests</h1><p>Kick off a new video — we'll scope it within one business day.</p></div>
+
+        <div class="requests-grid">
+          <form class="panel request-form" data-request-form aria-labelledby="h-new-request" aria-describedby="request-demo">
+            <h2 id="h-new-request">New request</h2>
+
+            <div class="form-group">
+              <label class="field-label" for="req-name">Project name</label>
+              <input class="input" id="req-name" name="name" type="text" value="Northbeam — Onboarding walkthrough">
+            </div>
+
+            <fieldset class="form-group">
+              <legend class="field-label">Video type</legend>
+              <div class="chip-group">
+                <label class="choice-chip"><input type="radio" name="type" value="SaaS Launch" checked><span>SaaS Launch</span></label>
+                <label class="choice-chip"><input type="radio" name="type" value="Product Demo"><span>Product Demo</span></label>
+                <label class="choice-chip"><input type="radio" name="type" value="Explainer"><span>Explainer</span></label>
+                <label class="choice-chip"><input type="radio" name="type" value="Tutorial"><span>Tutorial</span></label>
+              </div>
+            </fieldset>
+
+            <div class="form-group">
+              <label class="field-label" for="req-brief">Brief</label>
+              <textarea class="input" id="req-brief" name="brief" placeholder="Walk a first-time admin through connecting their data source, inviting the team, and shipping their first report…"></textarea>
+            </div>
+
+            <div class="form-row">
+              <div>
+                <label class="field-label" for="req-length">Target length</label>
+                <div class="input-wrap">
+                  <select class="input" id="req-length" name="length">
+                    <option selected>60–90 sec</option>
+                  </select>
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#8A93A3" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+                </div>
+              </div>
+              <div>
+                <label class="field-label" for="req-due">Due date</label>
+                <div class="input-wrap">
+                  <input class="input" id="req-due" name="due" type="text" value="Sep 30, 2026">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#8A93A3" stroke-width="2" aria-hidden="true"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18"/></svg>
+                </div>
+              </div>
+            </div>
+
+            <p class="request-form__note" id="request-demo">Studio demo: requests are not sent and settings apply only to this visit.</p>
+            <button class="btn btn-primary btn--md btn--block" type="submit">Submit request</button>
+            <p class="request-form__note" role="status" data-request-note hidden>This demo has not sent a request. Please contact FIJLY to arrange your video.</p>
+          </form>
+
+          <section class="stack" aria-labelledby="h-open-requests">
+            <h2 class="list-title" id="h-open-requests">Open requests</h2>
+            <article class="list-card">
+              <div class="list-card__top"><h3 class="list-card__title">Northbeam — Onboarding</h3><span class="badge badge-info">Scoping</span></div>
+              <div class="list-card__meta"><span>Tutorial</span><span aria-hidden="true">·</span><span>ETA Sep 30</span></div>
+            </article>
+            <article class="list-card">
+              <div class="list-card__top"><h3 class="list-card__title">AIFlow — Feature promo</h3><span class="badge">In Queue</span></div>
+              <div class="list-card__meta"><span>Promo</span><span aria-hidden="true">·</span><span>ETA Oct 4</span></div>
+            </article>
+            <article class="list-card">
+              <div class="list-card__top"><h3 class="list-card__title">Finly — Pricing explainer</h3><span class="badge badge-warning">Draft</span></div>
+              <div class="list-card__meta"><span>Explainer</span><span aria-hidden="true">·</span><span>ETA Oct 9</span></div>
+            </article>
+          </section>
+        </div>
+      </section>
+
+      <!-- ================= BRAND ASSETS ================= -->
+      <section class="screen" id="screen-assets" data-screen="assets" data-title="Brand Assets" aria-labelledby="h-assets" hidden>
+        <div class="page-head"><h1 id="h-assets">Brand Assets</h1><p>Everything we use to keep your videos on-brand.</p></div>
+
+        <div class="assets-grid">
+          <section class="panel" aria-labelledby="h-logo">
+            <h2 class="panel__label" id="h-logo">LOGO</h2>
+            <figure class="logo-stage">
+              <span class="logo-mark"><svg width="17" height="17" viewBox="0 0 24 24" fill="#fff" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg></span>
+              <span class="logo-word">FIJLY</span>
+            </figure>
+            <div class="logo-variants">
+              <figure class="logo-variant">
+                <span class="logo-mark logo-mark--sm"><svg width="12" height="12" viewBox="0 0 24 24" fill="#fff" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg></span>
+                <span class="logo-word">FIJLY</span>
+              </figure>
+              <figure class="logo-variant logo-variant--light" aria-label="FIJLY logo mark">
+                <span class="logo-mark logo-mark--md"><svg width="14" height="14" viewBox="0 0 24 24" fill="#fff" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg></span>
+              </figure>
+            </div>
+          </section>
+
+          <section class="panel" aria-labelledby="h-colors">
+            <h2 class="panel__label" id="h-colors">BRAND COLORS</h2>
+            <ul class="swatches">
+              <li><div class="swatch__chip"></div><div class="swatch__hex">#5B4BF5</div><div class="swatch__name">Violet</div></li>
+              <li><div class="swatch__chip swatch__chip--ink"></div><div class="swatch__hex">#0C0E13</div><div class="swatch__name">Ink</div></li>
+              <li><div class="swatch__chip swatch__chip--iris"></div><div class="swatch__hex">#8B5CF6</div><div class="swatch__name">Iris</div></li>
+              <li><div class="swatch__chip swatch__chip--success"></div><div class="swatch__hex">#0E9F6E</div><div class="swatch__name">Success</div></li>
+              <li><div class="swatch__chip swatch__chip--amber"></div><div class="swatch__hex">#F59E0B</div><div class="swatch__name">Amber</div></li>
+              <li><div class="swatch__chip swatch__chip--canvas"></div><div class="swatch__hex">#F4F5F7</div><div class="swatch__name">Canvas</div></li>
+            </ul>
+          </section>
+
+          <section class="panel" aria-labelledby="h-type">
+            <h2 class="panel__label" id="h-type">TYPOGRAPHY</h2>
+            <div class="type-specimen"><div class="type-specimen__cap type-specimen__cap--tight">Display · Plus Jakarta Sans</div><div class="type-specimen__display">Ag</div></div>
+            <div class="type-specimen"><div class="type-specimen__cap">Body · 400 / 600</div><div class="type-specimen__body">The quick brown fox jumps over the lazy dog.</div></div>
+            <div class="type-specimen"><div class="type-specimen__cap">Mono · JetBrains Mono</div><div class="type-specimen__mono">01 · 3.2 days · 72%</div></div>
+          </section>
+        </div>
+
+        <div class="assets-grid assets-grid--2">
+          <section class="panel" aria-labelledby="h-shots">
+            <h2 class="panel__label" id="h-shots">PRODUCT SCREENSHOTS</h2>
+            <div class="shots">
+              <figure class="shot"><img src="assets/concept-aiflow.svg" alt="AIFlow sample product interface" width="800" height="500" loading="lazy"><figcaption>AIFlow · UI concept</figcaption></figure>
+              <figure class="shot"><img src="assets/concept-clouddesk.svg" alt="CloudDesk sample product interface" width="800" height="500" loading="lazy"><figcaption>CloudDesk · UI concept</figcaption></figure>
+              <figure class="shot"><img src="assets/concept-taskpilot.svg" alt="TaskPilot sample product interface" width="800" height="500" loading="lazy"><figcaption>TaskPilot · UI concept</figcaption></figure>
+              <figure class="shot"><img src="assets/concept-finly.svg" alt="Finly sample product interface" width="800" height="500" loading="lazy"><figcaption>Finly · UI concept</figcaption></figure>
+            </div>
+          </section>
+          <section class="panel" aria-labelledby="h-files">
+            <h2 class="panel__label" id="h-files">UI COMPONENTS &amp; RECORDINGS</h2>
+            <ul class="file-list">
+              <li class="file-row"><span class="file-row__icon"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18"/></svg></span><span class="file-row__body"><span class="file-row__title">Component library</span><span class="file-row__sub">48 buttons, forms, cards</span></span><span class="file-row__ext">.fig</span></li>
+              <li class="file-row"><span class="file-row__icon file-row__icon--success"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="5" width="14" height="14" rx="2.5"/><path d="M17 10l4-2v8l-4-2"/></svg></span><span class="file-row__body"><span class="file-row__title">Product recordings</span><span class="file-row__sub">12 clips · 4K ProRes</span></span><span class="file-row__ext">2.4GB</span></li>
+            </ul>
+          </section>
+        </div>
+      </section>
+
+      <!-- ================= SCRIPTS ================= -->
+      <section class="screen" id="screen-scripts" data-screen="scripts" data-title="Scripts" aria-labelledby="h-scripts" hidden>
+        <div class="page-head"><h1 id="h-scripts">Scripts</h1><p>Draft, review, and lock narration for each scene.</p></div>
+
+        <div class="scripts-grid">
+          <article class="panel panel--flush" aria-labelledby="h-script-doc">
+            <div class="doc__head">
+              <div><h2 class="doc__title" id="h-script-doc">AIFlow — Launch Script</h2><div class="doc__meta">v4 · locked · 148 words</div></div>
+              <span class="badge badge-success">Approved</span>
+            </div>
+            <ol class="doc__body">
+              <li class="script-scene"><span class="script-scene__no">01</span><div class="script-scene__content"><div class="script-scene__label">PROBLEM · 0:00–0:12</div><p class="script-scene__text">Your support team answers the same 40 questions every single day. Customers wait. Tickets pile up. And your best people burn out on copy-paste.</p></div></li>
+              <li class="script-scene"><span class="script-scene__no">02</span><div class="script-scene__content"><div class="script-scene__label">SOLUTION · 0:12–0:26</div><p class="script-scene__text">Meet AIFlow — an AI teammate that resolves 92% of tickets instantly, in your brand voice, across every channel.</p></div></li>
+              <li class="script-scene script-scene--pending"><span class="script-scene__no">03</span><div class="script-scene__content"><div class="script-scene__label">PRODUCT · 0:26–0:44</div><p class="script-scene__text">Watch it triage, draft, and resolve — while your team steps in only when it matters…</p></div></li>
+            </ol>
+          </article>
+
+          <section class="stack" aria-labelledby="h-comments">
+            <h2 class="list-title" id="h-comments">Comments</h2>
+            <article class="comment">
+              <div class="comment__head"><span class="avatar avatar--sm" aria-hidden="true">A</span><span class="comment__name">Alex</span><span class="comment__time">2h</span></div>
+              <p class="comment__text">Love scene 02 — can we punch "92%" harder on screen?</p>
+            </article>
+            <article class="comment">
+              <div class="comment__head"><span class="avatar avatar--sm avatar--dark" aria-hidden="true">M</span><span class="comment__name">Maya · Fijly</span><span class="comment__time">1h</span></div>
+              <p class="comment__text">Done — added a kinetic type moment at 0:19. Rendering now ✦</p>
+            </article>
+          </section>
+        </div>
+      </section>
+
+      <!-- ================= ANALYTICS ================= -->
+      <section class="screen" id="screen-analytics" data-screen="analytics" data-title="Analytics" aria-labelledby="h-analytics" hidden>
+        <div class="page-head page-head--analytics"><h1 id="h-analytics">Analytics</h1><p>How your published videos are performing across channels.</p></div>
+
+        <div class="kpi-grid">
+          <article class="stat-card stat-card--compact"><h2 class="stat-card__label">Video Views</h2><div class="stat-card__value">248K</div><div class="stat-card__delta">↑ 18.2%</div></article>
+          <article class="stat-card stat-card--compact"><h2 class="stat-card__label">Watch Time</h2><div class="stat-card__value">9.4K<span class="stat-card__unit"> hrs</span></div><div class="stat-card__delta">↑ 11.0%</div></article>
+          <article class="stat-card stat-card--compact"><h2 class="stat-card__label">Engagement</h2><div class="stat-card__value">64%</div><div class="stat-card__delta">↑ 4.5%</div></article>
+          <article class="stat-card stat-card--compact"><h2 class="stat-card__label">CTA Clicks</h2><div class="stat-card__value">12.8K</div><div class="stat-card__delta">↑ 22.4%</div></article>
+          <article class="stat-card stat-card--compact stat-card--dark"><h2 class="stat-card__label">Conversion Rate</h2><div class="stat-card__value">7.9%</div><div class="stat-card__delta">↑ 1.3 pts</div></article>
+        </div>
+
+        <div class="charts-grid">
+          <section class="panel" aria-labelledby="h-views-chart">
+            <div class="chart-head">
+              <div><h2 id="h-views-chart">Views &amp; Watch time</h2><div class="panel__sub">Last 30 days</div></div>
+              <div class="legend"><span><span class="swatch-dot"></span>Views</span><span><span class="swatch-dot swatch-dot--soft"></span>Watch time</span></div>
+            </div>
+            <svg class="chart-svg" viewBox="0 0 640 220" role="img" aria-label="Views and watch time trending up over the last 30 days">
+              <defs><linearGradient id="fjA2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5B4BF5" stop-opacity=".22"/><stop offset="1" stop-color="#5B4BF5" stop-opacity="0"/></linearGradient></defs>
+              <g stroke="#EEF0F3" stroke-width="1"><line x1="0" y1="40" x2="640" y2="40"/><line x1="0" y1="90" x2="640" y2="90"/><line x1="0" y1="140" x2="640" y2="140"/><line x1="0" y1="190" x2="640" y2="190"/></g>
+              <path d="M0 160 C60 150 90 120 150 128 C210 136 240 80 300 88 C360 96 390 60 450 52 C510 44 560 30 640 24 L640 190 L0 190 Z" fill="url(#fjA2)"/>
+              <path d="M0 160 C60 150 90 120 150 128 C210 136 240 80 300 88 C360 96 390 60 450 52 C510 44 560 30 640 24" fill="none" stroke="#5B4BF5" stroke-width="3" stroke-linecap="round"/>
+              <path d="M0 178 C60 172 90 156 150 160 C210 164 240 138 300 142 C360 146 390 120 450 116 C510 112 560 104 640 100" fill="none" stroke="#C4BEFB" stroke-width="2.6" stroke-linecap="round" stroke-dasharray="1 0"/>
+              <circle cx="450" cy="52" r="4.5" fill="#5B4BF5" stroke="#fff" stroke-width="2"/>
+              <g fill="#A2A9B5" font-size="11" font-family="JetBrains Mono" text-anchor="middle"><text x="0" y="212">Aug 18</text><text x="215" y="212">Aug 28</text><text x="430" y="212">Sep 7</text><text x="620" y="212">Sep 16</text></g>
+            </svg>
+          </section>
+
+          <section class="panel funnel" aria-labelledby="h-funnel">
+            <h2 id="h-funnel">Funnel by video</h2><div class="panel__sub">View → CTA → Conversion</div>
+            <div class="funnel__donut">
+              <svg width="150" height="150" viewBox="0 0 42 42" role="img" aria-label="7.9% converts">
+                <circle cx="21" cy="21" r="15.9" fill="none" stroke="#EEF0F3" stroke-width="6"/>
+                <circle cx="21" cy="21" r="15.9" fill="none" stroke="#5B4BF5" stroke-width="6" stroke-dasharray="64 36" stroke-dashoffset="25" stroke-linecap="round"/>
+                <circle cx="21" cy="21" r="15.9" fill="none" stroke="#8b5cf6" stroke-width="6" stroke-dasharray="22 78" stroke-dashoffset="-39" stroke-linecap="round"/>
+                <text x="21" y="20" text-anchor="middle" font-size="7" font-weight="800" fill="#0E1116" font-family="JetBrains Mono">7.9%</text>
+                <text x="21" y="26" text-anchor="middle" font-size="3" fill="#8A93A3">converts</text>
+              </svg>
+            </div>
+            <ul class="funnel__list">
+              <li><span class="funnel__label"><span class="swatch-dot"></span>Explainers</span><span class="funnel__value">64%</span></li>
+              <li><span class="funnel__label"><span class="swatch-dot swatch-dot--secondary"></span>Demos</span><span class="funnel__value">22%</span></li>
+              <li><span class="funnel__label"><span class="swatch-dot swatch-dot--muted"></span>Other</span><span class="funnel__value">14%</span></li>
+            </ul>
+          </section>
+        </div>
+
+        <section class="panel top-videos" aria-labelledby="h-top-videos">
+          <h2 id="h-top-videos">Top performing videos</h2><div class="panel__sub">Ranked by conversion contribution</div>
+          <p class="table-hint">Swipe horizontally, or focus the table and use the arrow keys, to see every column.</p>
+          <div class="table-scroll" tabindex="0" role="region" aria-label="Video performance table, scroll horizontally">
+            <table class="table videos-table">
+              <caption class="visually-hidden">Top performing videos</caption>
+              <colgroup><col><col><col><col><col></colgroup>
+              <thead>
+                <tr><th scope="col">VIDEO</th><th scope="col">VIEWS</th><th scope="col">AVG WATCH</th><th scope="col">CTA</th><th scope="col">CONVERSION</th></tr>
+              </thead>
+              <tbody>
+                <tr class="conv--finly">
+                  <th scope="row"><span class="cell-video"><span class="thumb bg-grad-amber"><img src="assets/concept-finly.svg" alt="" width="800" height="500" loading="lazy"></span>Finly — Tutorial Series</span></th>
+                  <td class="num">82.4K</td><td class="num">0:52</td><td class="num">6.1K</td>
+                  <td><span class="cell-progress"><span class="progress-bar" aria-hidden="true"><span class="progress-bar__fill"></span></span><span class="cell-progress__value">9.2%</span></span></td>
+                </tr>
+                <tr class="conv--clouddesk">
+                  <th scope="row"><span class="cell-video"><span class="thumb bg-grad-blue"><img src="assets/concept-clouddesk.svg" alt="" width="800" height="500" loading="lazy"></span>CloudDesk — Explainer</span></th>
+                  <td class="num">64.1K</td><td class="num">0:47</td><td class="num">4.3K</td>
+                  <td><span class="cell-progress"><span class="progress-bar" aria-hidden="true"><span class="progress-bar__fill"></span></span><span class="cell-progress__value">7.8%</span></span></td>
+                </tr>
+                <tr class="conv--aiflow">
+                  <th scope="row"><span class="cell-video"><span class="thumb bg-grad-violet"><img src="assets/concept-aiflow.svg" alt="" width="800" height="500" loading="lazy"></span>AIFlow — Launch</span></th>
+                  <td class="num">58.9K</td><td class="num">0:41</td><td class="num">3.9K</td>
+                  <td><span class="cell-progress"><span class="progress-bar" aria-hidden="true"><span class="progress-bar__fill"></span></span><span class="cell-progress__value">6.4%</span></span></td>
+                </tr>
+                <tr class="conv--taskpilot">
+                  <th scope="row"><span class="cell-video"><span class="thumb bg-grad-green"><img src="assets/concept-taskpilot.svg" alt="" width="800" height="500" loading="lazy"></span>TaskPilot — Demo</span></th>
+                  <td class="num">42.7K</td><td class="num">0:38</td><td class="num">2.6K</td>
+                  <td><span class="cell-progress"><span class="progress-bar" aria-hidden="true"><span class="progress-bar__fill"></span></span><span class="cell-progress__value">5.1%</span></span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </section>
+
+      <!-- ================= TEAM ================= -->
+      <section class="screen" id="screen-team" data-screen="team" data-title="Team" aria-labelledby="h-team" hidden>
+        <div class="page-head"><h1 id="h-team">Team</h1><p>Your workspace and the Fijly crew on your account.</p></div>
+
+        <ul class="team-grid">
+          <li class="member"><span class="avatar avatar--lg avatar--violet" aria-hidden="true">A</span><h2 class="member__name">Alex Rivera</h2><div class="member__role">Head of Marketing</div><span class="badge">Owner</span></li>
+          <li class="member"><span class="avatar avatar--lg avatar--blue" aria-hidden="true">P</span><h2 class="member__name">Priya Shah</h2><div class="member__role">Product Marketing</div><span class="badge badge-info">Editor</span></li>
+          <li class="member"><span class="avatar avatar--lg avatar--green" aria-hidden="true">J</span><h2 class="member__name">Jordan Lee</h2><div class="member__role">Growth</div><span class="badge badge-info">Editor</span></li>
+          <li class="member"><span class="avatar avatar--lg avatar--ink" aria-hidden="true">M</span><h2 class="member__name">Maya Chen</h2><div class="member__role">Creative Director · Fijly</div><span class="badge badge-success">Fijly</span></li>
+          <li class="member"><span class="avatar avatar--lg avatar--red" aria-hidden="true">D</span><h2 class="member__name">Devon Park</h2><div class="member__role">Motion Designer · Fijly</div><span class="badge badge-success">Fijly</span></li>
+          <li class="member"><span class="avatar avatar--lg avatar--amber" aria-hidden="true">S</span><h2 class="member__name">Sam Ortiz</h2><div class="member__role">Producer · Fijly</div><span class="badge badge-success">Fijly</span></li>
+        </ul>
+      </section>
+
+      <!-- ================= SETTINGS ================= -->
+      <section class="screen" id="screen-settings" data-screen="settings" data-title="Settings" aria-labelledby="h-settings" hidden>
+        <div class="page-head"><h1 id="h-settings">Settings</h1><p>Workspace preferences and brand defaults.</p></div>
+
+        <div class="settings">
+          <section class="panel" aria-labelledby="h-workspace">
+            <h2 id="h-workspace">Workspace</h2>
+            <div class="workspace-row">
+              <span class="workspace-logo" aria-hidden="true">N</span>
+              <div><div class="workspace-row__name">Northbeam</div><div class="workspace-row__sub">northbeam.io · Pro plan</div></div>
+              <button class="btn btn-outline btn--semibold" type="button" aria-disabled="true" aria-describedby="studio-demo-note" title="Unavailable in this static demo">Change logo</button>
+            </div>
+            <label class="setting-row" for="set-autoshare">
+              <span><span class="setting-row__title">Auto-share deliverables</span><span class="setting-row__sub">Email the team when a video is delivered</span></span>
+              <span class="toggle-switch"><input type="checkbox" id="set-autoshare" name="autoshare" checked><span class="toggle-switch__track"></span></span>
+            </label>
+            <label class="setting-row" for="set-digest">
+              <span><span class="setting-row__title">Weekly analytics digest</span><span class="setting-row__sub">Every Monday, 9am</span></span>
+              <span class="toggle-switch"><input type="checkbox" id="set-digest" name="digest"><span class="toggle-switch__track"></span></span>
+            </label>
+          </section>
+
+          <section class="panel" aria-labelledby="h-brand-defaults">
+            <h2 id="h-brand-defaults">Brand defaults</h2>
+            <div class="defaults-row">
+              <div>
+                <span class="field-label" id="lbl-primary">Primary color</span>
+                <div class="input color-field" role="group" aria-labelledby="lbl-primary"><span class="color-field__chip"></span><span class="color-field__hex">#5B4BF5</span></div>
+              </div>
+              <div>
+                <label class="field-label" for="set-length">Default length</label>
+                <div class="input-wrap">
+                  <select class="input" id="set-length" name="default-length">
+                    <option selected>60–90 sec</option>
+                  </select>
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#8A93A3" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+      </section>
+
+    </div>
+  </main>
+</div>
+
+<script src="js/studio.js"></script>
+</body>
+</html>

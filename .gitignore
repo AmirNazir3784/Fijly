@@ -1,0 +1,18 @@
+# QA screenshots (large PNGs)
+qa/screenshots/
+qa/visual-sheets/
+qa/refinement-before/
+qa/refinement-after/
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor
+.vscode/
+*.swp
+*.swo
+
+# Prototype runtime (not deployed)
+.thumbnail

@@ -1,0 +1,115 @@
+{
+  "checks": [
+    "1440: hero bounds, CTA plan context, all concept dialogs, validation, email fallback, contact focus",
+    "1280: hero bounds, CTA plan context, all concept dialogs, validation, email fallback, contact focus",
+    "1024: hero bounds, CTA plan context, all concept dialogs, validation, email fallback, contact focus",
+    "768: hero bounds, CTA plan context, all concept dialogs, validation, email fallback, contact focus",
+    "390: hero bounds, CTA plan context, all concept dialogs, validation, email fallback, contact focus",
+    "375: hero bounds, CTA plan context, all concept dialogs, validation, email fallback, contact focus",
+    "Mock endpoint accepted/rejected responses; rejected brief retained",
+    "Studio motion preview advances, pauses and restarts"
+  ],
+  "errors": [],
+  "axeResults": [
+    {
+      "width": 1440,
+      "screen": "marketing",
+      "violations": []
+    },
+    {
+      "width": 1440,
+      "screen": "concept-dialog",
+      "violations": []
+    },
+    {
+      "width": 1440,
+      "screen": "overview",
+      "violations": []
+    },
+    {
+      "width": 1440,
+      "screen": "projects",
+      "violations": []
+    },
+    {
+      "width": 1440,
+      "screen": "requests",
+      "violations": []
+    },
+    {
+      "width": 1440,
+      "screen": "assets",
+      "violations": []
+    },
+    {
+      "width": 1440,
+      "screen": "scripts",
+      "violations": []
+    },
+    {
+      "width": 1440,
+      "screen": "analytics",
+      "violations": []
+    },
+    {
+      "width": 1440,
+      "screen": "team",
+      "violations": []
+    },
+    {
+      "width": 1440,
+      "screen": "settings",
+      "violations": []
+    },
+    {
+      "width": 375,
+      "screen": "marketing",
+      "violations": []
+    },
+    {
+      "width": 375,
+      "screen": "concept-dialog",
+      "violations": []
+    },
+    {
+      "width": 375,
+      "screen": "overview",
+      "violations": []
+    },
+    {
+      "width": 375,
+      "screen": "projects",
+      "violations": []
+    },
+    {
+      "width": 375,
+      "screen": "requests",
+      "violations": []
+    },
+    {
+      "width": 375,
+      "screen": "assets",
+      "violations": []
+    },
+    {
+      "width": 375,
+      "screen": "scripts",
+      "violations": []
+    },
+    {
+      "width": 375,
+      "screen": "analytics",
+      "violations": []
+    },
+    {
+      "width": 375,
+      "screen": "team",
+      "violations": []
+    },
+    {
+      "width": 375,
+      "screen": "settings",
+      "violations": []
+    }
+  ]
+}

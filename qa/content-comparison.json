@@ -1,0 +1,42 @@
+[
+  {
+    "id": "overview",
+    "strings": 99,
+    "missing": []
+  },
+  {
+    "id": "projects",
+    "strings": 39,
+    "missing": []
+  },
+  {
+    "id": "requests",
+    "strings": 33,
+    "missing": []
+  },
+  {
+    "id": "assets",
+    "strings": 33,
+    "missing": []
+  },
+  {
+    "id": "scripts",
+    "strings": 23,
+    "missing": []
+  },
+  {
+    "id": "analytics",
+    "strings": 67,
+    "missing": []
+  },
+  {
+    "id": "team",
+    "strings": 26,
+    "missing": []
+  },
+  {
+    "id": "settings",
+    "strings": 16,
+    "missing": []
+  }
+]

@@ -1,0 +1,15 @@
+const {chromium}=require('C:/Users/Mister Naveed/AppData/Local/npm-cache/_npx/e41f203b7505f1fb/node_modules/playwright-core');const fs=require('fs');const assert=require('assert/strict');
+(async()=>{const b=await chromium.launch();const p=await b.newPage();const results=[];const errors=[];p.on('pageerror',e=>errors.push(String(e)));
+for(const width of [1440,375])for(const screen of ['marketing','overview','projects','requests','assets','scripts','analytics','team','settings','privacy','terms','404']){
+ await p.setViewportSize({width,height:900});await p.goto('http://127.0.0.1:8766/'+(screen==='marketing'?'index.html':['privacy','terms','404'].includes(screen)?screen+'.html':'studio.html#'+screen),{waitUntil:'domcontentloaded'});await p.reload({waitUntil:'domcontentloaded'});await p.addScriptTag({path:'qa/axe.min.js'});
+ const v=await p.evaluate(async()=> (await axe.run(document,{runOnly:{type:'tag',values:['wcag2a','wcag2aa','wcag21aa','best-practice']}})).violations.map(x=>({id:x.id,nodes:x.nodes.map(n=>n.target)})));
+ results.push({width,screen,violations:v});
+ if(screen==='overview'&&width===375){await p.locator('[data-sidebar-open]').click();const r=await p.evaluate(async()=> (await axe.run()).violations.map(v=>v.id));results.push({width,screen:'open-sidebar',violations:r});await p.screenshot({path:'qa/screenshots/sidebar-open-375.png'});}
+}
+await p.setViewportSize({width:1440,height:900});await p.goto('http://127.0.0.1:8766/index.html');
+for(const id of ['services','work','process','pricing']){await p.locator(`.nav__links a[href="#${id}"]`).click();await p.waitForTimeout(800);assert.equal(await p.evaluate(id=>Math.abs(document.getElementById(id).getBoundingClientRect().top-68)<3,id),true);}
+await p.locator('.hero__actions a[href="#contact"]').click();await p.waitForTimeout(800);assert.match(p.url(),/#contact$/);assert.equal(await p.locator('.price-card a[href="#contact"]').count(),3);
+await p.setViewportSize({width:375,height:900});await p.locator('.nav__toggle').click();await p.setViewportSize({width:1440,height:900});assert.equal(await p.locator('.nav__toggle').getAttribute('aria-expanded'),'false');assert.equal(await p.evaluate(()=>document.activeElement.matches('.nav__links a')),true);
+await p.setViewportSize({width:375,height:900});await p.goto('http://127.0.0.1:8766/studio.html#settings');await p.reload();await p.keyboard.press('Tab');assert.equal(await p.evaluate(()=>document.activeElement.className),'skip-link');await p.keyboard.press('Enter');await p.waitForTimeout(100);assert.equal(await p.locator('.screen:visible').getAttribute('data-screen'),'settings');
+await p.setViewportSize({width:1024,height:900});await p.goto('http://127.0.0.1:8766/studio.html#projects');await p.reload();await p.screenshot({path:'qa/screenshots/final-projects-1024.png'});
+fs.writeFileSync('qa/final-browser-results.json',JSON.stringify({results,errors},null,2));console.log(JSON.stringify({scans:results.length,issues:results.filter(r=>r.violations.length),errors}));await b.close();})();

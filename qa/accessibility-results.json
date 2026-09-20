@@ -1,0 +1,38 @@
+[
+  {
+    "screen": "marketing",
+    "violations": []
+  },
+  {
+    "screen": "overview",
+    "violations": []
+  },
+  {
+    "screen": "projects",
+    "violations": []
+  },
+  {
+    "screen": "requests",
+    "violations": []
+  },
+  {
+    "screen": "assets",
+    "violations": []
+  },
+  {
+    "screen": "scripts",
+    "violations": []
+  },
+  {
+    "screen": "analytics",
+    "violations": []
+  },
+  {
+    "screen": "team",
+    "violations": []
+  },
+  {
+    "screen": "settings",
+    "violations": []
+  }
+]

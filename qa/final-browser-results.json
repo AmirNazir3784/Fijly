@@ -1,0 +1,130 @@
+{
+  "results": [
+    {
+      "width": 1440,
+      "screen": "marketing",
+      "violations": []
+    },
+    {
+      "width": 1440,
+      "screen": "overview",
+      "violations": []
+    },
+    {
+      "width": 1440,
+      "screen": "projects",
+      "violations": []
+    },
+    {
+      "width": 1440,
+      "screen": "requests",
+      "violations": []
+    },
+    {
+      "width": 1440,
+      "screen": "assets",
+      "violations": []
+    },
+    {
+      "width": 1440,
+      "screen": "scripts",
+      "violations": []
+    },
+    {
+      "width": 1440,
+      "screen": "analytics",
+      "violations": []
+    },
+    {
+      "width": 1440,
+      "screen": "team",
+      "violations": []
+    },
+    {
+      "width": 1440,
+      "screen": "settings",
+      "violations": []
+    },
+    {
+      "width": 1440,
+      "screen": "privacy",
+      "violations": []
+    },
+    {
+      "width": 1440,
+      "screen": "terms",
+      "violations": []
+    },
+    {
+      "width": 1440,
+      "screen": "404",
+      "violations": []
+    },
+    {
+      "width": 375,
+      "screen": "marketing",
+      "violations": []
+    },
+    {
+      "width": 375,
+      "screen": "overview",
+      "violations": []
+    },
+    {
+      "width": 375,
+      "screen": "open-sidebar",
+      "violations": []
+    },
+    {
+      "width": 375,
+      "screen": "projects",
+      "violations": []
+    },
+    {
+      "width": 375,
+      "screen": "requests",
+      "violations": []
+    },
+    {
+      "width": 375,
+      "screen": "assets",
+      "violations": []
+    },
+    {
+      "width": 375,
+      "screen": "scripts",
+      "violations": []
+    },
+    {
+      "width": 375,
+      "screen": "analytics",
+      "violations": []
+    },
+    {
+      "width": 375,
+      "screen": "team",
+      "violations": []
+    },
+    {
+      "width": 375,
+      "screen": "settings",
+      "violations": []
+    },
+    {
+      "width": 375,
+      "screen": "privacy",
+      "violations": []
+    },
+    {
+      "width": 375,
+      "screen": "terms",
+      "violations": []
+    },
+    {
+      "width": 375,
+      "screen": "404",
+      "violations": []
+    }
+  ],
+  "errors": []
+}

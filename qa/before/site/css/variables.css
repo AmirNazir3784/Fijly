@@ -1,0 +1,156 @@
+/* ==========================================================================
+   FIJLY — Design tokens
+   Extracted from "Fijly Website.dc.html" / "Fijly Studio.dc.html".
+   ========================================================================== */
+
+:root {
+  /* Primary */
+  --primary: #5B4BF5;
+  --primary-hover: #4536D4;          /* link hover */
+  --primary-hover-btn: #4C3EE0;      /* filled primary button hover */
+  --primary-tint: #EEEBFF;
+  --primary-tint-hover: #F4F2FF;     /* white CTA button hover */
+  --secondary: #8B5CF6;
+  --cta-gradient-end: #7C5CF6;
+
+  /* Text */
+  --text-primary: #0E1116;
+  --text-muted: #5B6472;
+  --text-light: #8A93A3;
+  --text-lighter: #98A1B2;
+  --text-lightest: #A2A9B5;
+  --text-placeholder: #9AA2AF;
+  --text-faint: #C4C9D2;
+  --text-on-dark: #D7DBE2;
+
+  /* Surfaces */
+  --surface-white: #FFFFFF;
+  --surface-light: #F7F8FA;
+  --surface-gray: #F4F5F7;
+  --surface-chip: #F1F2F5;
+  --surface-dark: #0C0E13;
+  --surface-dark-hover: #26303D;
+  --surface-frame: #0B0D12;
+  --surface-frame-sidebar: #12141C;
+
+  /* Borders */
+  --border-light: #EEF0F3;
+  --border-default: #E6E8EC;
+  --border-dark: #E1E4EA;
+  --border-hover: #C9CDD6;
+
+  /* Status */
+  --success: #0E9F6E;
+  --success-dark: #047857;
+  --success-tint: #D1FAE5;
+  --warning: #F59E0B;
+  --warning-dark: #B45309;
+  --warning-tint: #FEF3C7;
+  --info: #2563EB;
+  --info-dark: #1D4ED8;
+  --info-tint: #DBEAFE;
+  --danger: #EF4444;
+  --danger-tint: #FEE2E2;
+
+  /* Illustration palette (service cards, work thumbnails) */
+  --violet-line: #E7E4FB;
+  --violet-line-soft: #EDEBF9;
+  --violet-soft: #F3F0FF;
+  --amber-soft: #FFFBEB;
+  --orange-soft: #FFF7ED;
+  --amber-light: #FBBF24;
+  --green-soft: #ECFDF5;
+  --blue-soft: #EFF6FF;
+  --sky: #38BDF8;
+  --red-soft: #FEF2F2;
+
+  /* Typography */
+  --font-body: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+
+  /* Sizing */
+  --radius-sm: 8px;
+  --radius-md: 10px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-card: 18px;
+  --radius-panel: 20px;
+  --radius-full: 9999px;
+
+  /* Shadows (values from the prototype) */
+  --shadow-xs: 0 1px 2px rgba(16, 24, 40, .04);
+  --shadow-sm: 0 1px 3px rgba(16, 24, 40, .05);
+  --shadow-md: 0 12px 34px rgba(16, 24, 40, .16);
+  --shadow-lg: 0 18px 44px rgba(16, 24, 40, .13);
+  --shadow-nav: 0 1px 3px rgba(0, 0, 0, 0.06);
+  --shadow-logo: 0 4px 12px rgba(91, 75, 245, .4);
+  --shadow-primary: 0 10px 26px rgba(91, 75, 245, .4);
+  --shadow-frame: 0 40px 90px rgba(16, 24, 40, .18);
+  --shadow-featured: 0 20px 50px rgba(16, 24, 40, .25);
+  --shadow-cta: 0 30px 70px rgba(91, 75, 245, .35);
+
+  /* Spacing scale */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --space-2xl: 48px;
+  --space-3xl: 64px;
+  --space-4xl: 96px;
+
+  /* Layout (prototype: max-width 1160px, nav height 68px, side padding 26px) */
+  --max-width: 1160px;
+  --page-max-width: 1600px;
+  --gutter: 26px;
+  --nav-height: 68px;
+
+  /* ---- Studio dashboard (from "Fijly Studio.dc.html") ---- */
+
+  /* Layout */
+  --studio-max-width: 1480px;
+  --sidebar-width: 252px;
+  --topbar-height: 64px;
+
+  /* Sidebar */
+  --sidebar-label: #4B535F;
+  --sidebar-muted: #7C8496;
+  --sidebar-text-strong: #E7E9EE;
+  --sidebar-plan-start: #1A1730;
+
+  /* Extra neutrals */
+  --text-kbd: #B4BAC5;
+  --surface-hover: #FAFBFC;
+  --surface-bar: #EAECF0;
+  --border-hover-soft: #DADEE6;
+  --border-dashed: #D2D6DE;
+  --primary-border: #D9D2FB;
+  --primary-soft-line: #C4BEFB;
+  --success-light: #34D399;
+  --orange: #F97316;
+
+  /* Mock browser window dots */
+  --window-red: #FF5F57;
+  --window-yellow: #FEBC2E;
+  --window-green: #28C840;
+
+  /* Thumbnail / avatar gradients */
+  --grad-violet: linear-gradient(135deg, var(--primary), var(--secondary));
+  --grad-blue: linear-gradient(135deg, var(--info), var(--sky));
+  --grad-green: linear-gradient(135deg, var(--success), var(--success-light));
+  --grad-amber: linear-gradient(135deg, var(--warning), var(--amber-light));
+  --grad-ink: linear-gradient(135deg, var(--surface-dark), var(--surface-dark-hover));
+  --grad-red: linear-gradient(135deg, var(--danger), var(--orange));
+
+  /* Dashboard shadows */
+  --shadow-card-hover: 0 8px 26px rgba(16, 24, 40, .1);
+  --shadow-primary-sm: 0 2px 8px rgba(91, 75, 245, .35);
+  --shadow-primary-md: 0 4px 14px rgba(91, 75, 245, .35);
+}
+
+/* Mobile: tighter side gutter */
+@media (max-width: 767px) {
+  :root {
+    --gutter: 20px;
+  }
+}
