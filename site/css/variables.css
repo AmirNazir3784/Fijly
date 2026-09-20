@@ -16,12 +16,14 @@
   /* Text */
   --text-primary: #0E1116;
   --text-muted: #5B6472;
-  --text-light: #8A93A3;
-  --text-lighter: #98A1B2;
-  /* Both clear WCAG AA (4.5:1) on every surface they are used on:
+  /* --text-light, --text-lightest and --text-placeholder share one value so that
+     every tertiary label clears WCAG AA on the surfaces it is used on:
      white 5.19:1, --surface-light 4.89:1, --surface-gray 4.76:1, --surface-chip 4.64:1. */
+  --text-light: #666D7C;
   --text-lightest: #666D7C;
   --text-placeholder: #666D7C;
+  /* Dark-surface only (7.42:1 on --surface-dark); lighter than the tokens above by design. */
+  --text-lighter: #98A1B2;
   --text-faint: #C4C9D2;
   --text-on-dark: #D7DBE2;
 

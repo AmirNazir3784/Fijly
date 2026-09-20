@@ -16,3 +16,7 @@ desktop.ini
 
 # Prototype runtime (not deployed)
 .thumbnail
+
+# Python bytecode (from local QA tooling)
+__pycache__/
+*.pyc
