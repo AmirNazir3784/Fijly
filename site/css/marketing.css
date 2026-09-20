@@ -1273,19 +1273,8 @@ body.vgal-open { overflow: hidden; }
 
 /* Active video information, centred under the player -------------------- */
 .vgal__meta {
-  margin-top: 16px;
+  margin-top: 12px;
   text-align: center;
-}
-
-.vgal__flag {
-  display: inline-block;
-  margin: 0 0 8px;
-  padding: 4px 10px;
-  border-radius: var(--radius-full);
-  background: var(--primary-tint);
-  color: var(--primary);
-  font: 700 9px var(--font-mono);
-  letter-spacing: .1em;
 }
 
 .vgal__now {
@@ -1452,7 +1441,8 @@ body.vgal-open { overflow: hidden; }
     overflow-y: auto;
   }
 
-  .vgal__meta { margin-top: 14px; }
+  .vgal__meta { margin-top: 11px; }
+  .vgal__now { font-size: 15.5px; }
 
   .vgal__rail {
     grid-auto-flow: column;
@@ -1475,7 +1465,7 @@ body.vgal-open { overflow: hidden; }
   .vgal__rail { grid-auto-columns: 190px; }
   .vgal__thumb { grid-template-columns: 76px minmax(0, 1fr); }
   .vgal__shot { width: 76px; }
-  .vgal__now { font-size: 16px; }
+  .vgal__now { font-size: 15px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
