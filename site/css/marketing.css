@@ -394,18 +394,6 @@ section[id] {
   line-height: 1.65;
   color: #65677A;
 }
-.service-card__link {
-  display: inline-flex;
-  align-items: center;
-  align-self: flex-start;
-  gap: 8px;
-  margin-top: 24px;
-  color: #5548E7;
-  font-size: 13px;
-  font-weight: 700;
-  line-height: 1.5;
-}
-.service-card__link:hover { color: #4536C9; }
 @media (prefers-reduced-motion: reduce) {
   .service-card:hover { transform: none; }
 }
@@ -1083,9 +1071,8 @@ section[id] {
 }
 
 /* 4b. Category video gallery =============================================
-   Card badge + trigger, and the modal portfolio viewer it opens.
-   Posters are CSS gradients until real footage is supplied, so the section
-   costs no media requests on load. */
+   Card CTA + the modal portfolio viewer it opens. Posters are CSS gradients
+   until real footage is supplied, so the section costs no media requests. */
 .service-card__count {
   position: absolute;
   top: 10px;
@@ -1100,35 +1087,62 @@ section[id] {
   box-shadow: 0 2px 8px #342B5614;
 }
 
-.service-card__link {
-  background: none;
-  border: 0;
-  padding: 0;
+/* Secondary CTA: stretched to the card's content width so every card's
+   button has identical width, and pinned to the bottom by the description's
+   flex:1 so they line up across the row regardless of copy length. */
+.service-card__cta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  height: 44px;
+  margin-top: 22px;
+  padding: 0 16px;
+  border: 1px solid #DED7F8;
+  border-radius: 11px;
+  background: #F6F4FE;
+  color: #5548E7;
+  font: 700 13px var(--font-body);
+  line-height: 1;
   cursor: pointer;
-  font-family: inherit;
+  transition: background-color .16s ease, border-color .16s ease, color .16s ease, box-shadow .16s ease;
 }
 
-.service-card__link svg { transition: transform .18s ease; }
-.service-card__link:hover svg { transform: translateX(3px); }
+.service-card__cta svg { flex: none; transition: transform .18s ease; }
+
+.service-card__cta:hover {
+  background: #EFEBFD;
+  border-color: #C6BAF4;
+  color: #4536C9;
+  box-shadow: 0 2px 10px #5548E714;
+}
+
+.service-card__cta:hover svg { transform: translateX(3px); }
+
+.service-card__cta:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
 
 /* Modal shell ----------------------------------------------------------- */
 .vgal {
-  width: min(1180px, calc(100% - 32px));
-  max-height: calc(100dvh - 32px);
+  width: min(1140px, calc(100% - 40px));
+  max-height: calc(100dvh - 40px);
   padding: 0;
   margin: auto;
   overflow: hidden;
-  border: 1px solid #E2DEF0;
+  border: 1px solid #E4E0F1;
   border-radius: 20px;
   background: #FFFFFF;
   color: var(--text-primary);
-  box-shadow: 0 40px 90px -20px #2B245670, 0 8px 24px #2B245614;
+  box-shadow: 0 40px 90px -24px #2B24566B, 0 8px 24px #2B245612;
 }
 
 .vgal::backdrop {
-  background: #221C3DB8;
-  -webkit-backdrop-filter: blur(6px);
-  backdrop-filter: blur(6px);
+  background: #1E1937C4;
+  -webkit-backdrop-filter: blur(7px);
+  backdrop-filter: blur(7px);
 }
 
 .vgal[open] { animation: vgal-in .22s ease-out; }
@@ -1140,35 +1154,39 @@ section[id] {
 
 body.vgal-open { overflow: hidden; }
 
+/* Header: compact, single row of meaning ------------------------------- */
 .vgal__head {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 20px;
-  padding: 22px 24px 18px;
-  border-bottom: 1px solid #EFECF7;
-  background: linear-gradient(180deg, #FAF9FF, #FFFFFF);
+  gap: 18px;
+  padding: 16px 20px 14px;
+  border-bottom: 1px solid #F0EDF8;
+  background: linear-gradient(180deg, #FBFAFF, #FFFFFF);
 }
 
+.vgal__heading { min-width: 0; }
+
 .vgal__eyebrow {
-  margin: 0 0 6px;
-  font: 700 11px var(--font-mono);
+  margin: 0 0 4px;
+  font: 700 10px var(--font-mono);
   letter-spacing: .1em;
   color: var(--primary);
 }
 
 .vgal__title {
   margin: 0;
-  font-size: 22px;
+  font-size: 19px;
   font-weight: 700;
   letter-spacing: -.03em;
+  line-height: 1.25;
 }
 
 .vgal__desc {
-  margin: 6px 0 0;
-  max-width: 62ch;
-  font-size: 14px;
-  line-height: 1.6;
+  margin: 4px 0 0;
+  max-width: 70ch;
+  font-size: 13px;
+  line-height: 1.5;
   color: var(--text-muted);
 }
 
@@ -1176,12 +1194,13 @@ body.vgal-open { overflow: hidden; }
   flex: none;
   display: grid;
   place-items: center;
-  width: 40px;
-  height: 40px;
+  width: 34px;
+  height: 34px;
   border: 1px solid #E5E1F2;
-  border-radius: var(--radius-md);
+  border-radius: 9px;
   background: #FFFFFF;
   color: #55507A;
+  cursor: pointer;
   transition: background-color .15s ease, border-color .15s ease, color .15s ease;
 }
 
@@ -1191,14 +1210,12 @@ body.vgal-open { overflow: hidden; }
   color: var(--primary);
 }
 
-/* Body: stage + rail ---------------------------------------------------- */
+/* Body: 71 / 29 split ---------------------------------------------------- */
 .vgal__body {
   display: grid;
-  grid-template-columns: minmax(0, 72fr) minmax(0, 28fr);
-  gap: 18px;
-  padding: 20px 24px 24px;
-  max-height: calc(100dvh - 210px);
-  overflow-y: auto;
+  grid-template-columns: minmax(0, 71fr) minmax(0, 29fr);
+  gap: 22px;
+  padding: 20px;
 }
 
 .vgal__stage { min-width: 0; }
@@ -1221,7 +1238,6 @@ body.vgal-open { overflow: hidden; }
 }
 
 .vgal__poster {
-  position: relative;
   display: grid;
   place-items: center;
   align-content: center;
@@ -1233,14 +1249,15 @@ body.vgal-open { overflow: hidden; }
 .vgal__playbtn {
   display: grid;
   place-items: center;
-  width: 66px;
-  height: 66px;
+  width: 64px;
+  height: 64px;
   padding-left: 4px;
   border: 1px solid #FFFFFF;
   border-radius: 50%;
   background: #FFFFFFE0;
   color: var(--primary);
   box-shadow: 0 6px 20px #342B5622;
+  cursor: pointer;
   transition: transform .18s ease, background-color .15s ease;
 }
 
@@ -1254,43 +1271,89 @@ body.vgal-open { overflow: hidden; }
   color: #6F688F;
 }
 
-.vgal__meta { margin-top: 14px; }
-.vgal__now { margin: 0; font-size: 16px; font-weight: 700; letter-spacing: -.02em; }
-.vgal__runtime { margin: 4px 0 0; font: 12px var(--font-mono); color: var(--text-muted); }
+/* Active video information, centred under the player -------------------- */
+.vgal__meta {
+  margin-top: 16px;
+  text-align: center;
+}
 
-/* Rail ------------------------------------------------------------------ */
-.vgal__rail {
+.vgal__flag {
+  display: inline-block;
+  margin: 0 0 8px;
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  background: var(--primary-tint);
+  color: var(--primary);
+  font: 700 9px var(--font-mono);
+  letter-spacing: .1em;
+}
+
+.vgal__now {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -.02em;
+  line-height: 1.3;
+}
+
+.vgal__runtime {
+  margin: 5px 0 0;
+  font: 12px var(--font-mono);
+  color: var(--text-muted);
+}
+
+/* Sidebar --------------------------------------------------------------- */
+.vgal__aside {
+  min-width: 0;
   display: flex;
   flex-direction: column;
+}
+
+.vgal__aside-label {
+  margin: 0 0 10px;
+  font: 700 10px var(--font-mono);
+  letter-spacing: .1em;
+  color: #7D7695;
+}
+
+/* Three items, sized to fit: no internal scrollbar and nothing clipped. */
+.vgal__rail {
+  display: grid;
+  grid-auto-rows: max-content;
   gap: 10px;
   min-width: 0;
-  align-content: start;
 }
 
 .vgal__thumb {
-  display: flex;
+  display: grid;
+  grid-template-columns: 92px minmax(0, 1fr);
   gap: 11px;
   align-items: center;
+  width: 100%;
   padding: 8px;
   border: 1px solid #ECE9F6;
   border-radius: 13px;
   background: #FFFFFF;
   text-align: left;
   cursor: pointer;
-  transition: border-color .15s ease, background-color .15s ease, box-shadow .15s ease;
+  transition: border-color .15s ease, background-color .15s ease, box-shadow .15s ease, transform .15s ease;
 }
 
-.vgal__thumb:hover { border-color: #D8D0F4; background: #FBFAFF; }
+.vgal__thumb:hover {
+  border-color: #C6BAF4;
+  background: #FBFAFF;
+  box-shadow: 0 4px 14px #5548E714;
+  transform: translateY(-1px);
+}
 
-.vgal__thumb.is-active {
+.vgal__thumb:focus-visible {
+  outline: none;
   border-color: var(--primary);
-  background: #F7F5FF;
-  box-shadow: 0 0 0 1px var(--primary), 0 4px 14px #5548E71F;
+  box-shadow: 0 0 0 2px #5548E740;
 }
 
 .vgal__shot {
   position: relative;
-  flex: none;
   display: grid;
   place-items: center;
   width: 92px;
@@ -1302,21 +1365,31 @@ body.vgal-open { overflow: hidden; }
 
 .vgal__shot img { width: 100%; height: 100%; object-fit: cover; }
 
-.vgal__flag {
+/* Play cue appears on hover/focus, keeping the resting state calm. */
+.vgal__cue {
   position: absolute;
-  inset: auto 0 0;
-  display: none;
-  padding: 3px 0;
-  background: var(--primary);
-  color: #FFFFFF;
-  font: 700 7.5px var(--font-mono);
-  letter-spacing: .08em;
-  text-align: center;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  padding-left: 2px;
+  border-radius: 50%;
+  background: #FFFFFFD9;
+  color: var(--primary);
+  opacity: 0;
+  transform: scale(.9);
+  transition: opacity .15s ease, transform .15s ease;
 }
 
-.vgal__thumb.is-active .vgal__flag { display: block; }
+.vgal__thumb:hover .vgal__cue,
+.vgal__thumb:focus-visible .vgal__cue { opacity: 1; transform: none; }
 
-.vgal__thumb-meta { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.vgal__thumb-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
 
 .vgal__thumb-title {
   font-size: 12.5px;
@@ -1350,55 +1423,63 @@ body.vgal-open { overflow: hidden; }
 .vgal__poster--mauve,  .vgal__shot--mauve  { background: linear-gradient(140deg, #F4EAF3, #E3CDE2); }
 .vgal__poster--orchid, .vgal__shot--orchid { background: linear-gradient(140deg, #F5E9F8, #E4CDF0); }
 
-/* Tablet and below: rail moves under the stage as a scrollable row ------- */
+/* Short viewports: let the modal scroll as a whole rather than trapping a
+   scrollbar inside the sidebar. */
+@media (min-width: 900px) and (max-height: 720px) {
+  .vgal { max-height: calc(100dvh - 24px); }
+  .vgal__body { max-height: calc(100dvh - 140px); overflow-y: auto; }
+}
+
+/* Tablet and below: stage on top, list beneath as a scrollable row ------- */
 @media (max-width: 899px) {
   .vgal {
     width: 100%;
     max-width: none;
-    max-height: 100dvh;
     height: 100dvh;
+    max-height: 100dvh;
     border: 0;
     border-radius: 0;
   }
 
-  .vgal__head { padding: 16px 18px 14px; }
-  .vgal__title { font-size: 19px; }
-  .vgal__desc { font-size: 13px; }
+  .vgal__head { padding: 14px 16px 12px; }
+  .vgal__title { font-size: 17px; }
+  .vgal__desc { font-size: 12.5px; }
 
   .vgal__body {
     grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: auto auto;
-    gap: 16px;
-    padding: 16px 18px 20px;
-    max-height: none;
-    height: calc(100dvh - 116px);
+    gap: 18px;
+    padding: 16px;
+    overflow-y: auto;
   }
 
+  .vgal__meta { margin-top: 14px; }
+
   .vgal__rail {
-    flex-direction: row;
-    gap: 10px;
+    grid-auto-flow: column;
+    grid-auto-columns: 216px;
+    grid-auto-rows: auto;
     overflow-x: auto;
     scroll-snap-type: x mandatory;
     -webkit-overflow-scrolling: touch;
     padding-bottom: 4px;
   }
 
-  .vgal__thumb {
-    flex: 0 0 210px;
-    scroll-snap-align: start;
-    min-height: 56px;
-  }
-
-  .vgal__playbtn { width: 58px; height: 58px; }
+  .vgal__thumb { scroll-snap-align: start; min-height: 58px; }
+  .vgal__thumb:hover { transform: none; }
+  .vgal__playbtn { width: 56px; height: 56px; }
+  /* Touch has no hover, so keep the cue visible. */
+  .vgal__cue { opacity: 1; transform: none; }
 }
 
 @media (max-width: 479px) {
-  .vgal__thumb { flex-basis: 184px; }
+  .vgal__rail { grid-auto-columns: 190px; }
+  .vgal__thumb { grid-template-columns: 76px minmax(0, 1fr); }
   .vgal__shot { width: 76px; }
-  .vgal__now { font-size: 15px; }
+  .vgal__now { font-size: 16px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .vgal[open] { animation: none; }
-  .vgal__playbtn:hover:not(:disabled) { transform: none; }
+  .vgal__playbtn:hover:not(:disabled),
+  .vgal__thumb:hover { transform: none; }
 }
