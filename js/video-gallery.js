@@ -105,7 +105,6 @@
   var elDesc = document.getElementById('vgal-desc');
   var elEyebrow = document.getElementById('vgal-eyebrow');
   var elNow = document.getElementById('vgal-now');
-  var elRuntime = document.getElementById('vgal-runtime');
   var lastTrigger = null;
 
   /* ---- player --------------------------------------------------------- */
@@ -167,7 +166,6 @@
 
     buildPlayer(item);
     elNow.textContent = item.title;
-    elRuntime.textContent = item.src ? item.runtime : item.runtime + ' · Preview pending';
 
     // The cached buttons keep their listeners, so re-appending the subset is
     // enough; the active clip's button is simply left out of the DOM.
