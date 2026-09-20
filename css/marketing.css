@@ -151,7 +151,7 @@ section[id] {
 }
 
 /* 2. Hero ================================================================ */
-.hero { padding: 54px 0 36px; text-align: left; }
+.hero { padding: 44px 0 36px; text-align: left; }
 .hero__grid { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1.05fr); gap: 36px; align-items: center; }
 .hero__copy { min-width: 0; }
 
@@ -299,16 +299,20 @@ section[id] {
 .trust {
   min-width: 0;
   margin-top: 12px;
-  padding-block: 40px;
+  padding: 40px var(--space-lg);
   grid-column: 1 / -1;
+  /* Tint separates the strip from the hero without a hard rule. */
+  background: var(--surface-light);
+  border-radius: var(--radius-xl);
   text-align: center;
 }
 
 .trust__label {
   margin-bottom: 20px;
+  font-family: var(--font-mono);
   font-size: 13px;
   font-weight: 700;
-  letter-spacing: .04em;
+  letter-spacing: .06em;
   color: var(--text-lightest);
 }
 
@@ -363,7 +367,7 @@ section[id] {
 
 /* 4. Services ============================================================ */
 .services {
-  padding: 52px 0 76px;
+  padding-block: 80px;
 }
 
 .services__grid,
@@ -683,7 +687,7 @@ section[id] {
 }
 
 .process {
-  padding-block: 76px;
+  padding-block: 80px;
 }
 
 .process__grid {
@@ -808,7 +812,7 @@ section[id] {
 
 /* 7. Results strip ======================================================= */
 .results {
-  background: var(--surface-dark);
+  background: var(--primary);
   color: var(--surface-white);
 }
 
@@ -816,34 +820,35 @@ section[id] {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 28px;
-  padding-block: var(--space-3xl);
+  padding-block: 28px 56px;
   text-align: center;
-  padding-top: 28px;
 }
 
 .result__value {
   font-family: var(--font-mono);
-  font-size: 48px;
+  font-size: 64px;
   font-weight: 800;
   letter-spacing: -.03em;
 }
 
+/* Large text (24px/800), so 3.55:1 on --primary clears the 3:1 bar. */
 .result__unit {
   font-size: 24px;
-  color: var(--secondary);
+  color: rgba(255, 255, 255, .7);
 }
 
+/* Normal-size text, so this needs the full 4.5:1 — .9 gives 4.83:1. */
 .result__label {
   margin-top: 6px;
   font-size: 13.5px;
-  color: var(--text-lighter);
+  color: rgba(255, 255, 255, .9);
 }
 
 /* 8. Testimonial ========================================================= */
 .testimonial {
   max-width: 900px;
   margin: 0 auto;
-  padding: 84px var(--gutter);
+  padding: 80px var(--gutter);
   text-align: center;
 }
 
@@ -1204,10 +1209,12 @@ section[id] {
 .work-card__media:hover img { transform: scale(1.035); }
 .work-card__view { position: absolute; right: 12px; bottom: 12px; display: flex; align-items: center; gap: 14px; padding: 10px 12px; background: var(--surface-dark); color: var(--surface-white); border-radius: 8px; font-size: 12px; font-weight: 700; box-shadow: var(--shadow-md); }
 .work-card__media:focus-visible { outline-offset: -5px; outline-color: var(--surface-white); }
-.sample-label { text-align: center; font: 11px var(--font-mono); letter-spacing: .06em; color: var(--text-muted); margin-bottom: 20px; }
-.results > .sample-label { padding-top: 24px; margin-bottom: 0; color: var(--surface-muted); }
+.sample-label { text-align: center; font: 700 13px var(--font-mono); letter-spacing: .06em; color: var(--text-muted); margin-bottom: 20px; }
+.results > .sample-label { padding-top: 24px; margin-bottom: 0; color: rgba(255, 255, 255, .88); }
 
-.contact { padding: 12px 0 64px; }
+/* Bottom matches the 80px standard; the top stays tight because the FAQ above
+   already contributes its own 80px of bottom padding. */
+.contact { padding: 12px 0 80px; }
 .contact__grid { display: grid; grid-template-columns: .9fr 1.1fr; align-items: stretch; gap: 0; }
 .contact__intro { padding: 40px; background: var(--primary); border-radius: 22px 0 0 22px; color: var(--surface-white); }
 .contact__intro .eyebrow { color: var(--surface-white); margin-bottom: 24px; }
@@ -1229,8 +1236,9 @@ section[id] {
 .form-field :is(input,select,textarea) { width: 100%; min-width: 0; min-height: 46px; padding: 12px; border: 1px solid var(--border-dark); border-radius: 8px; background: var(--surface-white); color: var(--text-primary); font: 13px var(--font-body); }
 .form-field textarea { resize: vertical; line-height: 1.65; }
 .form-field :is(input,select,textarea):focus { outline: 2px solid var(--primary); outline-offset: 2px; }
-.contact-form__privacy { margin-top: 14px; font-size: 11px; color: var(--text-muted); line-height: 1.7; }
-.contact-form__privacy a { text-decoration: underline; }
+.required-star { color: var(--danger); margin-left: 2px; }
+.contact-form__privacy { margin-top: 16px; font-size: 13px; color: var(--text-light); line-height: 1.7; text-align: center; }
+.contact-form__privacy a { color: var(--primary); text-decoration: underline; }
 .contact-form__status, .contact-form__plan { margin-block: 16px; padding: 14px; background: var(--primary-tint); border-radius: 8px; font-size: 13px; line-height: 1.7; }
 .contact-form__status a { font-weight: 700; text-decoration: underline; }
 .contact-form button:disabled { opacity: .65; cursor: wait; }
