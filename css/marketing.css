@@ -399,62 +399,120 @@ section[id] {
 }
 
 /* 5. Process ============================================================= */
-.process .section-head {
-  margin-bottom: 48px;
+.process {
+  background: #FCFBFF;
+  border-top: 1px solid var(--border-light);
+  border-bottom: 1px solid var(--border-light);
 }
 
-.process {
-  padding-block: 56px;
+.process .section-head { margin-bottom: 44px; }
+
+/* The dotted connector lives on the track and sits behind the cards, so it
+   reads as a continuous progress line that is only visible in the gaps. */
+.process__track { position: relative; }
+
+.process__track::before {
+  content: '';
+  position: absolute;
+  top: 50px;                 /* vertical centre of the 48px icon tile */
+  left: 12.5%;               /* centre of the first of four columns */
+  right: 12.5%;              /* centre of the last */
+  border-top: 2px dotted #D9D2F2;
+  z-index: 0;
 }
 
 .process__grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 22px;
+  gap: 20px;
 }
 
-.step-card {
-  padding: 26px;
-  border-radius: var(--radius-xl);
+.step {
+  position: relative;
+  z-index: 1;                /* keeps the card over the connector */
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 26px 22px 24px;
+  border: 1px solid #E9E5F5;
+  border-radius: 18px;
+  background: var(--surface-white);
+  box-shadow: 0 1px 2px #2B245608;
+  transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease;
 }
 
-.step-card__head {
+.step:hover {
+  border-color: #D3C9F3;
+  box-shadow: 0 8px 22px -10px #4A3B9E2E;
+  transform: translateY(-2px);
+}
+
+.step__top {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 12px;
   margin-bottom: 18px;
 }
 
-.step-card__no {
-  font-family: var(--font-mono);
-  font-size: 42px;
-  font-weight: 800;
+.step__icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: linear-gradient(150deg, #F0ECFE, #E7EEFC);
+  border: 1px solid #E2DCF8;
+  color: #5548E7;
+}
+
+.step__no {
+  font-family: var(--font-body);
+  font-size: 34px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -.04em;
+  /* A tint of --primary: reads as a large numeral without competing with the
+     step title. #E0DAF4 was effectively invisible at 1.35:1. */
+  color: #B3A5E2;
+}
+
+.step__day {
+  align-self: flex-start;
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  background: #F1EEFD;
+  color: #5A4FB8;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .01em;
+}
+
+.step__title {
+  margin-top: 12px;
+  font-size: 16.5px;
+  font-weight: 700;
+  line-height: 1.35;
   letter-spacing: -.02em;
-  color: var(--primary);
+  color: var(--text-primary);
 }
 
-.step-card__icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 11px;
-  background: var(--primary-tint);
-  color: var(--primary);
-}
-
-.step-card__title {
-  font-size: 17px;
-  letter-spacing: normal;
-}
-
-.step-card__desc {
-  margin-top: var(--space-sm);
+.step__desc {
+  margin-top: 8px;
   font-size: 13.5px;
-  line-height: 1.55;
+  line-height: 1.6;
   color: var(--text-muted);
 }
+
+.process__cta {
+  display: flex;
+  justify-content: center;
+  margin-top: 40px;
+}
+
+.process__cta .btn svg { transition: transform .18s ease; }
+.process__cta .btn:hover svg { transform: translateX(3px); }
 
 /* 6. Selected work ======================================================= */
 .work__head {
@@ -906,6 +964,11 @@ section[id] {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  /* The connector is drawn for a single row of four; once the cards wrap it
+     would point at nothing, so it is dropped rather than re-aimed. */
+  .process__track::before { display: none; }
+  .process__cta { margin-top: 32px; }
+
   .pricing__grid {
     grid-template-columns: minmax(0, 1fr);
     max-width: 440px;
@@ -934,6 +997,10 @@ section[id] {
   .process__grid {
     grid-template-columns: minmax(0, 1fr);
   }
+
+  .step { padding: 22px 20px; }
+  .step__icon { width: 44px; height: 44px; }
+  .step__no { font-size: 30px; }
 
   .results__panel { padding: 26px 16px 16px; border-radius: 22px; }
   .results__head { max-width: 340px; margin-inline: auto; }
