@@ -1277,18 +1277,17 @@ body.vgal-open { overflow: hidden; }
   text-align: center;
 }
 
+/* Body sans-serif, stated explicitly so this never picks up the mono stack
+   used elsewhere in the modal. Semibold reads as premium next to the heavier
+   category heading above it. */
 .vgal__now {
   margin: 0;
+  font-family: var(--font-body);
   font-size: 17px;
-  font-weight: 700;
-  letter-spacing: -.02em;
-  line-height: 1.3;
-}
-
-.vgal__runtime {
-  margin: 5px 0 0;
-  font: 12px var(--font-mono);
-  color: var(--text-muted);
+  font-weight: 600;
+  letter-spacing: -.015em;
+  line-height: 1.35;
+  color: var(--text-primary);
 }
 
 /* Sidebar --------------------------------------------------------------- */
