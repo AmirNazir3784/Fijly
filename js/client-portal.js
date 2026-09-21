@@ -1,0 +1,186 @@
+/* Client composition over the existing FIJLY components and scoped mock facade. */
+(function () {
+  'use strict';
+  var api = FijlyMock, client = api.client, selectedScript = null, settingsDirty = false, scriptSignature = '';
+  var $ = function (selector) { return document.querySelector(selector); };
+  var cardArtwork = {};
+  document.querySelectorAll('.project-card').forEach(function (card) { cardArtwork[card.querySelector('.project-card__name').textContent] = card.querySelector('.project-card__media').cloneNode(true); });
+  function node(tag, text, cls) { var n = document.createElement(tag); if (text !== undefined) n.textContent = text; if (cls) n.className = cls; return n; }
+  function action(text, fn) { var b = node('button', text, 'btn btn-outline btn--md'); b.type = 'button'; b.onclick = fn; return b; }
+  function badge(text) { return node('span', text, 'badge ' + (['Completed', 'Approved'].includes(text) ? 'badge-success' : 'badge-info')); }
+  function date(value) { return value ? value.slice(0, 10) : 'Not recorded'; }
+  function openVideo(id) { FijlyWorkflow.open('videos', id); }
+  function completedAt(v) { return api.completedAt(v); }
+  function metric(card, label, value, note) { card.querySelector('.stat-card__label').textContent = label; card.querySelector('.stat-card__value').textContent = value; card.querySelector('.stat-card__delta').textContent = note; }
+  function overview() {
+    var profile = client.current(), videos = client.records('videos');
+    $('#h-overview').textContent = 'Welcome, ' + profile.contact.split(' ')[0];
+    $('.page-head__date').textContent = profile.name + ' / WORKSPACE';
+    $('.page-head--overview > button').textContent = 'All recorded activity';
+    $('.sidebar-user__name').textContent = profile.contact; $('.sidebar-user__email').textContent = profile.email; $('.sidebar-user .avatar').textContent = profile.contact[0];
+    $('#studio-demo-note').firstChild.textContent = profile.name + ' workspace · Mock data. Changes stay in this mock session. ';
+    var cards = document.querySelectorAll('#screen-overview .stat-card');
+    // Waiting requests count as active work; a request that became a video counts once.
+    var activeVideos = videos.filter(function (v) { return v.status !== 'Completed'; }).length, waiting = api.pendingRequests(profile.id).length;
+    metric(cards[0], 'Active Projects', activeVideos + waiting, activeVideos + ' in production · +' + waiting + ' pending ' + (waiting === 1 ? 'request' : 'requests'));
+    metric(cards[1], 'Videos Delivered', videos.filter(function (v) { return v.status === 'Completed'; }).length, 'Completed videos · all time');
+    metric(cards[2], 'Waiting for Review', videos.filter(function (v) { return v.status === 'Client Review'; }).length, 'Ready for your feedback');
+    metric(cards[3], 'Revisions in Progress', videos.filter(function (v) { return v.status === 'In Revision'; }).length, client.records('revisions').length + ' revision rounds recorded');
+    var recent = videos.slice().sort(function (a, b) { return (b.activity.slice(-1)[0] || {}).at > (a.activity.slice(-1)[0] || {}).at ? 1 : -1; });
+    document.querySelectorAll('.project-card').forEach(function (card, index) {
+      var v = recent[index]; card.hidden = !v; if (!v) return;
+      var r = api.requestFor(v); card.querySelector('.project-card__name').textContent = r.title;
+      card.querySelector('.project-card__sub').textContent = r.videoType;
+      card.querySelector('.project-card__badges').replaceChildren(badge(v.status));
+      card.querySelector('.project-card__updated').textContent = 'Due ' + r.deadline;
+      card.querySelector('.progress-row__label').textContent = 'Latest version';
+      card.querySelector('.progress-row__value').textContent = api.latest(v) ? 'V' + api.latest(v).number : 'Awaiting draft';
+      var progress = card.querySelector('.progress-bar'); if (progress) progress.remove();
+      var media = card.querySelector('.project-card__media'), artwork = client.current().id === 'northbeam' && cardArtwork[r.title.split(' / ')[0]]; if (artwork) media.replaceChildren.apply(media, Array.from(artwork.cloneNode(true).childNodes)); else media.replaceChildren(node('span', r.videoType, 'client-media-label'));
+      var link = card.querySelector('.project-card__foot a'); link.removeAttribute('data-screen-link'); link.textContent = 'View video'; link.onclick = function (event) { event.preventDefault(); event.stopImmediatePropagation(); openVideo(v.id); };
+    });
+    var feature = videos.find(function (v) { return v.status === 'Client Review'; }) || videos[0];
+    $('#preview').hidden = !feature; $('.storyboard').hidden = !feature;
+    if (feature) {
+      var r = api.requestFor(feature), latest = api.latest(feature);
+      $('#h-preview').textContent = r.title; $('.preview__meta').textContent = (latest ? 'V' + latest.number + ' · ' + latest.filename : 'Awaiting first draft') + ' · Simulated preview';
+      $('.preview .status-pill').textContent = feature.status;
+      $('.canvas__rec').textContent = 'SIMULATED PREVIEW';
+      // Retain the approved canvas, but remove unrelated product/demo figures.
+      $('.browser__url span').textContent = client.current().name;
+      $('.app__title').textContent = r.title; $('.app__sub').textContent = r.videoType + ' · ' + r.length;
+      document.querySelectorAll('.app-kpi__label').forEach(function (n, i) { n.textContent = ['VERSION', 'FEEDBACK', 'ROUNDS'][i]; });
+      document.querySelectorAll('.app-kpi__value').forEach(function (n, i) { n.textContent = [latest ? 'V' + latest.number : '—', feature.feedback.length, api.rounds(feature).length][i]; });
+      $('.app-chart__title').textContent = 'Production preview illustration';
+      var bubbles = document.querySelectorAll('.bubble'); bubbles[0].textContent = r.title; bubbles[1].textContent = 'Open video details to review version notes and history.';
+      var view = $('#client-current-video'); if (!view) { view = action('Open current video', function () {}); view.id = 'client-current-video'; $('.preview__head').append(view); } view.onclick = function () { openVideo(feature.id); };
+      $('.storyboard .panel__sub').textContent = 'Illustrative structure · ' + r.title;
+      $('.storyboard .version-pill').textContent = latest ? 'V' + latest.number : 'Outline';
+      var scenes = document.querySelectorAll('.scene'); scenes.forEach(function (scene, i) { scene.querySelector('.scene__title').textContent = ['Opening', 'Context', 'Product', 'Benefits', 'Closing'][i]; scene.querySelector('.scene__dur').textContent = 'Scene ' + (i + 1); scene.querySelector('.badge').textContent = 'Outline'; });
+    }
+    var empty = $('#client-overview-empty'); if (!empty) { empty = node('p', 'No videos yet. Submit a request to start your first project.', 'panel__sub'); empty.id = 'client-overview-empty'; $('.project-grid').append(empty); } empty.hidden = !!videos.length;
+  }
+
+  var modal = node('dialog', undefined, 'admin-dialog workflow-detail'); modal.id = 'client-asset-detail'; modal.setAttribute('aria-labelledby', 'client-dialog-title');
+  var head = node('div', undefined, 'admin-dialog-head'), title = node('h2'); title.id = 'client-dialog-title'; var body = node('div', undefined, 'workflow-body'); head.append(title, action('Close', function () { modal.close(); })); modal.append(head, body); document.body.append(modal);
+  var shownAsset = null;
+  function assetDetail(id) { var a = client.get('assets', id); shownAsset = id; title.textContent = a.name; body.replaceChildren(badge(a.category), node('p', a.fileType.toUpperCase() + ' · ' + Math.ceil(a.size / 1024) + ' KB · Added ' + date(a.uploadedAt)), node('p', a.notes || 'No additional notes.'), node('p', 'Simulated asset metadata. No file has been uploaded or stored.', 'admin-muted')); if (!modal.open) modal.showModal(); }
+  function assetRows(target, records) {
+    target.replaceChildren(); if (!records.length) { target.append(node(target.tagName === 'UL' ? 'li' : 'p', 'No matching assets.', 'admin-muted')); return; }
+    records.forEach(function (a) { var row = node(target.tagName === 'UL' ? 'li' : 'div', undefined, 'file-row'), info = node('span', undefined, 'file-row__body'); var b = action(a.name, function () { assetDetail(a.id); }); b.className = 'btn-link file-row__title'; info.append(b, node('span', a.category + ' · ' + Math.ceil(a.size / 1024) + ' KB', 'file-row__sub')); row.append(info, node('span', a.fileType.toUpperCase(), 'file-row__ext')); target.append(row); });
+  }
+  function assets() {
+    var records = client.records('assets').sort(function (a, b) { return b.uploadedAt.localeCompare(a.uploadedAt); });
+    document.querySelectorAll('[data-asset-group]').forEach(function (target) { assetRows(target, records.filter(function (a) { return target.dataset.assetGroup === 'media' ? ['Product Images', 'B-roll'].includes(a.category) : a.category === target.dataset.assetGroup; })); });
+    var search = $('#client-asset-search').value.toLowerCase(), category = $('#client-asset-category').value;
+    assetRows($('[data-client-assets]'), records.filter(function (a) { return (category === 'all' || a.category === category) && [a.name, a.category, a.notes].join(' ').toLowerCase().includes(search); }));
+    if (modal.open && shownAsset) { if (records.some(function (a) { return a.id === shownAsset; })) assetDetail(shownAsset); else modal.close(); }
+  }
+  api.assetCategories.forEach(function (category) { $('#client-asset-category').append(node('option', category)); });
+  $('#client-asset-search').oninput = assets; $('#client-asset-category').onchange = assets;
+  $('#client-add-asset').onclick = function () {
+    shownAsset = null; title.textContent = 'Add simulated asset'; body.innerHTML = '<form id="client-asset-form"><p class="admin-muted">Only file metadata is saved in this mock session.</p><div class="form-group"><label class="field-label" for="client-asset-file">Choose file</label><input class="input workflow-file" id="client-asset-file" type="file" required></div><div class="form-group"><label class="field-label" for="client-asset-kind">Category</label><select class="input" id="client-asset-kind"></select></div><div class="form-group"><label class="field-label" for="client-asset-notes">Notes</label><textarea class="input" id="client-asset-notes" maxlength="2000"></textarea></div><button class="btn btn-primary btn--md" type="submit">Save asset</button><p role="alert" id="client-asset-error"></p></form>';
+    api.assetCategories.forEach(function (c) { $('#client-asset-kind').append(node('option', c)); });
+    $('#client-asset-form').onsubmit = function (event) { event.preventDefault(); try { var file = $('#client-asset-file').files[0]; client.addAsset({ name: file.name, size: file.size, fileType: file.name.split('.').pop(), category: $('#client-asset-kind').value, notes: $('#client-asset-notes').value }); modal.close(); } catch (e) { $('#client-asset-error').textContent = e.message; } }; modal.showModal();
+  };
+
+  function scripts() {
+    var records = client.records('scripts'), select = $('#client-script-select');
+    if (!records.some(function (s) { return s.id === selectedScript; })) selectedScript = records.length ? records[0].id : null;
+    var signature = JSON.stringify([client.current().id, selectedScript, records]); if (signature === scriptSignature) return; scriptSignature = signature;
+    select.replaceChildren(); records.forEach(function (s) { var option = node('option', s.title); option.value = s.id; select.append(option); }); select.value = selectedScript || ''; select.disabled = !records.length;
+    var script = selectedScript && client.get('scripts', selectedScript), scenes = $('#client-script-scenes'), actions = $('#client-script-actions'), feedback = $('#client-script-feedback'); scenes.replaceChildren(); actions.replaceChildren(); feedback.replaceChildren();
+    $('#h-script-doc').textContent = script ? script.title : 'No scripts yet'; $('#client-script-status').textContent = script ? script.status : 'Awaiting production'; $('.doc__meta').textContent = script ? 'V' + script.version + ' · Updated ' + date(script.updatedAt) : 'Scripts will appear here when prepared by the studio.';
+    $('#client-script-video').hidden = !script; if (!script) return;
+    $('#client-script-video').onclick = function () { openVideo(script.videoId); };
+    script.scenes.forEach(function (s, i) { var li = node('li', undefined, 'script-scene'), content = node('div', undefined, 'script-scene__content'); content.append(node('div', s.label, 'script-scene__label'), node('p', s.text, 'script-scene__text')); li.append(node('span', String(i + 1).padStart(2, '0'), 'script-scene__no'), content); scenes.append(li); });
+    if (!script.feedback.length) feedback.append(node('p', 'No script feedback yet.', 'admin-muted'));
+    script.feedback.forEach(function (f) { var item = node('article', undefined, 'comment'); item.append(node('p', f.author + ' · V' + f.version + ' · ' + date(f.at), 'comment__name'), node('p', f.text, 'comment__text')); feedback.append(item); });
+    if (script.status === 'Client Review') {
+      var form = node('form'), label = node('label', 'Revision feedback', 'field-label'), input = node('textarea', undefined, 'input'); input.id = 'client-script-revision'; input.required = true; input.maxLength = 3000; label.htmlFor = input.id;
+      var submit = node('button', 'Request script revision', 'btn btn-outline btn--md'); submit.type = 'submit'; var error = node('p', undefined, 'workflow-error'); error.setAttribute('role', 'alert');
+      form.append(label, input, submit, error); form.onsubmit = function (e) { e.preventDefault(); try { client.reviewScript(script.id, 'Revision Requested', input.value); } catch (err) { error.textContent = err.message; } };
+      actions.append(action('Approve script', function () { try { client.reviewScript(script.id, 'Approved'); } catch (err) { error.textContent = err.message; } }), form);
+    }
+  }
+  $('#client-script-select').onchange = function () { selectedScript = this.value; scripts(); };
+  function analytics() {
+    var videos = client.records('videos'), rounds = client.records('revisions'), completed = videos.filter(function (v) { return v.status === 'Completed'; });
+    var kpis = $('#client-analytics-kpis'); kpis.replaceChildren();
+    [['Videos Completed', completed.length], ['In Progress', videos.length - completed.length], ['Awaiting Review', videos.filter(function (v) { return v.status === 'Client Review'; }).length], ['Revision Rounds', rounds.length], ['Approved', videos.filter(function (v) { return v.status === 'Approved'; }).length]].forEach(function (m) { var card = node('article', undefined, 'stat-card stat-card--compact'); card.append(node('h2', m[0], 'stat-card__label'), node('div', m[1], 'stat-card__value'), node('p', 'All recorded activity', 'stat-card__delta')); kpis.append(card); });
+    var stages = $('#client-stages'); stages.replaceChildren(); api.videoStatuses.forEach(function (s) { var row = node('li'); row.append(node('span', s, 'funnel__label'), node('span', videos.filter(function (v) { return v.status === s; }).length, 'funnel__value')); stages.append(row); });
+    var months = {}; completed.forEach(function (v) { var key = completedAt(v) ? completedAt(v).slice(0, 7) : 'Date not recorded'; months[key] = (months[key] || 0) + 1; });
+    var chart = $('#client-delivery-chart'); chart.replaceChildren(); if (!completed.length) chart.append(node('p', 'No deliveries yet.', 'admin-muted'));
+    Object.keys(months).sort().forEach(function (month) { var row = node('div', undefined, 'client-chart-row'), meter = node('progress'); meter.max = Math.max.apply(null, Object.values(months)); meter.value = months[month]; meter.setAttribute('aria-label', month + ': ' + months[month] + ' completed videos'); row.append(node('span', month), meter, node('strong', months[month])); chart.append(row); });
+    var timed = completed.filter(function (v) { return completedAt(v); }), durations = timed.map(function (v) { return (Date.parse(completedAt(v)) - Date.parse(api.requestFor(v).requestedAt)) / 86400000; }).filter(function (days) { return days >= 0; });
+    $('#client-production-time').textContent = durations.length ? 'Average production time: ' + (durations.reduce(function (a, b) { return a + b; }, 0) / durations.length).toFixed(1) + ' days · ' + durations.length + ' deliveries with recorded completion dates' : 'Average production time: — · No completion dates recorded yet';
+    var deliveries = $('#client-deliveries'); deliveries.replaceChildren(); if (!completed.length) deliveries.append(node('p', 'Completed videos will appear here.', 'admin-muted')); completed.forEach(function (v) { var row = node('div', undefined, 'file-row'); row.append(action(api.requestFor(v).title, function () { openVideo(v.id); }), node('span', date(completedAt(v)), 'admin-muted')); deliveries.append(row); });
+  }
+  var settings = $('#client-settings-form');
+  function loadSettings() {
+    if (settingsDirty) return; var p = client.current(), preferences = client.preferences();
+    ['name', 'contact', 'email', 'website'].forEach(function (key) { settings.elements.namedItem(key).value = p[key] || ''; });
+    ['defaultLength', 'platform'].forEach(function (key) { settings.elements.namedItem(key).value = preferences[key]; });
+    ['autoshare', 'digest', 'review'].forEach(function (key) { var input = settings.elements.namedItem(key); input.checked = preferences[key]; input.setAttribute('aria-checked', String(input.checked)); });
+    $('.workspace-row__name').textContent = p.name; $('.workspace-row__sub').textContent = p.email + ' · Client workspace'; $('.workspace-logo').textContent = p.name[0];
+  }
+  settings.addEventListener('input', function () { settingsDirty = true; $('#client-settings-note').textContent = 'Unsaved changes'; });
+  settings.onsubmit = function (e) { e.preventDefault(); try { var values = Object.fromEntries(new FormData(settings)); ['autoshare', 'digest', 'review'].forEach(function (key) { values[key] = settings.elements.namedItem(key).checked; }); client.saveProfile(values); settingsDirty = false; loadSettings(); $('#client-settings-note').textContent = 'Settings saved for this workspace.'; } catch (err) { $('#client-settings-note').textContent = err.message; } };
+  $('#client-discard-settings').onclick = function () { settingsDirty = false; loadSettings(); $('#client-settings-note').textContent = 'Changes discarded.'; };
+  /* Client switcher. Choosing a workspace is a preview convenience, not sign-in;
+     the current screen stays open and every screen re-renders for the client. */
+  var switcher = $('[data-client-switcher]'), switchButton = $('#client-switcher-button'), switchList = $('#client-switcher-list');
+  function switchOptions() { return Array.from(switchList.querySelectorAll('button')); }
+  function setSwitcher(open) {
+    switchList.hidden = !open; switchButton.setAttribute('aria-expanded', String(open));
+    if (open) { var current = switchList.querySelector('[aria-current="true"]') || switchOptions()[0]; if (current) current.focus(); }
+  }
+  function renderSwitcher() {
+    var current = client.current(); switcher.hidden = !current;
+    if (!current) { setSwitcher(false); return; }
+    var focused = switchList.contains(document.activeElement) ? document.activeElement.dataset.clientId : null;
+    $('.client-switcher__name').textContent = current.name; $('.client-switcher__avatar').textContent = current.name[0];
+    switchList.replaceChildren();
+    api.state.clients.forEach(function (c) {
+      var item = node('li'), option = node('button', undefined, 'client-switcher__option'); option.type = 'button'; option.dataset.clientId = c.id;
+      if (c.id === current.id) option.setAttribute('aria-current', 'true');
+      option.append(node('span', c.name, 'client-switcher__option-name'), node('span', c.status, 'client-switcher__status client-switcher__status--' + c.status.toLowerCase()));
+      item.append(option); switchList.append(item);
+    });
+    if (focused) { var again = switchList.querySelector('[data-client-id="' + focused + '"]'); if (again) again.focus(); }
+  }
+  switchButton.addEventListener('click', function () { setSwitcher(switchList.hidden); });
+  switchList.addEventListener('click', function (event) {
+    var option = event.target.closest('[data-client-id]'); if (!option) return;
+    setSwitcher(false); switchButton.focus();
+    if (option.dataset.clientId === client.current().id) return;
+    client.select(option.dataset.clientId);
+    $('#client-switch-status').textContent = 'Now viewing the ' + client.current().name + ' workspace.';
+  });
+  switcher.addEventListener('keydown', function (event) {
+    if (switchList.hidden) return;
+    // Handled here so Escape closes only the list, not the mobile sidebar.
+    if (event.key === 'Escape') { event.stopPropagation(); setSwitcher(false); switchButton.focus(); return; }
+    if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return;
+    event.preventDefault();
+    var options = switchOptions(), index = options.indexOf(document.activeElement);
+    options[(index + (event.key === 'ArrowDown' ? 1 : -1) + options.length) % options.length].focus();
+  });
+  switcher.addEventListener('focusout', function (event) { if (event.relatedTarget && !switcher.contains(event.relatedTarget)) setSwitcher(false); });
+  document.addEventListener('click', function (event) { if (!switchList.hidden && !switcher.contains(event.target)) setSwitcher(false); });
+
+  window.addEventListener('fijly:clientchange', function () { settingsDirty = false; selectedScript = null; modal.close(); shownAsset = null; $('#client-settings-note').textContent = ''; $('#client-asset-search').value = ''; $('#client-asset-category').value = 'all'; });
+  function render(changed) {
+    var available=!!client.current();
+    document.body.classList.toggle('client-no-workspace',!available);
+    document.querySelectorAll('.screen').forEach(function(screen){var note=screen.querySelector('.client-workspace-empty');if(!note){note=node('p','No client workspace is available. Add a client in the Admin preview to continue.','panel client-workspace-empty');screen.append(note);}note.hidden=available;});
+    if(!changed || changed.includes('clients'))renderSwitcher();
+    if(!available){$('.sidebar-user__name').textContent='No client selected';$('.sidebar-user__email').textContent='';$('#studio-demo-note').firstChild.textContent='No client workspace · Mock session. ';return;}
+    if(!changed || changed.some(function(k){return ['clients','requests','videos','revisions'].includes(k);}))overview();
+    if(!changed || changed.includes('assets'))assets();
+    if(!changed || changed.some(function(k){return ['scripts','clients'].includes(k);}))scripts();
+    if(!changed || changed.some(function(k){return ['requests','videos','revisions'].includes(k);}))analytics();
+    if(!changed || changed.some(function(k){return ['clients','settings','clientSettings'].includes(k);}))loadSettings();
+  }
+  api.subscribe(render); render();
+})();

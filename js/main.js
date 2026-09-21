@@ -125,18 +125,4 @@
     onScroll();
   }
 
-  /* 5. Pause marquee on hover / focus ------------------------------------ */
-  var marquee = document.querySelector('.marquee');
-  if (marquee) {
-    var pause = function () { marquee.classList.add('is-paused'); };
-    var play = function () {
-      if (!marquee.matches(':hover') && !marquee.contains(document.activeElement)) {
-        marquee.classList.remove('is-paused');
-      }
-    };
-    marquee.addEventListener('mouseenter', pause);
-    marquee.addEventListener('mouseleave', play);
-    marquee.addEventListener('focusin', pause);
-    marquee.addEventListener('focusout', play);
-  }
 })();
