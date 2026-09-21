@@ -31,10 +31,7 @@
     while (size >= 1024 && index < units.length - 1) { size /= 1024; index += 1; }
     return (size >= 10 || index === 0 ? Math.round(size) : size.toFixed(1)) + ' ' + units[index];
   }
-  function day(value) {
-    if (!value) return '—';
-    return new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
-  }
+  function day(value) { return api.formatDate(value, '—'); }
   function fillOptions(select, values, labelFor) {
     var keep = select.querySelector('option[value="all"]');
     select.replaceChildren();
@@ -215,9 +212,11 @@
     assetConfirm.showModal();
   });
 
-  document.getElementById('asset-confirm-cancel').addEventListener('click', function () {
-    assetConfirm.close();
-    openAssetDetail(selectedAsset);
+  ['asset-confirm-cancel', 'asset-confirm-close'].forEach(function (id) {
+    document.getElementById(id).addEventListener('click', function () {
+      assetConfirm.close();
+      openAssetDetail(selectedAsset);
+    });
   });
 
   document.getElementById('asset-confirm-ok').addEventListener('click', function () {
@@ -282,10 +281,7 @@
     var video = state.videos.find(function (item) { return item.id === script.videoId; });
     return { video: video, title: video ? api.requestFor(video).title : 'Video unavailable' };
   }
-  function scriptBadge(status) {
-    var tone = { Draft: '', 'Client Review': 'badge-info', Approved: 'badge-success', 'Revision Requested': 'badge-warning' }[status];
-    return node('span', 'badge ' + (tone || ''), status);
-  }
+  function scriptBadge(status) { return node('span', api.statusClass(status), status); }
 
   function visibleScripts() {
     var query = scriptSearch.value.trim().toLowerCase();
@@ -330,12 +326,35 @@
     document.getElementById('script-empty').hidden = records.length > 0;
   }
 
+  // Unsaved scene edits per script: they survive closing the dialog and
+  // re-renders from other tabs until saved, sent, or the script leaves Draft.
+  var sceneDrafts = {}, scriptNotice = null, renderedScript = '';
+  var scriptSave = document.getElementById('script-save');
+  function editedScenes() { return Array.from(document.querySelectorAll('#script-detail-body .admin-script-editor')).map(function (input) { return input.value; }); }
+  function sceneNote(item) {
+    var note = document.getElementById('script-scene-note');
+    if (note) note.textContent = sceneDrafts[item.id] ? 'Unsaved changes — save the draft to keep them.' : 'Edit each scene, then save the draft or send it to the client.';
+  }
+  function commentList(item, body) {
+    if (!item.feedback.length) body.append(node('p', 'admin-muted', 'No client feedback on this script yet.'));
+    item.feedback.slice().reverse().forEach(function (entry) {
+      var comment = node('article', 'comment');
+      comment.append(node('p', 'comment__name', entry.author + ' · V' + entry.version + ' · ' + day(entry.at)), node('p', 'comment__text', entry.text));
+      body.append(comment);
+    });
+  }
+
   function openScriptDetail(id) {
     var item = state.scripts.find(function (record) { return record.id === id; });
     if (!item) return;
-    if (selectedScript !== id) scriptError.textContent = '';
+    if (selectedScript !== id) { scriptError.textContent = ''; scriptNotice = null; }
+    if (item.status !== 'Draft') delete sceneDrafts[id];
+    // Skip rebuilding for unrelated shared-state changes so typing keeps focus.
+    var signature = JSON.stringify([item, scriptNotice]);
+    if (scriptDetail.open && selectedScript === id && signature === renderedScript) return;
+    renderedScript = signature;
     selectedScript = id;
-    var linked = scriptVideo(item);
+    var linked = scriptVideo(item), editable = item.status === 'Draft';
     document.getElementById('script-detail-title').textContent = item.title;
     var body = document.getElementById('script-detail-body');
     body.replaceChildren();
@@ -356,47 +375,65 @@
     var status = node('p', 'admin-script-state');
     if (item.status === 'Approved') { status.classList.add('admin-script-state--approved'); status.textContent = 'Approved by the client. No further action needed.'; }
     else if (item.status === 'Client Review') status.textContent = 'With the client for review. They can approve it or request a revision.';
-    else if (item.status === 'Draft') status.textContent = 'Draft V' + item.version + ' is ready to share with the client.';
-    else status.textContent = 'The client asked for changes to V' + item.version + '. Start the revision to prepare a new draft.';
-    var scenes = node('ol', 'doc__body admin-script-scenes');
+    else if (editable) status.textContent = 'Draft V' + item.version + ' — write or refine each scene, then send it to the client.';
+    else status.textContent = 'The client asked for changes to V' + item.version + '. Start the revision to edit the scenes for a new draft.';
+    var scenes = node('ol', 'doc__body admin-script-scenes'), draft = sceneDrafts[item.id];
     item.scenes.forEach(function (scene, index) {
       var li = node('li', 'script-scene');
       var content = node('div', 'script-scene__content');
-      content.append(node('div', 'script-scene__label', scene.label), node('p', 'script-scene__text', scene.text));
+      if (editable) {
+        var inputId = 'script-scene-' + index, label = node('label', 'script-scene__label', scene.label), input = node('textarea', 'input admin-script-editor');
+        label.htmlFor = inputId; input.id = inputId; input.rows = 3; input.maxLength = 2000; input.value = draft ? draft[index] : scene.text;
+        input.addEventListener('input', function () { sceneDrafts[item.id] = editedScenes(); sceneNote(item); });
+        content.append(label, input);
+      } else content.append(node('div', 'script-scene__label', scene.label), node('p', 'script-scene__text', scene.text));
       li.append(node('span', 'script-scene__no', String(index + 1).padStart(2, '0')), content);
       scenes.append(li);
     });
     if (!item.scenes.length) scenes.append(node('li', 'admin-muted', 'No scenes written yet.'));
-    body.append(intro, status, facts, node('h3', null, 'Scenes'), scenes, node('h3', null, 'Client feedback'));
-    if (!item.feedback.length) body.append(node('p', 'admin-muted', 'No client feedback on this script yet.'));
-    item.feedback.slice().reverse().forEach(function (entry) {
-      var comment = node('article', 'comment');
-      comment.append(node('p', 'comment__name', entry.author + ' · V' + entry.version + ' · ' + day(entry.at)), node('p', 'comment__text', entry.text));
-      body.append(comment);
-    });
+    body.append(intro);
+    // A notice describes one status; it is dropped once the script moves on.
+    if (scriptNotice && scriptNotice.id === item.id && scriptNotice.status === item.status) { var notice = node('p', 'workflow-notice', scriptNotice.text); notice.setAttribute('role', 'status'); body.append(notice); }
+    body.append(status, facts);
+    // A requested revision leads with what the client asked for.
+    if (item.status === 'Revision Requested') { var ask = node('section', 'admin-script-ask'); ask.append(node('h3', null, 'Client feedback')); commentList(item, ask); body.append(ask); }
+    body.append(node('h3', null, 'Scenes'));
+    if (editable) { var note = node('p', 'admin-muted'); note.id = 'script-scene-note'; body.append(note); }
+    body.append(scenes);
+    if (item.status !== 'Revision Requested') { body.append(node('h3', null, 'Client feedback')); commentList(item, body); }
+    sceneNote(item);
     var label = { 'Revision Requested': 'Start revision', Draft: 'Send to Client Review' }[item.status];
     scriptAction.hidden = !label;
     scriptAction.textContent = label || '';
+    scriptSave.hidden = !editable;
     if (!scriptDetail.open) scriptDetail.showModal();
   }
 
+  function scriptActionDone(item, text) { scriptError.textContent = ''; scriptNotice = { id: item.id, status: item.status, text: text }; scriptSaveStatus.textContent = text; openScriptDetail(item.id); }
+  function saveScenes(item) { if (!sceneDrafts[item.id]) return false; api.updateScriptScenes(item.id, editedScenes()); delete sceneDrafts[item.id]; return true; }
+  scriptSave.addEventListener('click', function () {
+    var item = state.scripts.find(function (record) { return record.id === selectedScript; });
+    if (!item) return;
+    try { sceneDrafts[item.id] = editedScenes(); saveScenes(item); scriptActionDone(item, item.title + ' V' + item.version + ' draft saved.'); }
+    catch (error) { scriptError.textContent = error.message; }
+  });
   scriptAction.addEventListener('click', function () {
     var item = state.scripts.find(function (record) { return record.id === selectedScript; });
     if (!item) return;
     try {
       if (item.status === 'Revision Requested') {
         api.adminReviewScript(item.id);
-        scriptSaveStatus.textContent = item.title + ' reopened as draft V' + item.version + '.';
+        scriptActionDone(item, 'Revision started — edit the scenes, then send V' + item.version + ' to the client.');
       } else if (item.status === 'Draft') {
+        // Unsaved edits go out with the script rather than being dropped.
+        saveScenes(item);
         api.adminSendScriptForReview(item.id);
-        scriptSaveStatus.textContent = item.title + ' V' + item.version + ' sent to the client for review.';
+        scriptActionDone(item, item.title + ' V' + item.version + ' sent to the client for review.');
       }
-      scriptError.textContent = '';
     } catch (error) {
       scriptError.textContent = error.message;
     }
-    // The shared-state subscription re-renders the open dialog; move focus off
-    // the action button when it is hidden for a read-only status.
+    // Move focus off the action button when it is hidden for a read-only status.
     if (scriptAction.hidden) scriptDetail.querySelector('[data-close-script-detail]').focus();
   });
 
@@ -418,6 +455,7 @@
   });
   var syncScriptDialog = function () { document.body.classList.toggle('admin-dialog-open', !!document.querySelector('dialog[open]')); };
   scriptDetail.addEventListener('close', syncScriptDialog);
+  scriptDetail.addEventListener('close', function () { scriptNotice = null; renderedScript = ''; });
   new MutationObserver(syncScriptDialog).observe(scriptDetail, { attributes: true, attributeFilter: ['open'] });
 
   /* ======================================================================
@@ -559,7 +597,9 @@
     // Approval quality
     var quality = document.getElementById('analytics-quality');
     quality.replaceChildren();
-    var reviewed = data.videos.filter(function (video) { return video.versions.length; });
+    // Only videos the client has signed off (Approved or Completed) have
+    // finished review; work still in production or review is not counted.
+    var reviewed = data.videos.filter(function (video) { return ['Approved', 'Completed'].includes(video.status); });
     var withRevision = reviewed.filter(function (video) { return api.rounds(video).length > 0; });
     var firstPass = reviewed.length - withRevision.length;
     var roundsPer = withRevision.length
@@ -589,7 +629,9 @@
       var from = new Date(to);
       from.setUTCDate(from.getUTCDate() - 6);from.setUTCHours(0,0,0,0);
       buckets.push({
+        // Short axis label; the text summary uses the full date format.
         label: from.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' }),
+        full: api.formatDate(from.toISOString().slice(0, 10)),
         from: from.toISOString(),
         to: to.toISOString(),
         completed: 0,
@@ -631,7 +673,7 @@
     // The bars are decorative; the same numbers are available as text.
     chart.setAttribute('aria-hidden', 'true');
     var summary = node('p', 'admin-muted', buckets.map(function (bucket) {
-      return bucket.label + ': ' + bucket.completed + ' completed, ' + bucket.revisions + ' revision rounds';
+      return 'Week of ' + bucket.full + ': ' + bucket.completed + ' completed, ' + bucket.revisions + ' revision rounds';
     }).join(' · '));
     host.append(chart, legend, summary);
   }
@@ -650,6 +692,14 @@
   // another tab cannot overwrite what is being typed here.
   var settingsDirty = false;
   var TOGGLE_KEYS = ['notifyNewRequest', 'notifyRevision', 'notifyApproval', 'notifyWeeklyDigest'];
+
+  // The sidebar shows the saved Admin profile, so it matches Settings.
+  function renderIdentity() {
+    var values = state.settings || {}, name = values.adminName || 'Studio admin';
+    document.getElementById('admin-name').textContent = name;
+    document.getElementById('admin-role').textContent = values.adminRole || 'FIJLY Studio';
+    document.getElementById('admin-avatar').textContent = name.charAt(0).toUpperCase();
+  }
 
   function loadSettings() {
     var values = state.settings || {};
@@ -712,6 +762,7 @@
     if(changed.includes('clients'))[assetClient,analyticsClient,scriptClient,document.getElementById('asset-form-client')].forEach(function(select){var value=select.value;fillOptions(select,state.clients.map(function(c){return c.id;}),clientName);select.value=Array.from(select.options).some(function(o){return o.value===value;})?value:(select.querySelector('[value="all"]')?'all':(state.clients[0]||{}).id||'');});
     if(changed.some(function(k){return ['clients','assets'].includes(k);}))renderAssets();
     if(changed.some(function(k){return ['clients','requests','videos','revisions','assets'].includes(k);}))renderAnalytics();
+    if (changed.includes('settings')) renderIdentity();
     if (!settingsDirty && changed.includes('settings')) loadSettings();
     if(assetDetail.open){if(state.assets.some(function(a){return a.id===selectedAsset;}))openAssetDetail(selectedAsset);else assetDetail.close();}
     if(assetEditor.open&&editingAsset&&!state.assets.some(function(a){return a.id===editingAsset;})){assetEditor.close();assetStatus.textContent='This asset was removed in another tab.';}
@@ -721,5 +772,6 @@
   renderAssets();
   renderScripts();
   renderAnalytics();
+  renderIdentity();
   loadSettings();
 })();

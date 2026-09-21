@@ -6,7 +6,6 @@
 .workflow-detail { width:min(860px,calc(100% - 32px)); }
 .workflow-body { padding:24px; font-size:13px; line-height:1.7; overflow-wrap:anywhere; }
 .workflow-body h3 { margin:24px 0 10px; }
-.workflow-actions { display:flex; flex-wrap:wrap; gap:10px; margin-top:22px; }
 .workflow-entry { padding:14px 0; border-bottom:1px solid var(--border-light); }
 .workflow-entry p { white-space:pre-wrap; }
 .workflow-feedback { padding:16px; background:var(--surface-hover); border-left:3px solid var(--primary); border-radius:8px; white-space:pre-wrap; }
@@ -24,4 +23,17 @@
 .admin-dialog h2,.admin-dialog p,.admin-dialog dd,.admin-project-list strong,.list-card__title,.doc__title,.file-row__title,.table button,.table td { overflow-wrap:anywhere; }
 .admin-dialog .input { max-width:100%; min-width:0; }
 @media(max-width:1100px) { .workflow-toolbar { grid-template-columns:repeat(2,minmax(0,1fr)); } .workflow-toolbar label:first-child { grid-column:1/-1; } }
-@media(max-width:600px) { .workflow-toolbar,.workflow-body { padding:16px; } .workflow-toolbar .input { font-size:16px; } .workflow-actions .btn { width:100%; } }
+@media(max-width:600px) { .workflow-toolbar,.workflow-body { padding:16px; } .workflow-toolbar .input { font-size:16px; } .workflow-detail .admin-dialog-foot .btn { flex:1 1 auto; } .review-bar__actions .btn { flex:1 1 auto; } }
+/* Review experience: media slot first, then the version and the client's decision. */
+.media-placeholder { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; aspect-ratio:16/9; padding:24px; border:1px dashed var(--border-dashed); border-radius:var(--radius-card); background:var(--surface-gray); color:var(--text-muted); text-align:center; }
+.media-placeholder__icon { display:flex; align-items:center; justify-content:center; width:64px; height:64px; border-radius:50%; background:var(--surface-white); color:var(--primary); box-shadow:var(--shadow-sm); }
+.media-placeholder__icon svg { margin-left:3px; }
+.media-placeholder__text { max-width:420px; font-size:13.5px; line-height:1.6; }
+.workflow-version-line { display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin:16px 0 4px; font-weight:600; }
+.review-bar { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:14px 20px; margin:18px 0 6px; padding:18px 20px; border:1px solid var(--primary-border); border-radius:var(--radius-card); background:var(--primary-tint); }
+.workflow-body .review-bar__label { margin:0; font-size:16px; }
+.review-bar__actions { display:flex; flex-wrap:wrap; gap:10px; }
+.workflow-notice { margin:0 0 16px; padding:12px 14px; border-radius:10px; background:var(--success-tint); color:var(--success-dark); font-size:13px; font-weight:600; line-height:1.5; }
+.field-hint { margin-top:6px; color:var(--text-muted); font-size:12px; line-height:1.5; }
+.workflow-body .admin-detail-facts { margin-top:18px; }
+@media(max-width:600px) { .media-placeholder { aspect-ratio:auto; min-height:190px; } .review-bar { padding:16px; } }

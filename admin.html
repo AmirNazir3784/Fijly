@@ -55,10 +55,10 @@
 
     <div class="sidebar-footer">
 <div class="sidebar-user">
-        <span class="avatar" aria-hidden="true">M</span>
+        <span class="avatar" aria-hidden="true" id="admin-avatar">S</span>
         <div class="sidebar-user__meta">
-          <div class="sidebar-user__name">Maya Chen</div>
-          <div class="sidebar-user__email">FIJLY Operations</div>
+          <div class="sidebar-user__name" id="admin-name">Sam Ortiz</div>
+          <div class="sidebar-user__email" id="admin-role">Studio producer</div>
         </div>
       </div>
 
@@ -257,13 +257,13 @@
   </main>
 </div>
 <dialog class="admin-dialog" id="client-detail" aria-labelledby="client-detail-title">
-  <div class="admin-dialog-head"><div><p class="admin-eyebrow">CLIENT PROFILE</p><h2 id="client-detail-title"></h2></div><button class="icon-btn" type="button" data-close-detail aria-label="Close client profile">&times;</button></div>
+  <div class="admin-dialog-head"><div><p class="admin-eyebrow">CLIENT PROFILE</p><h2 id="client-detail-title"></h2></div><button class="icon-btn" type="button" data-close-detail aria-label="Close client profile"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
   <div id="client-detail-body"></div>
-  <div class="admin-dialog-foot"><button class="btn btn-outline btn--md" type="button" data-close-detail>Close</button><button class="btn btn-primary btn--md" type="button" id="edit-client">Edit client</button></div>
+  <div class="admin-dialog-foot"><button class="btn btn-ghost btn--md dialog-dismiss" type="button" data-close-detail>Close</button><button class="btn btn-primary btn--md" type="button" id="edit-client">Edit client</button></div>
 </dialog>
 <dialog class="admin-dialog" id="client-editor" aria-labelledby="client-editor-title">
   <form id="client-form">
-    <div class="admin-dialog-head"><div><p class="admin-eyebrow">CLIENT DETAILS</p><h2 id="client-editor-title">Add client</h2></div><button class="icon-btn" type="button" data-close-editor aria-label="Close client form">&times;</button></div>
+    <div class="admin-dialog-head"><div><p class="admin-eyebrow">CLIENT DETAILS</p><h2 id="client-editor-title">Add client</h2></div><button class="icon-btn" type="button" data-close-editor aria-label="Close client form"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
     <div class="admin-dialog-fields">
       <div class="form-group"><label class="field-label" for="client-name">Company name</label><input class="input" id="client-name" name="company" required maxlength="80" autocomplete="organization"></div>
       <div class="admin-form-row"><div class="form-group"><label class="field-label" for="client-contact">Primary contact</label><input class="input" id="client-contact" name="contact" required maxlength="80" autocomplete="name"></div><div class="form-group"><label class="field-label" for="client-email">Email</label><input class="input" id="client-email" name="email" type="email" required maxlength="150" autocomplete="email"></div></div>
@@ -271,13 +271,13 @@
       <div class="form-group"><label class="field-label" for="client-notes">Production notes</label><textarea class="input" id="client-notes" name="notes" rows="3" maxlength="1000"></textarea></div>
       <p class="panel__sub" id="client-form-note">Mock record only. No account or invitation will be created.</p>
     </div>
-    <div class="admin-dialog-foot"><button class="btn btn-outline btn--md" type="button" data-close-editor>Cancel</button><button class="btn btn-primary btn--md" type="submit">Save client</button></div>
+    <div class="admin-dialog-foot"><button class="btn btn-ghost btn--md dialog-dismiss" type="button" data-close-editor>Cancel</button><button class="btn btn-primary btn--md" type="submit">Save client</button></div>
   </form>
 </dialog>
 <dialog class="admin-dialog" id="asset-detail" aria-labelledby="asset-detail-title">
   <div class="admin-dialog-head"><div><p class="admin-eyebrow">ASSET</p><h2 id="asset-detail-title"></h2></div><button class="icon-btn" type="button" data-close-asset-detail aria-label="Close asset details"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
   <div id="asset-detail-body"></div>
-  <div class="admin-dialog-foot"><button class="btn btn-outline btn--md" type="button" data-close-asset-detail>Close</button><button class="btn btn-outline btn--md" type="button" id="delete-asset">Remove asset</button><button class="btn btn-primary btn--md" type="button" id="edit-asset">Edit asset</button></div>
+  <div class="admin-dialog-foot"><button class="btn btn-ghost btn--md dialog-dismiss" type="button" data-close-asset-detail>Close</button><button class="btn btn-outline btn--md" type="button" id="delete-asset">Remove asset</button><button class="btn btn-primary btn--md" type="button" id="edit-asset">Edit asset</button></div>
 </dialog>
 <dialog class="admin-dialog" id="asset-editor" aria-labelledby="asset-editor-title">
   <form id="asset-form">
@@ -291,19 +291,19 @@
       </div>
       <div class="form-group"><label class="field-label" for="asset-notes">Notes (optional)</label><textarea class="input" id="asset-notes" name="notes" rows="3" maxlength="500"></textarea></div>
     </div>
-    <div class="admin-dialog-foot"><button class="btn btn-outline btn--md" type="button" data-close-asset-editor>Cancel</button><button class="btn btn-primary btn--md" type="submit">Save asset</button></div>
+    <div class="admin-dialog-foot"><button class="btn btn-ghost btn--md dialog-dismiss" type="button" data-close-asset-editor>Cancel</button><button class="btn btn-primary btn--md" type="submit">Save asset</button></div>
   </form>
 </dialog>
 <dialog class="admin-dialog admin-confirm" id="asset-confirm" aria-labelledby="asset-confirm-title">
-  <div class="admin-dialog-head"><div><p class="admin-eyebrow">CONFIRM</p><h2 id="asset-confirm-title">Remove asset</h2></div></div>
+  <div class="admin-dialog-head"><div><p class="admin-eyebrow">CONFIRM</p><h2 id="asset-confirm-title">Remove asset</h2></div><button class="icon-btn" type="button" id="asset-confirm-close" aria-label="Close dialog"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
   <div class="admin-dialog-fields"><p id="asset-confirm-text"></p></div>
-  <div class="admin-dialog-foot"><button class="btn btn-outline btn--md" type="button" id="asset-confirm-cancel">Cancel</button><button class="btn btn-primary btn--md" type="button" id="asset-confirm-ok">Remove asset</button></div>
+  <div class="admin-dialog-foot"><button class="btn btn-ghost btn--md dialog-dismiss" type="button" id="asset-confirm-cancel">Cancel</button><button class="btn btn-primary btn--md" type="button" id="asset-confirm-ok">Remove asset</button></div>
 </dialog>
 <dialog class="admin-dialog" id="script-detail" aria-labelledby="script-detail-title">
   <div class="admin-dialog-head"><div><p class="admin-eyebrow">SCRIPT</p><h2 id="script-detail-title"></h2></div><button class="icon-btn" type="button" data-close-script-detail aria-label="Close script details"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
   <div class="admin-dialog-fields" id="script-detail-body"></div>
   <p class="workflow-error admin-script-error" id="script-detail-error" role="alert"></p>
-  <div class="admin-dialog-foot"><button class="btn btn-outline btn--md" type="button" data-close-script-detail>Close</button><button class="btn btn-primary btn--md" type="button" id="script-action" hidden></button></div>
+  <div class="admin-dialog-foot"><button class="btn btn-ghost btn--md dialog-dismiss" type="button" data-close-script-detail>Close</button><button class="btn btn-outline btn--md" type="button" id="script-save" hidden>Save draft</button><button class="btn btn-primary btn--md" type="button" id="script-action" hidden></button></div>
 </dialog>
 <script src="js/studio-shell.js"></script>
 <script src="js/admin-data.js"></script>
