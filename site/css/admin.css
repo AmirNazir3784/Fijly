@@ -100,6 +100,20 @@
 
 .admin-confirm { width: min(460px, calc(100% - 32px)); }
 
+/* Dialog pattern shared by every dialog in both portals: × in the head,
+   content in the body, and a footer with the dismiss button on the left and
+   the primary action last on the right. */
+.admin-dialog-head .icon-btn { flex: none; }
+.admin-dialog-foot { flex-wrap: wrap; align-items: center; background: var(--surface-white); }
+.admin-dialog-foot .dialog-dismiss { margin-right: auto; }
+.btn-ghost { padding: 0 16px; background: transparent; border: 1px solid transparent; color: var(--text-muted); }
+.btn-ghost:hover { background: var(--surface-hover); color: var(--text-primary); }
+.btn-success { background: var(--success-dark); color: var(--surface-white); }
+.btn-success:hover { background: var(--success-dark); color: var(--surface-white); filter: brightness(.92); }
+.btn--lg { height: 52px; padding: 0 28px; border-radius: 12px; font-size: 15px; }
+/* Keep actions reachable in long dialogs; on phones the footer stacks instead. */
+@media (min-width: 601px) { .admin-dialog-foot { position: sticky; bottom: 0; z-index: 1; } }
+
 /* Dashboard deadlines -------------------------------------------------------- */
 .admin-due { display: flex; align-items: center; gap: 8px; }
 .admin-due .badge { font-family: var(--font-body); }
@@ -113,6 +127,10 @@
 .admin-script-state { margin-bottom: 22px; padding: 12px 14px; border-radius: var(--radius-md); background: var(--surface-hover); border: 1px solid var(--border-light); font-size: 13px; line-height: 1.5; color: var(--text-muted); }
 .admin-script-state--approved { background: var(--success-tint); border-color: var(--success-tint); color: var(--success-dark); font-weight: 600; }
 .admin-script-scenes { padding: 16px 0 4px; }
+.admin-script-scenes .script-scene__content { flex: 1; min-width: 0; }
+.admin-script-editor { width: 100%; min-height: 84px; margin-top: 4px; padding: 10px 12px; resize: vertical; font-size: 14px; line-height: 1.55; }
+.admin-script-ask { margin-top: 18px; padding: 2px 16px 16px; border: 1px solid var(--warning-tint); border-left: 3px solid var(--warning); border-radius: 12px; background: var(--surface-hover); }
+.admin-script-ask h3 { margin-top: 14px; }
 #script-detail-body .comment { margin-top: 10px; }
 .admin-script-error:empty { display: none; }
 .admin-script-error { margin: 0 24px 12px; }

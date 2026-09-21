@@ -119,14 +119,9 @@ const { pathToFileURL } = require('url');
     assert.equal(rows, expected[filter] || 1, `${filter}: ${rows} rows vs ${expected[filter]} videos`);
   }
   await page.locator('.sidebar-link[data-screen="overview"]').click();
-  await page.locator('[data-play-toggle]').first().click();
-  await page.waitForFunction(() => document.querySelector('.timeline__time').textContent !== '00:24');
-  assert.notEqual(await page.locator('.timeline__time').first().textContent(), '00:24');
-  await page.locator('.sidebar-link[data-screen="projects"]').click();
-  assert.equal(await page.locator('#preview').evaluate(e => e.classList.contains('is-playing')), false);
-  await page.locator('.sidebar-link[data-screen="overview"]').click();
-  await page.locator('[data-preview-restart]').click();
-  assert.equal(await page.locator('.timeline__time').first().textContent(), '00:00');
+  // The preview is a placeholder: it names the featured video and never plays.
+  assert.equal(await page.locator('#preview .canvas, #preview .timeline, [data-play-toggle]').count(), 0);
+  assert.match(await page.locator('#preview-video').innerText(), / · (Client Review|In Production|In Revision|Draft Ready|Approved|Completed)$/);
   assert.equal(await page.locator('.scene').count(), 5);
   await page.locator('.sidebar-link[data-screen="settings"]').click();
   await page.locator('label[for="set-digest"]').click();
@@ -149,7 +144,7 @@ const { pathToFileURL } = require('url');
   await page.reload();
   assert.equal(await page.locator('[data-request-list] .list-card').count(), cardsBefore + 1,
     'session mock should survive reload');
-  checks.push('Client filters, preview playback/restart/route pause, storyboard, settings switches, validated local requests and session persistence');
+  checks.push('Client filters, preview placeholder, storyboard, settings switches, validated local requests and session persistence');
 
   await load('admin', 'clients');
   await page.locator('#client-search').fill('alex');
@@ -195,7 +190,7 @@ const { pathToFileURL } = require('url');
   assert.equal(await page.locator('#admin-stats .stat-card__value').first().textContent(), '05');
   await page.locator('#admin-priorities [data-client="northbeam"]').first().click();
   assert.equal(await page.locator('.admin-project-list li').count(), await page.evaluate(() => FijlyMock.state.projects.filter(p => p.client === 'northbeam').length + FijlyMock.pendingRequests('northbeam').length));
-  assert.match(await page.locator('.admin-project-list').innerText(), /Awaiting production/);
+  assert.match(await page.locator('.admin-project-list').innerText(), /Submitted|Under Review/);
   await scan('admin/client-detail-projects');
   await page.setViewportSize({ width: 390, height: 900 });
   await page.screenshot({ path: 'qa/screenshots/v1-admin-client-detail-390.png', fullPage: true });

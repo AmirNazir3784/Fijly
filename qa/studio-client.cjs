@@ -20,19 +20,19 @@ const base = require('./runtime.cjs').base;
   await a.waitForFunction(()=>FijlyMock.state.requests.some(r=>r.title==='Client QA / Product walkthrough'));
   const request = await a.evaluate(()=>FijlyMock.state.requests.find(r=>r.title==='Client QA / Product walkthrough')); assert.equal(request.client,'northbeam'); assert.equal(request.length,'2–3 min'); assert.equal(request.attachments[0].name,'brief.txt'); assert.equal(request.platform,'LinkedIn');
   assert.match(await c.locator('[data-request-list]').innerText(),/Client QA \/ Product walkthrough/);
-  await route('projects'); await c.locator('#client-project-status').selectOption('New Request'); assert.match(await c.locator('.projects-table tbody').innerText(),/Client QA/);
+  await route('projects'); await c.locator('#client-project-search').fill('Client QA'); assert.match(await c.locator('.projects-table tbody').innerText(),/Client QA[\s\S]*Submitted/);
   const videoId=await a.evaluate(id=>FijlyMock.produce(id).id,request.id); await c.waitForFunction(id=>FijlyMock.state.videos.some(v=>v.id===id),videoId);
   await a.evaluate(id=>{FijlyMock.addVersion(id,'qa-v1.mp4','First cut');FijlyMock.setVideoStatus(id,'Draft Ready');FijlyMock.setVideoStatus(id,'Client Review');},videoId);
-  await c.waitForFunction(id=>FijlyMock.get('videos',id).status==='Client Review',videoId); await c.locator('#client-project-status').selectOption('Client Review'); await c.getByRole('button',{name:request.title,exact:true}).click();
-  assert.match(await c.locator('#workflow-detail').innerText(),/Latest draft[\s\S]*qa-v1.mp4/);
+  await c.waitForFunction(id=>FijlyMock.get('videos',id).status==='Client Review',videoId); await c.locator('[data-filter="review"]').click(); await c.getByRole('button',{name:request.title,exact:true}).click();
+  assert.match(await c.locator('#workflow-detail .workflow-version-line').innerText(),/V1 · qa-v1\.mp4/);
   assert.equal(await c.getByRole('button',{name:'Add version',exact:true}).count(),0); assert.equal(await c.getByRole('button',{name:'Edit production details',exact:true}).count(),0);
-  await c.getByRole('button',{name:'Request revision',exact:true}).click(); await c.locator('#wf-feedback').fill('Slow the reporting sequence at 00:18.'); await c.locator('#workflow-editor').getByRole('button',{name:'Save',exact:true}).click();
+  await c.getByRole('button',{name:'Request revision',exact:true}).click(); await c.locator('#wf-feedback').fill('Slow the reporting sequence at 00:18.'); await c.locator('#workflow-editor').getByRole('button',{name:'Send revision request',exact:true}).click();
   await a.waitForFunction(id=>FijlyMock.rounds(FijlyMock.get('videos',id)).length===1,videoId); await close();
-  await c.locator('#client-project-status').selectOption('Revision Requested'); assert.match(await c.locator('.projects-table tbody').innerText(),/Client QA/);
+  await c.locator('[data-filter="production"]').click(); assert.match(await c.locator('.projects-table tbody').innerText(),/Client QA[\s\S]*In Revision/);
   for(let round=1;round<=2;round++) {
     await a.evaluate(id=>{const v=FijlyMock.get('videos',id);FijlyMock.setRevisionStatus(FijlyMock.activeRevision(v).id,'In Revision');FijlyMock.addVersion(id,'qa-v'+(v.versions.length+1)+'.mp4','Revised cut');FijlyMock.setVideoStatus(id,'Draft Ready');FijlyMock.setVideoStatus(id,'Client Review');},videoId);
-    await c.waitForFunction(({id,n})=>FijlyMock.get('videos',id).versions.length===n&&FijlyMock.get('videos',id).status==='Client Review',{id:videoId,n:round+1}); await c.locator('#client-project-status').selectOption('Client Review'); await c.getByRole('button',{name:request.title,exact:true}).click();
-    if(round===1) { await c.getByRole('button',{name:'Request revision',exact:true}).click(); await c.locator('#wf-feedback').fill('Use the shorter closing CTA.'); await c.locator('#workflow-editor').getByRole('button',{name:'Save',exact:true}).click(); await a.waitForFunction(id=>FijlyMock.rounds(FijlyMock.get('videos',id)).length===2,videoId); await close(); }
+    await c.waitForFunction(({id,n})=>FijlyMock.get('videos',id).versions.length===n&&FijlyMock.get('videos',id).status==='Client Review',{id:videoId,n:round+1}); await c.locator('[data-filter="review"]').click(); await c.getByRole('button',{name:request.title,exact:true}).click();
+    if(round===1) { await c.getByRole('button',{name:'Request revision',exact:true}).click(); await c.locator('#wf-feedback').fill('Use the shorter closing CTA.'); await c.locator('#workflow-editor').getByRole('button',{name:'Send revision request',exact:true}).click(); await a.waitForFunction(id=>FijlyMock.rounds(FijlyMock.get('videos',id)).length===2,videoId); await close(); }
   }
   await c.getByRole('button',{name:'Approve video',exact:true}).click(); await c.locator('#workflow-confirm').getByRole('button',{name:'Cancel',exact:true}).click(); assert.match(await c.locator('#workflow-detail').innerText(),/Client Review/);
   await c.getByRole('button',{name:'Approve video',exact:true}).click(); await c.locator('#workflow-confirm').getByRole('button',{name:'Confirm',exact:true}).click();
@@ -59,7 +59,7 @@ const base = require('./runtime.cjs').base;
   await c.getByRole('button',{name:'Save settings',exact:true}).click(); await a.waitForFunction(()=>FijlyMock.get('clients','northbeam').name==='Northbeam QA'); await c.reload({waitUntil:'domcontentloaded'}); assert.equal(await c.locator('#client-company').inputValue(),'Northbeam QA'); assert.equal(await c.locator('#set-digest').isChecked(),true);
   await c.locator('#client-company').fill('Discard me'); await c.locator('#client-discard-settings').click(); assert.equal(await c.locator('#client-company').inputValue(),'Northbeam QA'); await route('requests'); assert.equal(await c.locator('#req-length').inputValue(),'30–45 sec'); assert.equal(await c.locator('#req-platform').inputValue(),'YouTube');
   checks.push('Profile and notifications persist; request preferences applied; unsaved settings survive broadcasts; discard restores values');
-  await route('analytics'); assert.equal(await c.locator('#client-analytics-kpis .stat-card__value').first().innerText(),'2'); assert.doesNotMatch(await c.locator('#client-delivery-chart').innerText(),/Date not recorded/); assert.match(await c.locator('#client-delivery-chart').innerText(),/2026-09/); assert.match(await c.locator('#client-production-time').innerText(),/2 deliveries/);
+  await route('analytics'); assert.equal(await c.locator('#client-analytics-kpis .stat-card__value').first().innerText(),'2'); assert.doesNotMatch(await c.locator('#client-delivery-chart').innerText(),/Date not recorded/); assert.match(await c.locator('#client-delivery-chart').innerText(),/Sep 2026/); assert.match(await c.locator('#client-production-time').innerText(),/2 deliveries/);
   // Exercise each real client, including the empty Relay workspace, and reject foreign IDs.
   for(const id of ['layerbase','orbitly','clearpath','relay','linearwave','northbeam']) {
     await c.evaluate(id=>FijlyMock.client.select(id),id);

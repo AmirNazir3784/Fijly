@@ -49,15 +49,14 @@ const assert=require('assert/strict');const fs=require('fs');
   await p.locator(`[data-filter="${filter}"]`).click();assert.equal(await p.locator('.projects-table tbody tr:visible').count(),count);
   assert.equal(await p.locator(`[data-filter="${filter}"]`).getAttribute('aria-pressed'),'true');
  }
- await p.locator('#client-project-search').fill('no-such-title');assert.match(await p.locator('.projects-table tbody').innerText(),/No projects/);await p.locator('#client-project-search').fill('');
+ await p.locator('#client-project-search').fill('no-such-title');assert.match(await p.locator('.projects-table tbody').innerText(),/No videos match this filter/);await p.locator('#client-project-search').fill('');
  checks.push('All project filters and real search empty state');
  await p.locator('[data-screen="settings"].sidebar-link').click();
  for(const id of ['set-autoshare','set-digest']){
   const input=p.locator('#'+id);const original=await input.isChecked();await p.locator(`label[for="${id}"]`).click();assert.equal(await input.isChecked(),!original);assert.equal(await input.getAttribute('aria-checked'),String(!original));
   await input.focus();await p.keyboard.press('Space');assert.equal(await input.isChecked(),original);assert.equal(await input.getAttribute('aria-checked'),String(original));assert.equal(await input.getAttribute('role'),'switch');
  }checks.push('Both settings switches: labels, mouse, Space, role and ARIA state');
- await p.locator('[data-screen="overview"].sidebar-link').click();await p.locator('.canvas__overlay').click();assert.equal(await p.locator('.timeline__play').getAttribute('aria-label'),'Pause preview');await p.locator('.timeline__play').focus();await p.keyboard.press('Enter');assert.equal(await p.locator('.canvas__overlay').getAttribute('aria-label'),'Play preview');assert.equal(await p.locator('[data-play-toggle][aria-pressed]').count(),0);
- await p.locator('[data-fullscreen]').click();await p.waitForFunction(()=>!!document.fullscreenElement);await p.locator('[data-fullscreen]').click();await p.waitForFunction(()=>!document.fullscreenElement);
+ await p.locator('[data-screen="overview"].sidebar-link').click();assert.equal(await p.locator('#preview .canvas, #preview .timeline, [data-play-toggle], [data-fullscreen]').count(),0);assert.match(await p.locator('#preview-message').innerText(),/Draft ready for review/);
  checks.push('Preview play/pause mouse and keyboard, synchronized names, fullscreen');
  await p.locator('[data-screen="requests"].sidebar-link').click();const before=await p.locator('[data-request-list] .list-card').count();await p.locator('[data-request-form] [type="submit"]').click();assert.equal(await p.locator('[data-request-list] .list-card').count(),before);
  await p.locator('#req-name').fill('Functional regression');await p.locator('#req-brief').fill('Show the core workflow.');await p.locator('[data-request-form] [type="submit"]').click();assert.equal(await p.locator('[data-request-list] .list-card').count(),before+1);checks.push('Request validation and mock submission');

@@ -44,10 +44,8 @@ const assert=require('assert/strict'),fs=require('fs');
  }
  await p.unrouteAll();checks.push('Mock endpoint accepted/rejected responses; rejected brief retained');
  await p.setViewportSize({width:1440,height:900});await p.goto(base+'studio.html#overview',{waitUntil:'domcontentloaded'});
- await p.locator('.timeline__play').click();await p.waitForTimeout(1300);assert.notEqual(await p.locator('.timeline__time').first().textContent(),'00:24');
- await p.locator('.timeline__play').click();let time=await p.locator('.timeline__time').first().textContent();await p.waitForTimeout(1100);assert.equal(await p.locator('.timeline__time').first().textContent(),time);
- await p.locator('[data-preview-restart]').click();assert.equal(await p.locator('.timeline__time').first().textContent(),'00:00');
- checks.push('Studio motion preview advances, pauses and restarts');
+ assert.equal(await p.locator('#preview .canvas, #preview .timeline').count(),0);assert.ok(await p.locator('.preview-placeholder').isVisible());
+ checks.push('Overview preview is a clear placeholder, not a simulated player');
  for(const width of [1440,375])for(const screen of ['marketing','overview','projects','requests','assets','scripts','analytics','settings']){
   await p.setViewportSize({width,height:900});await p.goto(base+(screen==='marketing'?'index.html':'studio.html#'+screen),{waitUntil:'domcontentloaded'});await p.reload({waitUntil:'domcontentloaded'});await p.addScriptTag({path:'qa/axe.min.js'});
   const violations=await p.evaluate(async()=>(await axe.run()).violations.map(v=>({id:v.id,nodes:v.nodes.map(n=>({target:n.target,summary:n.failureSummary}))})));

@@ -7,7 +7,7 @@
     "390: hero bounds, CTA plan context, all concept dialogs, validation, email fallback, contact focus",
     "375: hero bounds, CTA plan context, all concept dialogs, validation, email fallback, contact focus",
     "Mock endpoint accepted/rejected responses; rejected brief retained",
-    "Studio motion preview advances, pauses and restarts"
+    "Overview preview is a clear placeholder, not a simulated player"
   ],
   "errors": [],
   "accessibility": []

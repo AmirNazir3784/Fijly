@@ -11,6 +11,24 @@
   var assetCategories = ['Logo', 'Brand Guidelines', 'Fonts', 'Headshots', 'B-roll', 'Product Images', 'Reference Files', 'Other'];
   var lengths = ['15–30 sec', '30–45 sec', '60–90 sec', '90–120 sec', '2–3 min', '3 min+'];
   var stamp = function () { return new Date().toISOString(); };
+  // One badge colour per status name, shared by both portals.
+  var statusTones = { Submitted: 'badge-info', 'Under Review': 'badge-info', 'In Production': 'badge-warning', 'Draft Ready': 'badge-info', 'Client Review': 'badge-warning', 'In Revision': 'badge-warning', Approved: 'badge-success', Completed: 'badge-success', 'Revision Requested': 'badge-warning', Resolved: 'badge-success', Draft: '' };
+  // Date-only values (deadlines) are calendar dates: read them as local dates so
+  // they never shift a day. Timestamps are shown in the viewer's time zone.
+  function toDate(value) {
+    var day = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(value || ''));
+    return day ? new Date(+day[1], +day[2] - 1, +day[3]) : new Date(value);
+  }
+  function formatDate(value, fallback) {
+    var d = value ? toDate(value) : null;
+    if (!d || isNaN(d)) return fallback === undefined ? 'Not set' : fallback;
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+  function formatDateTime(value, fallback) {
+    var d = value ? toDate(value) : null;
+    if (!d || isNaN(d)) return fallback === undefined ? 'Not set' : fallback;
+    return formatDate(value) + ' · ' + d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+  }
   var id = function (prefix) { return prefix + '-' + (crypto.randomUUID ? crypto.randomUUID() : Date.now() + '-' + Math.random().toString(16).slice(2)); };
   function initialState() {
     var initial = { schema: 3, revision: 0, snapshot: seed.snapshot, clients: clone(seed.clients), activity: [], requests: [], videos: [], revisions: [], assets: clone(seed.assets || []), settings: clone(seed.settings || {}) };
@@ -202,6 +220,8 @@
   }
   var service = {
     state: state, videoStatuses: videoStatuses, revisionStatuses: revisionStatuses, requestStatuses: requestStatuses, scriptStatuses: scriptStatuses, assetCategories: assetCategories,
+    formatDate: formatDate, formatDateTime: formatDateTime,
+    statusClass: function (status) { return 'badge ' + (statusTones[status] || ''); },
     // Submitted or Under Review requests that have not yet become a video.
     pendingRequests: function (clientId) { return state.requests.filter(function (r) { return ['Submitted', 'Under Review'].includes(r.status) && (!clientId || r.client === clientId) && !state.videos.some(function (v) { return v.requestId === r.id; }); }); },
     subscribe: function (listener) { listeners.push(listener); return function () { listeners = listeners.filter(function (entry) { return entry !== listener; }); }; },
@@ -228,7 +248,7 @@
       Object.assign(request, values);
       if (attachments && attachments.length) request.attachments.push.apply(request.attachments, metadata(attachments));
       var video = state.videos.find(function (item) { return item.requestId === identifier; });
-      if (video) event(video, 'Production details updated. Editor: ' + (request.assignedEditor || 'Unassigned') + '; deadline: ' + request.deadline + '.');
+      if (video) event(video, 'Production details updated. Editor: ' + (request.assignedEditor || 'Unassigned') + '; deadline: ' + formatDate(request.deadline) + '.');
       commit();
     },
     reviewRequest: function (identifier) {
@@ -318,7 +338,19 @@
     adminSendScriptForReview: function (identifier) {
       var script = get('scripts', identifier);
       if (script.status !== 'Draft') throw new Error('Only a draft script can be sent for client review.');
+      if (!script.scenes.length || script.scenes.some(function (scene) { return !String(scene.text || '').trim(); })) throw new Error('Write every scene before sending the script to the client.');
       script.status = 'Client Review'; script.updatedAt = stamp();
+      commit(); return script;
+    },
+    // Scene text is editable only while the studio holds the script as a draft.
+    // Labels and scene order stay fixed; `scenes` is the new text per scene.
+    updateScriptScenes: function (identifier, scenes) {
+      var script = get('scripts', identifier);
+      if (script.status !== 'Draft') throw new Error('Only a draft script can be edited.');
+      if (!Array.isArray(scenes) || scenes.length !== script.scenes.length) throw new Error('This script changed elsewhere. Reopen it and try again.');
+      var next = script.scenes.map(function (scene, index) { var value = scenes[index]; return { label: scene.label, text: String(value && typeof value === 'object' ? value.text : value || '').trim() }; });
+      if (JSON.stringify(next) === JSON.stringify(script.scenes)) return script;
+      script.scenes = next; script.updatedAt = stamp();
       commit(); return script;
     },
     /* Settings -------------------------------------------------------------- */

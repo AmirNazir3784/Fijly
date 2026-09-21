@@ -24,13 +24,13 @@
   // Open work: every video not yet completed, plus requests still waiting to
   // become a video. A request that has a video is counted once, as the video.
   function openCount(id) { return projects(id).filter(function (item) { return item.status !== 'Completed'; }).length + pending(id).length; }
+  // Client relationship states are Admin-only; every workflow status uses the
+  // shared colour map so both portals agree.
+  var clientTones = { Active: 'badge-success', Onboarding: 'badge-info', Paused: '', Overdue: 'badge-danger' };
   function badge(value) {
-    var classes = { Active: 'badge-success', Onboarding: 'badge-info', Paused: '', 'In Production': 'badge-warning', 'Draft Ready': 'badge-info', 'Client Review': 'badge-info', 'In Revision': 'badge-warning', Approved: 'badge-success', Completed: 'badge-success', Submitted: 'badge-info', 'Under Review': 'badge-info', Overdue: 'badge-danger' };
-    return node('span', 'badge ' + (classes[value] || ''), value);
+    return node('span', Object.prototype.hasOwnProperty.call(clientTones, value) ? 'badge ' + clientTones[value] : window.FijlyMock.statusClass(value), value);
   }
-  function date(value) {
-    return new Date(value + 'T12:00:00Z').toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
-  }
+  function date(value) { return window.FijlyMock.formatDate(value); }
   // Deadlines are calendar dates, so compare them with the local calendar date.
   function localDay(value) {
     return value.getFullYear() + '-' + String(value.getMonth() + 1).padStart(2, '0') + '-' + String(value.getDate()).padStart(2, '0');
@@ -64,14 +64,14 @@
     var overdue = openVideos.filter(function (item) { return item.due < today; });
     // Overdue work stays listed alongside the rest of this week's deadlines.
     var due = openVideos.filter(function (item) { return item.due <= weekEnd; }).sort(function (a, b) { return a.due.localeCompare(b.due); });
-    document.getElementById('dashboard-date').textContent = 'OPERATIONS / ' + now.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }).toUpperCase();
+    document.getElementById('dashboard-date').textContent = 'OPERATIONS / ' + date(today).toUpperCase();
     var stats = document.getElementById('admin-stats');
     stats.replaceChildren();
     [
       ['Active clients', active, data.clients.length + ' clients in the studio'],
-      ['Active projects', openVideos.length + waiting, production + ' in production · +' + waiting + ' pending ' + (waiting === 1 ? 'request' : 'requests')],
+      ['Active projects', openVideos.length + waiting, production + ' in production · +' + waiting + ' submitted ' + (waiting === 1 ? 'request' : 'requests')],
       ['Awaiting review', review, 'Ready for client feedback'],
-      ['Due this week', thisWeek.length, date(weekStart) + '–' + date(weekEnd) + (overdue.length ? ' · ' + overdue.length + ' overdue' : '')]
+      ['Due this week', thisWeek.length, date(weekStart) + ' – ' + date(weekEnd) + (overdue.length ? ' · ' + overdue.length + ' overdue' : '')]
     ].forEach(function (stat) {
       var card = node('article', 'stat-card');
       card.append(node('h2', 'stat-card__label', stat[0]), node('div', 'stat-card__value', String(stat[1]).padStart(2, '0')), node('div', 'stat-card__delta stat-card__delta--muted', stat[2]));
@@ -108,7 +108,7 @@
     });
     var activity = document.getElementById('admin-activity');
     activity.replaceChildren();
-    var recent = data.videos.flatMap(function(v){return v.activity.map(function(a){return {client:window.FijlyMock.requestFor(v).client,text:a.text,time:new Date(a.at).toLocaleString(),at:a.at};});}).sort(function(a,b){return b.at.localeCompare(a.at);});
+    var recent = data.videos.flatMap(function(v){return v.activity.map(function(a){return {client:window.FijlyMock.requestFor(v).client,text:a.text,time:window.FijlyMock.formatDateTime(a.at),at:a.at};});}).sort(function(a,b){return b.at.localeCompare(a.at);});
     recent.slice(0, 4).forEach(function (item) {
       var entry = node('li');
       var avatar = node('span', 'avatar avatar--sm', client(item.client).name.charAt(0));
@@ -172,7 +172,7 @@
     });
     pending(id).forEach(function (request) {
       var row = node('li'); var text = node('div');
-      text.append(node('strong', '', request.title), node('span', 'admin-muted admin-block', request.videoType + ' / ' + date(request.deadline) + ' / Awaiting production'));
+      text.append(node('strong', '', request.title), node('span', 'admin-muted admin-block', request.videoType + ' / ' + date(request.deadline)));
       row.append(text, badge(request.status)); list.append(row);
     });
     if (!list.children.length) list.append(node('li', 'admin-muted', 'No projects yet. This client is ready for a first brief.'));

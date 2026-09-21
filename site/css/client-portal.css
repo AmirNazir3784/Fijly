@@ -47,3 +47,18 @@
 .client-workspace-empty[hidden] { display:none; }
 @media(max-width:600px) { .client-toolbar { align-items:stretch; } .client-toolbar > label { min-width:100%; } .client-chart-row { grid-template-columns:minmax(70px,1fr) 1fr auto; } .doc__head ~ .client-toolbar { padding:0 16px; } }
 @media(max-width:600px) { #client-script-actions > .btn { width:100%; } #client-script-actions form { flex-basis:100%; } }
+
+/* Overview: the preview frame is a clear placeholder, not a player. It fills
+   the card, which the grid stretches to the storyboard height. */
+#preview:not([hidden]) { display: flex; flex-direction: column; }
+.preview-placeholder { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; aspect-ratio: 16 / 9; padding: 28px; background: var(--surface-gray); text-align: center; }
+.preview-placeholder__icon { display: flex; align-items: center; justify-content: center; width: 64px; height: 64px; border-radius: 50%; background: var(--surface-white); color: var(--primary); box-shadow: var(--shadow-sm); }
+.preview-placeholder__icon svg { margin-left: 3px; }
+.preview-placeholder__message { max-width: 440px; color: var(--text-primary); font-size: 16px; font-weight: 700; line-height: 1.45; }
+.preview-placeholder__video { color: var(--text-muted); font-size: 13px; line-height: 1.5; }
+.preview-placeholder .btn { margin-top: 4px; }
+@media (max-width: 600px) { .preview-placeholder { aspect-ratio: auto; min-height: 240px; } }
+
+/* Projects empty states, centred across the table. */
+.projects-table td.table-empty-cell { padding: 0; text-align: center; }
+.table-empty-state { display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 40px 20px; color: var(--text-muted); font-size: 14px; }
