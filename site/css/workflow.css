@@ -1,0 +1,27 @@
+.workflow-toolbar { display:grid; grid-template-columns:2fr repeat(4,1fr); gap:12px; padding:20px; }
+.workflow-toolbar label { min-width:0; font-size:11px; color:var(--text-muted); }
+.workflow-toolbar .input { width:100%; margin-top:6px; }
+.workflow-table { min-width:880px; }
+.workflow-table button { white-space:normal; }
+.workflow-detail { width:min(860px,calc(100% - 32px)); }
+.workflow-body { padding:24px; font-size:13px; line-height:1.7; overflow-wrap:anywhere; }
+.workflow-body h3 { margin:24px 0 10px; }
+.workflow-actions { display:flex; flex-wrap:wrap; gap:10px; margin-top:22px; }
+.workflow-entry { padding:14px 0; border-bottom:1px solid var(--border-light); }
+.workflow-entry p { white-space:pre-wrap; }
+.workflow-feedback { padding:16px; background:var(--surface-hover); border-left:3px solid var(--primary); border-radius:8px; white-space:pre-wrap; }
+.workflow-version { padding:18px; border:1px solid var(--border-default); border-radius:12px; background:var(--surface-hover); margin:10px 0; }
+.workflow-version summary { cursor:pointer; font-weight:600; }
+.workflow-error { color:#b42318; margin:12px 0; font-size:13px; }
+.workflow-file { padding:10px; height:auto; }
+.workflow-table-wrap { overflow-x:auto; position:relative; }
+.workflow-detail .admin-dialog-foot { flex-wrap:wrap; }
+.workflow-body .btn-link { border:0; background:none; color:var(--primary); cursor:pointer; }
+.workflow-detail .admin-dialog-head h2 { overflow-wrap:anywhere; }
+.workflow-request-card { padding:18px; }
+.workflow-request-card .badge { margin:10px 0; }
+.studio-noscript { padding:2rem; text-align:center; font-family:sans-serif; }
+.admin-dialog h2,.admin-dialog p,.admin-dialog dd,.admin-project-list strong,.list-card__title,.doc__title,.file-row__title,.table button,.table td { overflow-wrap:anywhere; }
+.admin-dialog .input { max-width:100%; min-width:0; }
+@media(max-width:1100px) { .workflow-toolbar { grid-template-columns:repeat(2,minmax(0,1fr)); } .workflow-toolbar label:first-child { grid-column:1/-1; } }
+@media(max-width:600px) { .workflow-toolbar,.workflow-body { padding:16px; } .workflow-toolbar .input { font-size:16px; } .workflow-actions .btn { width:100%; } }

@@ -1,0 +1,90 @@
+{
+  "at": "2026-09-21T13:56:16.520Z",
+  "results": [
+    {
+      "suite": "qa/static_check.py",
+      "exitCode": 0,
+      "seconds": 1.285
+    },
+    {
+      "suite": "qa/studio-v1.cjs",
+      "exitCode": 0,
+      "seconds": 92.568
+    },
+    {
+      "suite": "qa/studio-workflow.cjs",
+      "exitCode": 0,
+      "seconds": 29.344
+    },
+    {
+      "suite": "qa/studio-workflow-probe.cjs",
+      "exitCode": 0,
+      "seconds": 3.308
+    },
+    {
+      "suite": "qa/studio-workflow-sweep.cjs",
+      "exitCode": 0,
+      "seconds": 12.601
+    },
+    {
+      "suite": "qa/studio-admin-sections.cjs",
+      "exitCode": 0,
+      "seconds": 18.994
+    },
+    {
+      "suite": "qa/studio-client.cjs",
+      "exitCode": 0,
+      "seconds": 22.19
+    },
+    {
+      "suite": "qa/studio-stability.cjs",
+      "exitCode": 0,
+      "seconds": 15.179
+    },
+    {
+      "suite": "qa/functional.cjs",
+      "exitCode": 0,
+      "seconds": 48.61
+    },
+    {
+      "suite": "qa/accessibility.cjs",
+      "exitCode": 0,
+      "seconds": 15.206
+    },
+    {
+      "suite": "qa/refinement-check.cjs",
+      "exitCode": 0,
+      "seconds": 44.956
+    },
+    {
+      "suite": "qa/final_browser.cjs",
+      "exitCode": 0,
+      "seconds": 17.652
+    },
+    {
+      "suite": "qa/render.cjs",
+      "exitCode": 0,
+      "seconds": 20.667
+    },
+    {
+      "suite": "qa/refinement-render.cjs",
+      "exitCode": 0,
+      "seconds": 25.188
+    },
+    {
+      "suite": "qa/visual-sheets.cjs",
+      "exitCode": 0,
+      "seconds": 6.174
+    },
+    {
+      "suite": "qa/compare.cjs",
+      "exitCode": 0,
+      "seconds": 1.733
+    },
+    {
+      "suite": "qa/performance.cjs",
+      "exitCode": 0,
+      "seconds": 4.897
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+[
+  { screen: 'marketing', violations: [] },
+  { screen: 'overview', violations: [] },
+  { screen: 'projects', violations: [] },
+  { screen: 'requests', violations: [] },
+  { screen: 'assets', violations: [] },
+  { screen: 'scripts', violations: [] },
+  { screen: 'analytics', violations: [] },
+  { screen: 'settings', violations: [] }
+]
+Focus after mobile navigation: {
+  active: '<h1 id="h-projects" tabindex="-1">Projects</h1>',
+  visible: true
+}
+Hash change visible screen: settings

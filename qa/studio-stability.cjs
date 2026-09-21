@@ -1,0 +1,81 @@
+const {chromium,base,routes,widths}=require('./runtime.cjs'),assert=require('assert/strict'),fs=require('fs');
+(async()=>{
+ const b=await chromium.launch(),ctx=await b.newContext(),p=await ctx.newPage(),q=await ctx.newPage(),errors=[],requests=[],cancelledResources=new Set(),checks=[],scans=[];
+ for(const page of [p,q]){page.setDefaultTimeout(10000);page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error')errors.push(m.text());});page.on('response',r=>{if(r.status()>=400)requests.push(r.url());});page.on('requestfailed',r=>{if(r.failure().errorText==='net::ERR_ABORTED')cancelledResources.add(r.url());else requests.push(r.url()+': '+r.failure().errorText);});}
+ const load=async(page,portal,route)=>page.goto(base+portal+'.html#'+route,{waitUntil:'load'});
+ const scan=async(label)=>{await p.addScriptTag({path:'qa/axe.min.js'});scans.push({label,violations:await p.evaluate(async()=>(await axe.run(document,{runOnly:{type:'tag',values:['wcag2a','wcag2aa','wcag21aa','best-practice']}})).violations.map(v=>({id:v.id,targets:v.nodes.map(n=>n.target)})))});};
+ await load(p,'admin','dashboard');await load(q,'studio','overview');
+ const seed=await p.evaluate(()=>JSON.parse(JSON.stringify(FijlyMock.state)));
+ // Validate service guards independently of native browser form validation.
+ const validation=await p.evaluate(()=>{const api=FijlyMock,input={title:'Guard test',instructions:'A clear brief',platform:'Website',videoType:'Tutorial',priority:'Normal',deadline:'2026-10-01'},out={};
+ const rejects=(name,fn)=>{try{fn();out[name]=false;}catch(e){out[name]=!!e.message;}};
+ rejects('rollover date',()=>api.createRequest({...input,deadline:'2026-02-31'},'northbeam'));
+ rejects('invalid date',()=>api.createRequest({...input,deadline:'invalid'},'northbeam'));
+ rejects('invalid reference',()=>api.createRequest({...input,references:['javascript:alert(1)']},'northbeam'));
+ rejects('incomplete link',()=>api.createRequest({...input,references:['example.com']},'northbeam'));
+ rejects('unknown client',()=>api.createRequest(input,'missing-client'));
+ rejects('invalid client email',()=>api.saveClient({name:'Invalid',contact:'Test',email:'invalid',status:'Active'}));
+ rejects('invalid studio email',()=>api.saveSettings({studioEmail:'invalid'}));
+ rejects('fractional turnaround',()=>api.saveSettings({defaultLeadDays:1.5}));
+ rejects('invalid length',()=>api.saveSettings({defaultLength:'bogus'}));
+ const completed=api.state.videos.find(v=>v.status==='Completed');for(const [name,fn] of [['completed version',()=>api.addVersion(completed.id)],['completed revision',()=>api.requestRevision(completed.id,'text')],['completed transition',()=>api.setVideoStatus(completed.id,'In Production')],['completed request edit',()=>api.updateRequest(completed.requestId,{title:'bad'})]])rejects(name,fn);
+ const r=api.createRequest(input,'northbeam',[{},null,{name:'brief.txt'}]);out['metadata normalized']=r.attachments.length===1&&r.attachments[0].size===0;
+ const v=api.produce(r.id);out['production idempotent']=api.produce(r.id).id===v.id;rejects('no draft review',()=>api.setVideoStatus(v.id,'Client Review'));rejects('no draft ready',()=>api.setVideoStatus(v.id,'Draft Ready'));
+ const rev=api.state.revision;api.saveSettings({...api.state.settings});out['no-op revision unchanged']=api.state.revision===rev;
+ let called=0;const unsubscribe=api.subscribe(()=>called++);unsubscribe();api.saveSettings({adminRole:'QA role'});out['unsubscribe works']=called===0;return out;});
+ assert.ok(Object.values(validation).every(Boolean),JSON.stringify(validation));checks.push({validation});
+ await q.waitForFunction(()=>FijlyMock.state.settings.adminRole==='QA role');
+ // Concurrent, independent changes must survive delayed BroadcastChannel delivery.
+ await ctx.addInitScript(()=>{const Native=BroadcastChannel;window.qaQueue=[];window.qaHold=false;window.BroadcastChannel=class extends Native{postMessage(message){if(window.qaHold)qaQueue.push(()=>super.postMessage(message));else super.postMessage(message);}};});
+ await p.reload();await q.reload();
+ await Promise.all([p.evaluate(()=>window.qaHold=true),q.evaluate(()=>window.qaHold=true)]);
+ await Promise.all([p.evaluate(()=>FijlyMock.createRequest({title:'Concurrent admin',instructions:'Admin brief',platform:'Website',videoType:'Tutorial',priority:'Normal',deadline:'2026-10-01'},'layerbase')),q.evaluate(()=>FijlyMock.client.createRequest({title:'Concurrent client',instructions:'Client brief',platform:'Website',videoType:'Tutorial',priority:'Normal',deadline:'2026-10-01'}))]);
+ await Promise.all([p.evaluate(()=>{qaHold=false;qaQueue.splice(0).forEach(send=>send());}),q.evaluate(()=>{qaHold=false;qaQueue.splice(0).forEach(send=>send());})]);
+ for(const page of [p,q])await page.waitForFunction(()=>['Concurrent admin','Concurrent client'].every(title=>FijlyMock.state.requests.some(r=>r.title===title)));
+ checks.push('Delayed concurrent tab writes preserve both independent requests and converge');
+ // Dynamic filter options and a live client profile asset count.
+ const newClient=await p.evaluate(()=>FijlyMock.saveClient({name:'QA new client',contact:'QA',email:'qa@example.com',status:'Active'}));
+ await load(p,'admin','requests');assert.ok((await p.locator('[data-workflow-list="requests"] [data-filter="client"] option').allTextContents()).includes('QA new client'));
+ await p.evaluate(()=>FijlyMock.saveClient({name:'QA live option',contact:'QA',email:'live@example.com',status:'Active'}));assert.ok((await p.locator('[data-workflow-list="requests"] [data-filter="client"] option').allTextContents()).includes('QA live option'));
+ await load(p,'admin','clients');await p.locator('#client-rows [data-client="northbeam"]').first().click();const assetsBefore=await p.evaluate(()=>FijlyMock.assetsFor('northbeam').length);await q.evaluate(()=>FijlyMock.client.addAsset({name:'cross-tab-profile.txt',category:'Other'}));await p.waitForFunction(n=>document.querySelector('#client-detail-body').textContent.includes(n+' files'),assetsBefore+1);await p.keyboard.press('Escape');
+ await load(p,'admin','assets');await p.locator('#asset-search').fill('cross-tab-profile');await p.locator('#asset-rows button').first().click();await p.locator('#edit-asset').click();await q.evaluate(()=>FijlyMock.deleteAsset(FijlyMock.state.assets.find(a=>a.name==='cross-tab-profile.txt').id));await p.waitForFunction(()=>!document.querySelector('#asset-editor').open);assert.match(await p.locator('#asset-save-status').innerText(),/removed in another tab/);
+ checks.push('New client filters refresh, live profile asset count updates, cross-tab deletion closes stale asset editor');
+ // Long text must wrap in cards and dialogs without page overflow.
+ await load(q,'studio','requests');await q.locator('#req-name').fill('LongTitle'.repeat(13));await q.locator('#req-brief').fill('Instructions'.repeat(250));await q.getByRole('button',{name:'Submit request',exact:true}).dblclick();
+ const longId=await q.evaluate(()=>FijlyMock.client.records('requests').find(r=>r.title.startsWith('LongTitle')).id);assert.equal(await q.evaluate(()=>FijlyMock.client.records('requests').filter(r=>r.title.startsWith('LongTitle')).length),1);
+ await p.waitForFunction(id=>FijlyMock.state.requests.some(r=>r.id===id),longId);await p.evaluate(id=>FijlyWorkflow.open('requests',id),longId);
+ for(const width of widths){await p.setViewportSize({width,height:900});assert.equal(await p.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false,'long dialog '+width);assert.equal(await p.locator('#workflow-detail').evaluate(d=>d.scrollWidth>d.clientWidth+1),false,'dialog internal overflow '+width);}
+ await scan('long request detail mobile');await p.keyboard.press('Escape');
+ checks.push('Long title/instructions, repeated submit and dialog wrapping at all five widths');
+ await p.setViewportSize({width:1440,height:900});await load(p,'studio','projects');
+ await p.getByRole('button',{name:'CloudDesk / Homepage explainer',exact:true}).click();await p.getByRole('button',{name:'Approve video',exact:true}).click();await p.locator('#workflow-confirm').getByRole('button',{name:'Confirm',exact:true}).click();
+ await p.waitForFunction(()=>document.querySelector('#workflow-detail').contains(document.activeElement)&&document.activeElement.checkVisibility());
+ await p.locator('#workflow-detail .admin-dialog-head button').click();await p.waitForFunction(()=>document.activeElement!==document.body&&document.activeElement.checkVisibility()&&!document.activeElement.closest('dialog'));
+ await p.getByRole('button',{name:'CloudDesk / Homepage explainer',exact:true}).click();await p.evaluate(()=>location.hash='analytics');await p.waitForFunction(()=>!document.querySelector('dialog[open]'));
+ checks.push('Approval/close returns visible keyboard focus; route changes close modal details');
+ // Empty and malformed sessions use isolated contexts, never corrupt the main run.
+ for(const scenario of ['no-clients','no-work','no-videos','no-requests','no-assets','missing-fields','orphaned-records']){
+  const state=structuredClone(seed);delete state.clocks;
+  if(scenario==='no-clients')state.clients=[];
+  if(scenario==='no-work')for(const key of ['requests','videos','revisions','assets','scripts'])state[key]=[];
+  if(['no-videos','no-requests','no-assets'].includes(scenario))state[scenario.slice(3)]=[];
+  if(scenario==='missing-fields'){for(const r of state.requests){delete r.references;delete r.attachments;delete r.assignedEditor;}for(const a of state.assets){delete a.fileType;delete a.size;delete a.notes;delete a.uploadedAt;}}
+  if(scenario==='orphaned-records'){state.requests.push({...state.requests[0],id:'orphan-request',client:'missing'});state.videos.push({...state.videos[0],id:'orphan-video',requestId:'missing'});state.assets.push({...state.assets[0],id:'orphan-asset',client:'missing'});state.scripts.push({...state.scripts[0],id:'leaked-script',client:'layerbase'});state.videos[0].versions.push({...state.videos[0].versions[0]});}
+  const isolated=await b.newContext();await isolated.addInitScript(s=>sessionStorage.setItem('fijly-studio-workflow-v3',JSON.stringify(s)),state);const page=await isolated.newPage();page.on('pageerror',e=>errors.push(scenario+': '+e.message));page.on('console',m=>{if(m.type()==='error')errors.push(scenario+': '+m.text());});
+  for(const [portal,screens]of Object.entries(routes))for(const screen of screens){await load(page,portal,screen);assert.equal(await page.locator('.screen:visible').count(),1);assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false,scenario+'/'+screen);}
+  if(scenario==='no-clients'){await load(page,'admin','assets');await page.locator('[data-add-asset]').click();assert.match(await page.locator('#asset-save-status').innerText(),/Add a client/);await load(page,'studio','requests');assert.match(await page.locator('.screen:visible').innerText(),/No client workspace/);await page.evaluate(()=>FijlyMock.saveClient({name:'First client',contact:'Test',email:'test@example.com',status:'Active'}));assert.equal(await page.locator('body').evaluate(e=>e.classList.contains('client-no-workspace')),false);assert.equal(await page.locator('#client-analytics-kpis .stat-card').count(),5);}
+  if(scenario==='orphaned-records')assert.equal(await page.evaluate(()=>FijlyMock.state.videos.some(v=>v.id==='orphan-video')||FijlyMock.state.scripts.some(s=>s.id==='leaked-script')||FijlyMock.state.videos[0].versions.length!==1),false);
+  await isolated.close();checks.push(scenario+': all 15 routes render; invalid relationships excluded, valid work preserved');
+ }
+ // IDs, relationships, status/round/version consistency across the exercised state.
+ const integrity=await p.evaluate(()=>{const s=FijlyMock.state,issues=[];for(const key of ['clients','requests','videos','revisions','assets','scripts'])if(new Set(s[key].map(r=>r.id)).size!==s[key].length)issues.push(key+' duplicate IDs');for(const r of s.requests)if(!s.clients.some(c=>c.id===r.client))issues.push('orphan request');for(const v of s.videos){if(!s.requests.some(r=>r.id===v.requestId))issues.push('orphan video');if(new Set(v.versions.map(x=>x.number)).size!==v.versions.length)issues.push('duplicate versions');for(const round of FijlyMock.rounds(v))if(!v.feedback.some(f=>f.id===round.feedbackId&&f.version===round.baseVersion))issues.push('revision feedback ownership');}for(const script of s.scripts){const v=s.videos.find(v=>v.id===script.videoId);if(!v||FijlyMock.requestFor(v).client!==script.client)issues.push('script ownership');}return issues;});assert.deepEqual(integrity,[]);
+ await p.setViewportSize({width:1440,height:900});await load(p,'admin','analytics');await p.locator('#analytics-client').selectOption('linearwave');assert.equal(await p.locator('#analytics-kpis .stat-card__value').first().innerText(),'00');assert.equal(await p.locator('#analytics-kpis .stat-card__value').nth(6).innerText(),'6.3d');
+ checks.push('Integrity checks pass; inactive-client analytics and seeded completion dates are accurate');
+ for(const width of widths){await p.setViewportSize({width,height:900});await load(p,'admin','assets');assert.ok(await p.locator('.admin-assets-table').evaluate(t=>t.offsetWidth>=1100));assert.ok(await p.locator('#asset-rows tr').first().evaluate(r=>r.offsetHeight<200),'Asset rows remain readable at '+width);assert.equal(await p.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);await load(p,'admin','analytics');assert.ok(await p.locator('#screen-analytics .table').evaluate(t=>t.offsetWidth>=650));}
+ checks.push('Asset and analytics tables retain readable columns at all widths, inside horizontal scroll containers');
+ // Navigation or re-render can cancel lazy images. Verify those URLs directly;
+ // never count a missing resource as an expected navigation cancellation.
+ for(const url of cancelledResources){const response=await ctx.request.get(url);assert.ok(response.ok(),'Cancelled resource is unavailable: '+url);}
+ const cancelledResourcesChecked=[...cancelledResources];
+ fs.writeFileSync('qa/studio-stability-results.json',JSON.stringify({checks,scans,errors,failedRequests:requests,cancelledResourcesChecked,integrity},null,2));await b.close();assert.deepEqual(errors,[]);assert.deepEqual(requests,[]);assert.ok(scans.every(s=>!s.violations.length),JSON.stringify(scans));console.log(JSON.stringify({checks,scans:scans.length,errors,failedRequests:requests,cancelledResourcesChecked},null,2));
+})().catch(e=>{console.error(e);process.exit(1)});

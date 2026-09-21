@@ -1,0 +1,202 @@
+{
+  "measuredAt": "2026-09-21T01:54:16.448Z",
+  "note": "Local static server, Chromium, three fresh contexts. Diagnostic timings, not a production SLA.",
+  "reports": [
+    {
+      "portal": "studio",
+      "samples": [
+        {
+          "domReadyMs": 1794.8999999999069,
+          "loadMs": 3029.600000000093,
+          "domNodes": 892,
+          "resources": 18
+        },
+        {
+          "domReadyMs": 704.1999999997206,
+          "loadMs": 1681.6999999997206,
+          "domNodes": 892,
+          "resources": 18
+        },
+        {
+          "domReadyMs": 744.8000000002794,
+          "loadMs": 2270.9000000003725,
+          "domNodes": 892,
+          "resources": 18,
+          "noopUpdates": {
+            "tenNoopSavesMs": 29.899999999906868,
+            "domMutations": 1350
+          }
+        }
+      ]
+    },
+    {
+      "portal": "admin",
+      "samples": [
+        {
+          "domReadyMs": 2025.7000000001863,
+          "loadMs": 3098.3000000002794,
+          "domNodes": 1558,
+          "resources": 13
+        },
+        {
+          "domReadyMs": 843.6000000000931,
+          "loadMs": 1991.3999999999069,
+          "domNodes": 1558,
+          "resources": 13
+        },
+        {
+          "domReadyMs": 519.3000000002794,
+          "loadMs": 1554.3000000002794,
+          "domNodes": 1558,
+          "resources": 13,
+          "noopUpdates": {
+            "tenNoopSavesMs": 51.1999999997206,
+            "domMutations": 900
+          }
+        }
+      ]
+    }
+  ],
+  "sizes": [
+    {
+      "file": "js/admin-data.js",
+      "bytes": 8109,
+      "gzipBytes": 2353
+    },
+    {
+      "file": "js/admin-sections.js",
+      "bytes": 25826,
+      "gzipBytes": 6510
+    },
+    {
+      "file": "js/admin.js",
+      "bytes": 12369,
+      "gzipBytes": 3391
+    },
+    {
+      "file": "js/client-portal.js",
+      "bytes": 18877,
+      "gzipBytes": 5523
+    },
+    {
+      "file": "js/config.js",
+      "bytes": 324,
+      "gzipBytes": 248
+    },
+    {
+      "file": "js/contact.js",
+      "bytes": 6201,
+      "gzipBytes": 2231
+    },
+    {
+      "file": "js/hero.js",
+      "bytes": 2620,
+      "gzipBytes": 964
+    },
+    {
+      "file": "js/main.js",
+      "bytes": 5164,
+      "gzipBytes": 1702
+    },
+    {
+      "file": "js/mock-service.js",
+      "bytes": 22223,
+      "gzipBytes": 6299
+    },
+    {
+      "file": "js/studio-shell.js",
+      "bytes": 5396,
+      "gzipBytes": 1675
+    },
+    {
+      "file": "js/studio.js",
+      "bytes": 3740,
+      "gzipBytes": 1210
+    },
+    {
+      "file": "js/video-gallery.js",
+      "bytes": 9949,
+      "gzipBytes": 3400
+    },
+    {
+      "file": "js/workflow.js",
+      "bytes": 23147,
+      "gzipBytes": 6967
+    },
+    {
+      "file": "css/admin.css",
+      "bytes": 9438,
+      "gzipBytes": 2240
+    },
+    {
+      "file": "css/base.css",
+      "bytes": 3307,
+      "gzipBytes": 1308
+    },
+    {
+      "file": "css/client-portal.css",
+      "bytes": 1764,
+      "gzipBytes": 713
+    },
+    {
+      "file": "css/components.css",
+      "bytes": 17677,
+      "gzipBytes": 3572
+    },
+    {
+      "file": "css/dashboard.css",
+      "bytes": 44078,
+      "gzipBytes": 7957
+    },
+    {
+      "file": "css/marketing.css",
+      "bytes": 48795,
+      "gzipBytes": 10946
+    },
+    {
+      "file": "css/variables.css",
+      "bytes": 5099,
+      "gzipBytes": 1876
+    },
+    {
+      "file": "css/workflow.css",
+      "bytes": 1872,
+      "gzipBytes": 696
+    },
+    {
+      "file": "assets/concept-aiflow.svg",
+      "bytes": 2685,
+      "gzipBytes": 1035
+    },
+    {
+      "file": "assets/concept-clouddesk.svg",
+      "bytes": 3766,
+      "gzipBytes": 1082
+    },
+    {
+      "file": "assets/concept-finly.svg",
+      "bytes": 2388,
+      "gzipBytes": 981
+    },
+    {
+      "file": "assets/concept-taskpilot.svg",
+      "bytes": 3758,
+      "gzipBytes": 1078
+    },
+    {
+      "file": "assets/favicon.ico",
+      "bytes": 4286,
+      "gzipBytes": 265
+    },
+    {
+      "file": "assets/favicon.svg",
+      "bytes": 161,
+      "gzipBytes": 153
+    },
+    {
+      "file": "assets/og-image.png",
+      "bytes": 97839,
+      "gzipBytes": 95983
+    }
+  ]
+}

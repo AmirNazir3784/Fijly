@@ -1,0 +1,161 @@
+{
+  "checks": [
+    "1440px: all 15 active routes, selected navigation, one heading, no overflow or subscription UI",
+    "1024px: all 15 active routes, selected navigation, one heading, no overflow or subscription UI",
+    "768px: all 15 active routes, selected navigation, one heading, no overflow or subscription UI",
+    "390px: all 15 active routes, selected navigation, one heading, no overflow or subscription UI",
+    "320px: all 15 active routes, selected navigation, one heading, no overflow or subscription UI",
+    "Both shells: mobile links, focus trap, Escape, resize, and browser back/forward",
+    "Team and subscriptions retained only in inactive templates; deferred Admin routes fall back safely",
+    "Client filters, preview playback/restart/route pause, storyboard, settings switches, validated local requests and session persistence",
+    "Admin search/status/sort/empty state, validation and duplicate prevention, safe text rendering, add/edit/cancel, metric updates, profiles, dialogs, and session persistence"
+  ],
+  "scans": [
+    {
+      "label": "studio/overview/1440",
+      "violations": []
+    },
+    {
+      "label": "studio/projects/1440",
+      "violations": []
+    },
+    {
+      "label": "studio/requests/1440",
+      "violations": []
+    },
+    {
+      "label": "studio/assets/1440",
+      "violations": []
+    },
+    {
+      "label": "studio/scripts/1440",
+      "violations": []
+    },
+    {
+      "label": "studio/analytics/1440",
+      "violations": []
+    },
+    {
+      "label": "studio/settings/1440",
+      "violations": []
+    },
+    {
+      "label": "admin/dashboard/1440",
+      "violations": []
+    },
+    {
+      "label": "admin/clients/1440",
+      "violations": []
+    },
+    {
+      "label": "admin/requests/1440",
+      "violations": []
+    },
+    {
+      "label": "admin/videos/1440",
+      "violations": []
+    },
+    {
+      "label": "admin/revisions/1440",
+      "violations": []
+    },
+    {
+      "label": "admin/assets/1440",
+      "violations": []
+    },
+    {
+      "label": "admin/scripts/1440",
+      "violations": []
+    },
+    {
+      "label": "admin/analytics/1440",
+      "violations": []
+    },
+    {
+      "label": "admin/settings/1440",
+      "violations": []
+    },
+    {
+      "label": "studio/overview/390",
+      "violations": []
+    },
+    {
+      "label": "studio/projects/390",
+      "violations": []
+    },
+    {
+      "label": "studio/requests/390",
+      "violations": []
+    },
+    {
+      "label": "studio/assets/390",
+      "violations": []
+    },
+    {
+      "label": "studio/scripts/390",
+      "violations": []
+    },
+    {
+      "label": "studio/analytics/390",
+      "violations": []
+    },
+    {
+      "label": "studio/settings/390",
+      "violations": []
+    },
+    {
+      "label": "admin/dashboard/390",
+      "violations": []
+    },
+    {
+      "label": "admin/clients/390",
+      "violations": []
+    },
+    {
+      "label": "admin/requests/390",
+      "violations": []
+    },
+    {
+      "label": "admin/videos/390",
+      "violations": []
+    },
+    {
+      "label": "admin/revisions/390",
+      "violations": []
+    },
+    {
+      "label": "admin/assets/390",
+      "violations": []
+    },
+    {
+      "label": "admin/scripts/390",
+      "violations": []
+    },
+    {
+      "label": "admin/analytics/390",
+      "violations": []
+    },
+    {
+      "label": "admin/settings/390",
+      "violations": []
+    },
+    {
+      "label": "admin/client-editor",
+      "violations": []
+    },
+    {
+      "label": "admin/client-detail-empty",
+      "violations": []
+    },
+    {
+      "label": "admin/client-detail-projects",
+      "violations": []
+    },
+    {
+      "label": "admin/client-editor-mobile",
+      "violations": []
+    }
+  ],
+  "errors": [],
+  "apiRequests": []
+}

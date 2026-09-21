@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+  <link rel="icon" href="assets/favicon.ico" sizes="32x32">
+  <link rel="apple-touch-icon" href="assets/favicon.svg">
+  <meta name="theme-color" content="#5B4BF5">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FIJLY Studio - Admin Portal</title>
+  <meta name="description" content="FIJLY Studio admin workspace for client production operations.">
+  <meta name="robots" content="noindex, nofollow">
+
+
+
+
+  <link rel="stylesheet" href="css/fonts.css">
+
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/dashboard.css">
+  <link rel="stylesheet" href="css/admin.css">
+  <link rel="stylesheet" href="css/workflow.css">
+</head>
+<body class="studio-body admin-body">
+<a class="skip-link" href="#studio-content">Skip to content</a>
+<div class="studio-layout" id="studio" data-default-screen="dashboard" data-portal-title="FIJLY Admin">
+  <aside class="sidebar" id="sidebar" aria-label="Admin navigation">
+    <div class="sidebar-header">
+      <span class="sidebar-logo__mark"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M8 5v14l11-7z" fill="#fff"/></svg></span>
+      <span class="sidebar-logo__text">
+        <span class="sidebar-logo__word">FIJLY</span>
+        <span class="sidebar-logo__sub">ADMIN</span>
+      </span>
+      <button class="sidebar-close" type="button" aria-label="Close menu" data-sidebar-close>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+
+    <div class="sidebar-label" id="sidebar-label">OPERATIONS</div>
+    <nav class="sidebar-nav" aria-labelledby="sidebar-label">
+<ul>
+<li><a class="sidebar-link" href="#dashboard" data-screen="dashboard" aria-current="page"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/></svg><span>Dashboard</span></a></li>
+<li><a class="sidebar-link" href="#clients" data-screen="clients"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg><span>Clients</span></a></li>
+<li><a class="sidebar-link" href="#requests" data-screen="requests"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="5" width="14" height="14" rx="2.5"/><path d="M17 10l4-2v8l-4-2"/></svg><span>Video Requests</span></a></li>
+<li><a class="sidebar-link" href="#videos" data-screen="videos"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="5" width="14" height="14" rx="2.5"/><path d="M17 10l4-2v8l-4-2"/></svg><span>Videos</span></a></li>
+<li><a class="sidebar-link" href="#revisions" data-screen="revisions"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M7 3h7l5 5v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M13 3v6h6"/></svg><span>Revisions</span></a></li>
+<li><a class="sidebar-link" href="#assets" data-screen="assets"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="8.5" cy="9.5" r="1.4" fill="currentColor" stroke="none"/><circle cx="15.5" cy="9.5" r="1.4" fill="currentColor" stroke="none"/><circle cx="9" cy="15" r="1.4" fill="currentColor" stroke="none"/></svg><span>Assets</span></a></li>
+<li><a class="sidebar-link" href="#scripts" data-screen="scripts"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M7 3h7l5 5v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M13 3v6h6M9.5 13h6M9.5 17h4"/></svg><span>Scripts</span></a></li>
+<li><a class="sidebar-link" href="#analytics" data-screen="analytics"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg><span>Analytics</span></a></li>
+<li><a class="sidebar-link" href="#settings" data-screen="settings"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg><span>Settings</span></a></li>
+</ul>
+</nav>
+
+    <div class="sidebar-footer">
+<div class="sidebar-user">
+        <span class="avatar" aria-hidden="true">M</span>
+        <div class="sidebar-user__meta">
+          <div class="sidebar-user__name">Maya Chen</div>
+          <div class="sidebar-user__email">FIJLY Operations</div>
+        </div>
+      </div>
+
+      <a class="sidebar-link sidebar-link--site" href="index.html">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.5 2.5 15 0 18M12 3c-2.5 2.5-2.5 15 0 18"/></svg>
+        <span>View website</span>
+      </a>
+    </div>
+  </aside>
+
+  <div class="sidebar-backdrop" data-sidebar-close></div>
+  <main class="studio-main">
+    <p class="studio-demo-note">Admin workspace &middot; Mock data. Changes stay in this mock session; no data is sent.</p>
+    <header class="studio-topbar">
+<button class="icon-btn studio-topbar__menu" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="sidebar" data-sidebar-open>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      </button>
+      <p class="studio-topbar__title" id="topbar-title">Dashboard</p>
+      <span class="admin-portal-label">ADMIN PORTAL</span>
+      <a class="btn btn-outline btn--xs btn--semibold admin-portal-switch" href="studio.html">Client portal <span aria-hidden="true">&nearr;</span></a>
+    </header>
+    <div class="studio-content" id="studio-content" tabindex="-1">
+      <noscript><p class="panel">Enable JavaScript to browse the mock Admin workspace.</p></noscript>
+      <section class="screen" id="screen-dashboard" data-screen="dashboard" data-title="Dashboard" aria-labelledby="h-dashboard">
+        <div class="page-head page-head--row page-head--overview">
+          <div><div class="page-head__date" id="dashboard-date">OPERATIONS</div><h1 id="h-dashboard">Production at a glance</h1><p>A clear view of every client and the work moving forward.</p></div>
+          <a class="btn btn-primary btn--xs" href="#clients" data-screen-link="clients">Manage clients <span aria-hidden="true">&rarr;</span></a>
+        </div>
+        <div class="stats-grid" id="admin-stats"></div>
+        <div class="admin-dashboard-grid">
+          <section class="panel panel--flush" aria-labelledby="h-priorities">
+            <div class="admin-panel-head"><div><h2 id="h-priorities">Coming up next</h2><p class="panel__sub">Overdue work and open projects due this week (Mon–Sun)</p></div><span class="badge" id="due-count"></span></div>
+            <p class="table-hint">Scroll horizontally to see every column.</p>
+            <div class="table-scroll" tabindex="0" role="region" aria-label="Upcoming production deadlines">
+              <table class="table admin-priority-table"><caption class="visually-hidden">Upcoming projects by due date</caption><thead><tr><th scope="col">PROJECT / CLIENT</th><th scope="col">STATUS</th><th scope="col">DUE</th></tr></thead><tbody id="admin-priorities"></tbody></table>
+            </div>
+          </section>
+          <section class="panel" aria-labelledby="h-pipeline"><div class="admin-panel-head admin-panel-head--plain"><div><h2 id="h-pipeline">Production pipeline</h2><p class="panel__sub">Current project stages across all clients</p></div></div><ul class="admin-pipeline" id="admin-pipeline"></ul></section>
+        </div>
+        <div class="admin-dashboard-grid admin-dashboard-grid--bottom">
+          <section class="panel" aria-labelledby="h-activity"><h2 id="h-activity">Recent activity</h2><ul class="admin-activity" id="admin-activity"></ul></section>
+          <section class="panel" aria-labelledby="h-client-overview"><div class="admin-panel-head admin-panel-head--plain"><div><h2 id="h-client-overview">Client overview</h2><p class="panel__sub">Relationships across the studio</p></div><a class="btn-link" href="#clients" data-screen-link="clients">View all <span aria-hidden="true">&rarr;</span></a></div><ul class="admin-client-overview" id="admin-client-overview"></ul></section>
+        </div>
+      </section>
+      <section class="screen" id="screen-clients" data-screen="clients" data-title="Clients" aria-labelledby="h-clients" hidden>
+        <div class="page-head page-head--row"><div><h1 id="h-clients">Clients</h1><p>Client relationships, production context, and project history.</p></div><button class="btn btn-primary btn--xs" type="button" data-add-client><span aria-hidden="true">+</span> Add client</button></div>
+        <div class="panel panel--flush">
+          <div class="admin-client-toolbar">
+            <label class="admin-search"><span class="field-label">Search clients</span><input class="input" type="search" id="client-search" placeholder="Company, contact, or email" maxlength="150"></label>
+            <label><span class="field-label">Status</span><select class="input" id="client-status"><option value="all">All statuses</option><option>Active</option><option>Onboarding</option><option>Paused</option></select></label>
+            <label><span class="field-label">Sort by</span><select class="input" id="client-sort"><option value="name">Company A-Z</option><option value="projects">Open projects &amp; requests</option></select></label>
+          </div>
+          <p class="admin-result-count" id="client-count" role="status"></p>
+          <p class="table-hint">Scroll horizontally to see every column.</p>
+          <div class="table-scroll" tabindex="0" role="region" aria-label="Clients table, scroll horizontally">
+            <table class="table admin-clients-table"><caption class="visually-hidden">Client directory</caption><thead><tr><th scope="col">CLIENT</th><th scope="col">PRIMARY CONTACT</th><th scope="col">STATUS</th><th scope="col">OPEN PROJECTS &amp; REQUESTS</th><th scope="col">DELIVERED</th><th scope="col"><span class="visually-hidden">Actions</span></th></tr></thead><tbody id="client-rows"></tbody></table>
+          </div>
+          <div class="admin-empty" id="client-empty" hidden><h2>No matching clients</h2><p>Try a different name or status.</p><button class="btn btn-outline btn--xs" type="button" id="clear-client-filters">Clear filters</button></div>
+        </div>
+        <p class="admin-save-status" id="admin-save-status" role="status"></p>
+      </section>
+      <section class="screen" id="screen-requests" data-screen="requests" data-title="Video Requests" aria-labelledby="h-requests" hidden>
+        <div class="page-head"><h1 id="h-requests">Video Requests</h1><p>Review client briefs and move approved work into production.</p></div>
+        <div class="panel panel--flush" data-workflow-list="requests"></div>
+      </section>
+      <section class="screen" id="screen-videos" data-screen="videos" data-title="Videos" aria-labelledby="h-videos" hidden>
+        <div class="page-head"><h1 id="h-videos">Videos</h1><p>Manage production, versions, and client reviews in one place.</p></div>
+        <div class="panel panel--flush" data-workflow-list="videos"></div>
+      </section>
+      <section class="screen" id="screen-revisions" data-screen="revisions" data-title="Revisions" aria-labelledby="h-revisions" hidden>
+        <div class="page-head"><h1 id="h-revisions">Revisions</h1><p>Keep client feedback and every revision round connected to the video.</p></div>
+        <div class="panel panel--flush" data-workflow-list="revisions"></div>
+      </section>
+      <section class="screen" id="screen-assets" data-screen="assets" data-title="Assets" aria-labelledby="h-assets" hidden>
+        <div class="page-head page-head--row">
+          <div><h1 id="h-assets">Assets</h1><p>Brand files supplied by clients, kept with the client record they belong to.</p></div>
+          <button class="btn btn-primary btn--xs" type="button" data-add-asset>Add asset <span aria-hidden="true">&rarr;</span></button>
+        </div>
+        <div class="panel panel--flush">
+          <div class="admin-client-toolbar admin-asset-toolbar">
+            <label class="admin-search"><span class="field-label">Search assets</span><input class="input" type="search" id="asset-search" placeholder="File name, client, or notes" maxlength="150"></label>
+            <label><span class="field-label">Client</span><select class="input" id="asset-client"><option value="all">All clients</option></select></label>
+            <label><span class="field-label">Category</span><select class="input" id="asset-category"><option value="all">All categories</option></select></label>
+            <label><span class="field-label">Sort by</span><select class="input" id="asset-sort"><option value="newest">Newest first</option><option value="oldest">Oldest first</option><option value="name">File name A-Z</option><option value="client">Client A-Z</option><option value="size">Largest first</option></select></label>
+          </div>
+          <p class="admin-result-count" id="asset-count" role="status"></p>
+          <p class="table-hint">Scroll horizontally to see every column.</p>
+          <div class="table-scroll" tabindex="0" role="region" aria-label="Assets table, scroll horizontally">
+            <table class="table admin-assets-table"><caption class="visually-hidden">Client asset library</caption><thead><tr><th scope="col">FILE</th><th scope="col">CLIENT</th><th scope="col">CATEGORY</th><th scope="col">TYPE</th><th scope="col">SIZE</th><th scope="col">UPLOADED</th><th scope="col"><span class="visually-hidden">Actions</span></th></tr></thead><tbody id="asset-rows"></tbody></table>
+          </div>
+          <div class="admin-empty" id="asset-empty" hidden><h2>No matching assets</h2><p>Try a different search, client, or category.</p><button class="btn btn-outline btn--xs" type="button" id="clear-asset-filters">Clear filters</button></div>
+        </div>
+        <p class="admin-save-status" id="asset-save-status" role="status"></p>
+      </section>
+      <section class="screen" id="screen-scripts" data-screen="scripts" data-title="Scripts" aria-labelledby="h-scripts" hidden>
+        <div class="page-head"><h1 id="h-scripts">Scripts</h1><p>Scene-by-scene scripts for every video, with the client feedback on each.</p></div>
+        <div class="panel panel--flush">
+          <div class="admin-client-toolbar">
+            <label class="admin-search"><span class="field-label">Search scripts</span><input class="input" type="search" id="script-search" placeholder="Script title or client" maxlength="150"></label>
+            <label><span class="field-label">Status</span><select class="input" id="script-status"><option value="all">All statuses</option></select></label>
+            <label><span class="field-label">Client</span><select class="input" id="script-client"><option value="all">All clients</option></select></label>
+            <label><span class="field-label">Sort by</span><select class="input" id="script-sort"><option value="newest">Recently updated</option><option value="oldest">Least recently updated</option><option value="status">Status (action needed first)</option><option value="client">Client A-Z</option></select></label>
+          </div>
+          <p class="admin-result-count" id="script-count" role="status"></p>
+          <p class="table-hint">Scroll horizontally to see every column.</p>
+          <div class="table-scroll" tabindex="0" role="region" aria-label="Scripts table, scroll horizontally">
+            <table class="table admin-scripts-table"><caption class="visually-hidden">Scripts</caption><thead><tr><th scope="col">SCRIPT</th><th scope="col">VIDEO</th><th scope="col">CLIENT</th><th scope="col">STATUS</th><th scope="col">SCENES</th><th scope="col">UPDATED</th><th scope="col"><span class="visually-hidden">Actions</span></th></tr></thead><tbody id="script-rows"></tbody></table>
+          </div>
+          <div class="admin-empty" id="script-empty" hidden><h2>No matching scripts</h2><p>Try a different search, status, or client.</p><button class="btn btn-outline btn--xs" type="button" id="clear-script-filters">Clear filters</button></div>
+        </div>
+        <p class="admin-save-status" id="script-save-status" role="status"></p>
+      </section>
+
+      <section class="screen" id="screen-analytics" data-screen="analytics" data-title="Analytics" aria-labelledby="h-analytics" hidden>
+        <div class="page-head"><h1 id="h-analytics">Analytics</h1><p>Studio performance calculated from the current workflow records.</p></div>
+        <div class="panel panel--flush">
+          <div class="admin-client-toolbar admin-analytics-toolbar">
+            <label><span class="field-label">Client</span><select class="input" id="analytics-client"><option value="all">All clients</option></select></label>
+            <label><span class="field-label">Date range</span><select class="input" id="analytics-range"><option value="30">Last 30 days</option><option value="7">Last 7 days</option><option value="90">Last 90 days</option><option value="all">All time</option></select></label>
+          </div>
+          <p class="admin-result-count" id="analytics-scope" role="status"></p>
+        </div>
+        <div class="kpi-grid" id="analytics-kpis"></div>
+        <div class="charts-grid admin-analytics-grid">
+          <section class="panel" aria-labelledby="h-analytics-trend">
+            <div class="chart-head"><div><h2 id="h-analytics-trend">Deliveries and revisions</h2><p class="panel__sub" id="analytics-trend-sub">Videos completed against revision rounds opened.</p></div></div>
+            <div id="analytics-trend"></div>
+          </section>
+          <section class="panel funnel" aria-labelledby="h-analytics-stages">
+            <h2 id="h-analytics-stages">Production status</h2>
+            <p class="panel__sub">Where every video currently sits.</p>
+            <ul class="admin-pipeline" id="analytics-stages"></ul>
+          </section>
+        </div>
+        <div class="charts-grid admin-analytics-grid">
+          <section class="panel" aria-labelledby="h-analytics-clients">
+            <h2 id="h-analytics-clients">Client activity</h2>
+            <p class="panel__sub">Requests, videos and revision rounds per client in range.</p>
+            <div class="table-scroll" tabindex="0" role="region" aria-label="Client activity table, scroll horizontally">
+              <table class="table"><caption class="visually-hidden">Client activity</caption><thead><tr><th scope="col">CLIENT</th><th scope="col">REQUESTS</th><th scope="col">IN PRODUCTION</th><th scope="col">COMPLETED</th><th scope="col">REVISIONS</th></tr></thead><tbody id="analytics-clients"></tbody></table>
+            </div>
+            <p class="admin-muted" id="analytics-clients-empty" hidden>No client activity in this range.</p>
+          </section>
+          <section class="panel" aria-labelledby="h-analytics-quality">
+            <h2 id="h-analytics-quality">Approval and revision activity</h2>
+            <p class="panel__sub">How much work is approved without a further round.</p>
+            <ul class="admin-client-overview" id="analytics-quality"></ul>
+          </section>
+        </div>
+        <p class="admin-save-status">Figures are derived from the current mock records, not from a reporting service.</p>
+      </section>
+
+      <section class="screen" id="screen-settings" data-screen="settings" data-title="Settings" aria-labelledby="h-settings" hidden>
+        <div class="page-head"><h1 id="h-settings">Settings</h1><p>Admin Portal preferences for this mock workspace.</p></div>
+        <form id="settings-form">
+          <div class="admin-settings-grid">
+            <section class="panel" aria-labelledby="h-set-profile">
+              <h2 id="h-set-profile">Admin profile</h2>
+              <p class="panel__sub">How you appear inside the Admin Portal.</p>
+              <div class="form-group"><label class="field-label" for="set-admin-name">Your name</label><input class="input" id="set-admin-name" name="adminName" required maxlength="80" autocomplete="name"></div>
+              <div class="form-group"><label class="field-label" for="set-admin-role">Role</label><input class="input" id="set-admin-role" name="adminRole" maxlength="80"></div>
+              <div class="form-group"><label class="field-label" for="set-admin-email">Email</label><input class="input" id="set-admin-email" name="adminEmail" type="email" required maxlength="120" autocomplete="email"></div>
+            </section>
+            <section class="panel" aria-labelledby="h-set-studio">
+              <h2 id="h-set-studio">Studio information</h2>
+              <p class="panel__sub">Shown alongside client-facing production details.</p>
+              <div class="form-group"><label class="field-label" for="set-studio-name">Studio name</label><input class="input" id="set-studio-name" name="studioName" required maxlength="80" autocomplete="organization"></div>
+              <div class="form-group"><label class="field-label" for="set-studio-email">Contact email</label><input class="input" id="set-studio-email" name="studioEmail" type="email" maxlength="120"></div>
+              <div class="form-group"><label class="field-label" for="set-studio-location">Location / hours</label><input class="input" id="set-studio-location" name="studioLocation" maxlength="80"></div>
+            </section>
+            <section class="panel" aria-labelledby="h-set-notify">
+              <h2 id="h-set-notify">Notification preferences</h2>
+              <p class="panel__sub">Which production events you want surfaced. No email is sent in this preview.</p>
+              <label class="setting-row" for="set-notify-request"><span><span class="setting-row__title">New video request</span><span class="setting-row__sub">A client submits a brief</span></span><span class="toggle-switch"><input type="checkbox" id="set-notify-request" name="notifyNewRequest"><span class="toggle-switch__track"></span></span></label>
+              <label class="setting-row" for="set-notify-revision"><span><span class="setting-row__title">Revision requested</span><span class="setting-row__sub">A client asks for another round</span></span><span class="toggle-switch"><input type="checkbox" id="set-notify-revision" name="notifyRevision"><span class="toggle-switch__track"></span></span></label>
+              <label class="setting-row" for="set-notify-approval"><span><span class="setting-row__title">Video approved</span><span class="setting-row__sub">A client approves a draft</span></span><span class="toggle-switch"><input type="checkbox" id="set-notify-approval" name="notifyApproval"><span class="toggle-switch__track"></span></span></label>
+              <label class="setting-row" for="set-notify-digest"><span><span class="setting-row__title">Weekly summary</span><span class="setting-row__sub">Every Monday morning</span></span><span class="toggle-switch"><input type="checkbox" id="set-notify-digest" name="notifyWeeklyDigest"><span class="toggle-switch__track"></span></span></label>
+            </section>
+            <section class="panel" aria-labelledby="h-set-workflow">
+              <h2 id="h-set-workflow">Default workflow preferences</h2>
+              <p class="panel__sub">Applied as starting values when you scope a new request.</p>
+              <div class="form-group"><label class="field-label" for="set-default-priority">Default priority</label><select class="input" id="set-default-priority" name="defaultPriority"><option>Low</option><option>Normal</option><option>High</option><option>Urgent</option></select></div>
+              <div class="form-group"><label class="field-label" for="set-default-lead">Default turnaround (days)</label><input class="input" id="set-default-lead" name="defaultLeadDays" type="number" min="1" max="90" step="1" required></div>
+              <div class="form-group"><label class="field-label" for="set-default-length">Default video length</label><select class="input" id="set-default-length" name="defaultLength"><option>30–45 sec</option><option>60–90 sec</option><option>2–3 min</option><option>3 min+</option></select></div>
+            </section>
+          </div>
+          <div class="admin-settings-actions">
+            <button class="btn btn-outline btn--md" type="button" id="settings-reset">Discard changes</button>
+            <button class="btn btn-primary btn--md" type="submit">Save settings</button>
+          </div>
+          <p class="admin-save-status" id="settings-status" role="status"></p>
+          <p class="panel__sub">Preferences are stored in this mock session only. No account, billing, plan, or team permission is created.</p>
+        </form>
+      </section>
+    </div>
+  </main>
+</div>
+<dialog class="admin-dialog" id="client-detail" aria-labelledby="client-detail-title">
+  <div class="admin-dialog-head"><div><p class="admin-eyebrow">CLIENT PROFILE</p><h2 id="client-detail-title"></h2></div><button class="icon-btn" type="button" data-close-detail aria-label="Close client profile">&times;</button></div>
+  <div id="client-detail-body"></div>
+  <div class="admin-dialog-foot"><button class="btn btn-outline btn--md" type="button" data-close-detail>Close</button><button class="btn btn-primary btn--md" type="button" id="edit-client">Edit client</button></div>
+</dialog>
+<dialog class="admin-dialog" id="client-editor" aria-labelledby="client-editor-title">
+  <form id="client-form">
+    <div class="admin-dialog-head"><div><p class="admin-eyebrow">CLIENT DETAILS</p><h2 id="client-editor-title">Add client</h2></div><button class="icon-btn" type="button" data-close-editor aria-label="Close client form">&times;</button></div>
+    <div class="admin-dialog-fields">
+      <div class="form-group"><label class="field-label" for="client-name">Company name</label><input class="input" id="client-name" name="company" required maxlength="80" autocomplete="organization"></div>
+      <div class="admin-form-row"><div class="form-group"><label class="field-label" for="client-contact">Primary contact</label><input class="input" id="client-contact" name="contact" required maxlength="80" autocomplete="name"></div><div class="form-group"><label class="field-label" for="client-email">Email</label><input class="input" id="client-email" name="email" type="email" required maxlength="150" autocomplete="email"></div></div>
+      <div class="admin-form-row"><div class="form-group"><label class="field-label" for="client-industry">Industry</label><input class="input" id="client-industry" name="industry" maxlength="80"></div><div class="form-group"><label class="field-label" for="edit-client-status">Status</label><select class="input" id="edit-client-status" name="status"><option>Onboarding</option><option>Active</option><option>Paused</option></select></div></div>
+      <div class="form-group"><label class="field-label" for="client-notes">Production notes</label><textarea class="input" id="client-notes" name="notes" rows="3" maxlength="1000"></textarea></div>
+      <p class="panel__sub" id="client-form-note">Mock record only. No account or invitation will be created.</p>
+    </div>
+    <div class="admin-dialog-foot"><button class="btn btn-outline btn--md" type="button" data-close-editor>Cancel</button><button class="btn btn-primary btn--md" type="submit">Save client</button></div>
+  </form>
+</dialog>
+<dialog class="admin-dialog" id="asset-detail" aria-labelledby="asset-detail-title">
+  <div class="admin-dialog-head"><div><p class="admin-eyebrow">ASSET</p><h2 id="asset-detail-title"></h2></div><button class="icon-btn" type="button" data-close-asset-detail aria-label="Close asset details"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+  <div id="asset-detail-body"></div>
+  <div class="admin-dialog-foot"><button class="btn btn-outline btn--md" type="button" data-close-asset-detail>Close</button><button class="btn btn-outline btn--md" type="button" id="delete-asset">Remove asset</button><button class="btn btn-primary btn--md" type="button" id="edit-asset">Edit asset</button></div>
+</dialog>
+<dialog class="admin-dialog" id="asset-editor" aria-labelledby="asset-editor-title">
+  <form id="asset-form">
+    <div class="admin-dialog-head"><div><p class="admin-eyebrow">ASSET DETAILS</p><h2 id="asset-editor-title">Add asset</h2></div><button class="icon-btn" type="button" data-close-asset-editor aria-label="Close asset form"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+    <div class="admin-dialog-fields">
+      <div class="form-group" id="asset-file-group"><label class="field-label" for="asset-file">Choose a file (simulated)</label><input class="input workflow-file" id="asset-file" name="file" type="file"><p class="panel__sub">Only the file name, type and size are recorded. Nothing is uploaded or stored.</p></div>
+      <div class="form-group"><label class="field-label" for="asset-name">File name</label><input class="input" id="asset-name" name="name" required maxlength="120"></div>
+      <div class="admin-form-row">
+        <div class="form-group"><label class="field-label" for="asset-form-client">Client</label><select class="input" id="asset-form-client" name="client" required></select></div>
+        <div class="form-group"><label class="field-label" for="asset-form-category">Category</label><select class="input" id="asset-form-category" name="category" required></select></div>
+      </div>
+      <div class="form-group"><label class="field-label" for="asset-notes">Notes (optional)</label><textarea class="input" id="asset-notes" name="notes" rows="3" maxlength="500"></textarea></div>
+    </div>
+    <div class="admin-dialog-foot"><button class="btn btn-outline btn--md" type="button" data-close-asset-editor>Cancel</button><button class="btn btn-primary btn--md" type="submit">Save asset</button></div>
+  </form>
+</dialog>
+<dialog class="admin-dialog admin-confirm" id="asset-confirm" aria-labelledby="asset-confirm-title">
+  <div class="admin-dialog-head"><div><p class="admin-eyebrow">CONFIRM</p><h2 id="asset-confirm-title">Remove asset</h2></div></div>
+  <div class="admin-dialog-fields"><p id="asset-confirm-text"></p></div>
+  <div class="admin-dialog-foot"><button class="btn btn-outline btn--md" type="button" id="asset-confirm-cancel">Cancel</button><button class="btn btn-primary btn--md" type="button" id="asset-confirm-ok">Remove asset</button></div>
+</dialog>
+<dialog class="admin-dialog" id="script-detail" aria-labelledby="script-detail-title">
+  <div class="admin-dialog-head"><div><p class="admin-eyebrow">SCRIPT</p><h2 id="script-detail-title"></h2></div><button class="icon-btn" type="button" data-close-script-detail aria-label="Close script details"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+  <div class="admin-dialog-fields" id="script-detail-body"></div>
+  <p class="workflow-error admin-script-error" id="script-detail-error" role="alert"></p>
+  <div class="admin-dialog-foot"><button class="btn btn-outline btn--md" type="button" data-close-script-detail>Close</button><button class="btn btn-primary btn--md" type="button" id="script-action" hidden></button></div>
+</dialog>
+<script src="js/studio-shell.js"></script>
+<script src="js/admin-data.js"></script>
+<script src="js/mock-service.js"></script>
+<script src="js/admin.js"></script>
+<script src="js/workflow.js"></script>
+<script src="js/admin-sections.js"></script>
+</body>
+</html>

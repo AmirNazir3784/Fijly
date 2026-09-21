@@ -1,0 +1,52 @@
+{
+  "checks": [
+    "Assets search, client/category filters, five sort orders, empty state and reset",
+    "Asset creation from a simulated file, required-name validation, cancel, and in-place edit",
+    "Delete requires confirmation; cancel keeps the record, confirm removes it",
+    "All assets resolve to an existing client record",
+    "Admin and Client Brand Assets share one asset collection across tabs",
+    "Analytics KPIs, status breakdown, trend and client table derive from shared records; client and range filters scope them",
+    "Settings save, survive reload, reject invalid email and turnaround, and discard restores",
+    "Workflow defaults seed the request form and the created record; typed values and unsaved edits are never overwritten",
+    "1440px: Assets, Analytics and Settings render without page overflow",
+    "1024px: Assets, Analytics and Settings render without page overflow",
+    "768px: Assets, Analytics and Settings render without page overflow",
+    "390px: Assets, Analytics and Settings render without page overflow",
+    "320px: Assets, Analytics and Settings render without page overflow"
+  ],
+  "errors": [],
+  "scans": [
+    {
+      "label": "admin/assets/1440",
+      "violations": []
+    },
+    {
+      "label": "admin/analytics/1440",
+      "violations": []
+    },
+    {
+      "label": "admin/settings/1440",
+      "violations": []
+    },
+    {
+      "label": "admin/assets/390",
+      "violations": []
+    },
+    {
+      "label": "admin/analytics/390",
+      "violations": []
+    },
+    {
+      "label": "admin/settings/390",
+      "violations": []
+    },
+    {
+      "label": "admin/asset-detail/390",
+      "violations": []
+    },
+    {
+      "label": "admin/asset-editor/390",
+      "violations": []
+    }
+  ]
+}

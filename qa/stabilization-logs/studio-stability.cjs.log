@@ -1,0 +1,44 @@
+{
+  "checks": [
+    {
+      "validation": {
+        "rollover date": true,
+        "invalid date": true,
+        "invalid reference": true,
+        "incomplete link": true,
+        "unknown client": true,
+        "invalid client email": true,
+        "invalid studio email": true,
+        "fractional turnaround": true,
+        "invalid length": true,
+        "completed version": true,
+        "completed revision": true,
+        "completed transition": true,
+        "completed request edit": true,
+        "metadata normalized": true,
+        "production idempotent": true,
+        "no draft review": true,
+        "no draft ready": true,
+        "no-op revision unchanged": true,
+        "unsubscribe works": true
+      }
+    },
+    "Delayed concurrent tab writes preserve both independent requests and converge",
+    "New client filters refresh, live profile asset count updates, cross-tab deletion closes stale asset editor",
+    "Long title/instructions, repeated submit and dialog wrapping at all five widths",
+    "Approval/close returns visible keyboard focus; route changes close modal details",
+    "no-clients: all 15 routes render; invalid relationships excluded, valid work preserved",
+    "no-work: all 15 routes render; invalid relationships excluded, valid work preserved",
+    "no-videos: all 15 routes render; invalid relationships excluded, valid work preserved",
+    "no-requests: all 15 routes render; invalid relationships excluded, valid work preserved",
+    "no-assets: all 15 routes render; invalid relationships excluded, valid work preserved",
+    "missing-fields: all 15 routes render; invalid relationships excluded, valid work preserved",
+    "orphaned-records: all 15 routes render; invalid relationships excluded, valid work preserved",
+    "Integrity checks pass; inactive-client analytics and seeded completion dates are accurate",
+    "Asset and analytics tables retain readable columns at all widths, inside horizontal scroll containers"
+  ],
+  "scans": 1,
+  "errors": [],
+  "failedRequests": [],
+  "cancelledResourcesChecked": []
+}

@@ -24,7 +24,7 @@ for p,soup in pages.items():
         elif url.fragment:
             target=pages.get(dest)
             if target is not None and not target.find(id=unquote(url.fragment)):
-                if not (dest.name=='studio.html' and target.find(attrs={'data-screen':url.fragment})):issues.append(f'{p.name}: broken fragment {value}')
+                if not (dest.name in ['studio.html','admin.html'] and target.find(attrs={'data-screen':url.fragment})):issues.append(f'{p.name}: broken fragment {value}')
     for e in soup.select('[aria-labelledby], [aria-describedby], [aria-controls], label[for]'):
         for attr in ['aria-labelledby','aria-describedby','aria-controls','for']:
             for key in e.get(attr,'').split():
@@ -41,7 +41,7 @@ for p in root.rglob('*'):
             if not urlsplit(url).scheme and not (p.parent/url).is_file():issues.append(f'{p.name}: missing CSS asset {url}')
 hashes=json.loads(Path('qa/reference-hashes.json').read_text(encoding='utf-8-sig'))
 for item in hashes:
-    if hashlib.sha256(Path(item['Path']).read_bytes()).hexdigest().upper()!=item['Hash']:issues.append('Reference modified: '+item['Path'])
+    if hashlib.sha256(Path(item['Path'].replace('\\','/').split('/')[-1]).read_bytes()).hexdigest().upper()!=item['Hash']:issues.append('Reference modified: '+item['Path'])
 out={'html_pages':len(pages),'issues':issues,'reference_files_unchanged':not any('Reference modified' in i for i in issues)}
 Path('qa/static-results.json').write_text(json.dumps(out,indent=2),encoding='utf-8')
 print(json.dumps(out,indent=2))

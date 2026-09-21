@@ -1,0 +1,85 @@
+{
+  "checks": [
+    "Overview metrics derive from owned records; current/recent links open the matching video",
+    "Request fields/history/status sync; New Request through Completed; two revision rounds, V1–V3, feedback retained; approval/cancel and final delivery; no Admin controls",
+    "Assets search, details, simulated create and Admin sync; script review, related video and saved feedback",
+    "Profile and notifications persist; request preferences applied; unsaved settings survive broadcasts; discard restores values",
+    "All six clients isolated across screen data and detail/mutation guards; empty workspace; analytics derived only from owned records",
+    "1440px: all seven client routes, no page overflow",
+    "1024px: all seven client routes, no page overflow",
+    "768px: all seven client routes, no page overflow",
+    "390px: all seven client routes, no page overflow",
+    "320px: all seven client routes, no page overflow"
+  ],
+  "scans": [
+    {
+      "label": "completed video history",
+      "violations": []
+    },
+    {
+      "label": "asset details",
+      "violations": []
+    },
+    {
+      "label": "add simulated asset",
+      "violations": []
+    },
+    {
+      "label": "overview/1440",
+      "violations": []
+    },
+    {
+      "label": "projects/1440",
+      "violations": []
+    },
+    {
+      "label": "requests/1440",
+      "violations": []
+    },
+    {
+      "label": "assets/1440",
+      "violations": []
+    },
+    {
+      "label": "scripts/1440",
+      "violations": []
+    },
+    {
+      "label": "analytics/1440",
+      "violations": []
+    },
+    {
+      "label": "settings/1440",
+      "violations": []
+    },
+    {
+      "label": "overview/390",
+      "violations": []
+    },
+    {
+      "label": "projects/390",
+      "violations": []
+    },
+    {
+      "label": "requests/390",
+      "violations": []
+    },
+    {
+      "label": "assets/390",
+      "violations": []
+    },
+    {
+      "label": "scripts/390",
+      "violations": []
+    },
+    {
+      "label": "analytics/390",
+      "violations": []
+    },
+    {
+      "label": "settings/390",
+      "violations": []
+    }
+  ],
+  "errors": []
+}

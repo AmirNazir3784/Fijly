@@ -1,0 +1,60 @@
+{
+  "checks": [
+    "Client submission, request edit/review, cancel/confirm production, V1/V2/V3, two client revision rounds, approval/completion, append-only history, cross-tab sync and reload persistence",
+    "Combined request filters, sorting and empty-state reset",
+    "1440px: 12 portal routes, no horizontal page overflow",
+    "1024px: 12 portal routes, no horizontal page overflow",
+    "768px: 12 portal routes, no horizontal page overflow",
+    "390px: 12 portal routes, no horizontal page overflow",
+    "320px: 12 portal routes, no horizontal page overflow"
+  ],
+  "errors": [],
+  "scans": [
+    {
+      "label": "revision detail",
+      "violations": []
+    },
+    {
+      "label": "admin/requests/1440",
+      "violations": []
+    },
+    {
+      "label": "admin/videos/1440",
+      "violations": []
+    },
+    {
+      "label": "admin/revisions/1440",
+      "violations": []
+    },
+    {
+      "label": "studio/requests/1440",
+      "violations": []
+    },
+    {
+      "label": "admin/requests/390",
+      "violations": []
+    },
+    {
+      "label": "admin/videos/390",
+      "violations": []
+    },
+    {
+      "label": "admin/revisions/390",
+      "violations": []
+    },
+    {
+      "label": "studio/requests/390",
+      "violations": []
+    },
+    {
+      "label": "mobile video detail",
+      "violations": []
+    }
+  ],
+  "workflow": {
+    "versions": 3,
+    "feedback": 2,
+    "rounds": 2,
+    "status": "Completed"
+  }
+}

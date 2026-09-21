@@ -1,0 +1,16 @@
+{
+  "checks": [
+    "Overview metrics derive from owned records; current/recent links open the matching video",
+    "Request fields/history/status sync; New Request through Completed; two revision rounds, V1–V3, feedback retained; approval/cancel and final delivery; no Admin controls",
+    "Assets search, details, simulated create and Admin sync; script review, related video and saved feedback",
+    "Profile and notifications persist; request preferences applied; unsaved settings survive broadcasts; discard restores values",
+    "All six clients isolated across screen data and detail/mutation guards; empty workspace; analytics derived only from owned records",
+    "1440px: all seven client routes, no page overflow",
+    "1024px: all seven client routes, no page overflow",
+    "768px: all seven client routes, no page overflow",
+    "390px: all seven client routes, no page overflow",
+    "320px: all seven client routes, no page overflow"
+  ],
+  "scans": 17,
+  "errors": []
+}

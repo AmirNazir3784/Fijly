@@ -1,42 +1,40 @@
-[
-  {
-    "id": "overview",
-    "strings": 99,
-    "missing": []
-  },
-  {
-    "id": "projects",
-    "strings": 39,
-    "missing": []
-  },
-  {
-    "id": "requests",
-    "strings": 33,
-    "missing": []
-  },
-  {
-    "id": "assets",
-    "strings": 33,
-    "missing": []
-  },
-  {
-    "id": "scripts",
-    "strings": 23,
-    "missing": []
-  },
-  {
-    "id": "analytics",
-    "strings": 67,
-    "missing": []
-  },
-  {
-    "id": "team",
-    "strings": 26,
-    "missing": []
-  },
-  {
-    "id": "settings",
-    "strings": 16,
-    "missing": []
-  }
-]
+{
+  "referenceFilesUnchanged": true,
+  "results": [
+    {
+      "screen": "overview",
+      "heading": "Welcome, Alex",
+      "status": "Approved component layout retained; operational content intentionally derived from shared state"
+    },
+    {
+      "screen": "projects",
+      "heading": "Projects",
+      "status": "Approved component layout retained; operational content intentionally derived from shared state"
+    },
+    {
+      "screen": "requests",
+      "heading": "Video Requests",
+      "status": "Approved component layout retained; operational content intentionally derived from shared state"
+    },
+    {
+      "screen": "assets",
+      "heading": "Brand Assets",
+      "status": "Approved component layout retained; operational content intentionally derived from shared state"
+    },
+    {
+      "screen": "scripts",
+      "heading": "Scripts",
+      "status": "Approved component layout retained; operational content intentionally derived from shared state"
+    },
+    {
+      "screen": "analytics",
+      "heading": "Analytics",
+      "status": "Approved component layout retained; operational content intentionally derived from shared state"
+    },
+    {
+      "screen": "settings",
+      "heading": "Settings",
+      "status": "Approved component layout retained; operational content intentionally derived from shared state"
+    }
+  ]
+}

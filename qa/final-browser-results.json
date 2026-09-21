@@ -37,11 +37,6 @@
     },
     {
       "width": 1440,
-      "screen": "team",
-      "violations": []
-    },
-    {
-      "width": 1440,
       "screen": "settings",
       "violations": []
     },
@@ -98,11 +93,6 @@
     {
       "width": 375,
       "screen": "analytics",
-      "violations": []
-    },
-    {
-      "width": 375,
-      "screen": "team",
       "violations": []
     },
     {

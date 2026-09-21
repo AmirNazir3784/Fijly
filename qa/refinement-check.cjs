@@ -1,13 +1,14 @@
-const {chromium}=require('C:/Users/Mister Naveed/AppData/Local/npm-cache/_npx/e41f203b7505f1fb/node_modules/playwright-core');
+const {chromium}=require('./runtime.cjs');
 const assert=require('assert/strict'),fs=require('fs');
 (async()=>{
+ fs.mkdirSync('qa/refinement-after',{recursive:true});
  const b=await chromium.launch(),p=await b.newPage();const checks=[],errors=[],axeResults=[];
  p.on('pageerror',e=>errors.push(String(e)));
- const base='http://127.0.0.1:8766/';
+ const base=require('./runtime.cjs').base;
  for(const width of [1440,1280,1024,768,390,375]){
   await p.setViewportSize({width,height:900});await p.goto(base+'index.html',{waitUntil:'domcontentloaded'});
   await p.evaluate(()=>document.fonts.ready);
-  for(const selector of ['.hero__copy','.hero-frame','#contact-form','.work__grid','.footer__grid']){
+  for(const selector of ['.hero__copy','.hero-showcase','#contact-form','.work__grid','.footer__grid']){
    const r=await p.locator(selector).boundingBox();assert(r.x>=0&&r.x+r.width<=width+1,`${width} clipped ${selector}`);
   }
   assert.equal(await p.locator('a[href="#"]').count(),0);
@@ -26,7 +27,7 @@ const assert=require('assert/strict'),fs=require('fs');
   await p.locator('#contact-form button').click();assert.equal(await p.locator('#contact-email').evaluate(e=>e.validity.typeMismatch),true);
   await p.locator('#contact-email').fill('jane@example.com');await p.locator('#contact-form button').click();
   assert.match(await p.locator('#contact-status').textContent(),/has not been sent/);
-  const href=await p.locator('#contact-status a').getAttribute('href');assert(href.startsWith('mailto:hello@fijly.studio?'));assert(decodeURIComponent(href).includes('Jane Founder'));
+  const href=await p.locator('#contact-status a').getAttribute('href');assert(href.startsWith('mailto:hello@fijly.com?'));assert(decodeURIComponent(href).includes('Jane Founder'));
   await p.locator('[data-concept="aiflow"]').click();await p.locator('[data-close-concept]').click();assert.equal(await p.locator('#concept-dialog').isVisible(),false);assert.equal(await p.evaluate(()=>document.activeElement.id),'contact');
   if(width===375){await p.locator('#contact').screenshot({path:'qa/refinement-after/contact-ready-375.png'});}
   checks.push(`${width}: hero bounds, CTA plan context, all concept dialogs, validation, email fallback, contact focus`);
@@ -47,12 +48,12 @@ const assert=require('assert/strict'),fs=require('fs');
  await p.locator('.timeline__play').click();let time=await p.locator('.timeline__time').first().textContent();await p.waitForTimeout(1100);assert.equal(await p.locator('.timeline__time').first().textContent(),time);
  await p.locator('[data-preview-restart]').click();assert.equal(await p.locator('.timeline__time').first().textContent(),'00:00');
  checks.push('Studio motion preview advances, pauses and restarts');
- for(const width of [1440,375])for(const screen of ['marketing','overview','projects','requests','assets','scripts','analytics','team','settings']){
+ for(const width of [1440,375])for(const screen of ['marketing','overview','projects','requests','assets','scripts','analytics','settings']){
   await p.setViewportSize({width,height:900});await p.goto(base+(screen==='marketing'?'index.html':'studio.html#'+screen),{waitUntil:'domcontentloaded'});await p.reload({waitUntil:'domcontentloaded'});await p.addScriptTag({path:'qa/axe.min.js'});
   const violations=await p.evaluate(async()=>(await axe.run()).violations.map(v=>({id:v.id,nodes:v.nodes.map(n=>({target:n.target,summary:n.failureSummary}))})));
   axeResults.push({width,screen,violations});
   if(screen==='marketing'){await p.locator('[data-concept="aiflow"]').click();axeResults.push({width,screen:'concept-dialog',violations:await p.evaluate(async()=>(await axe.run()).violations.map(v=>({id:v.id,nodes:v.nodes.map(n=>n.target)})))});}
  }
  fs.writeFileSync('qa/refinement-check-results.json',JSON.stringify({checks,errors,axeResults},null,2));
- console.log(JSON.stringify({checks,errors,accessibility:axeResults.filter(r=>r.violations.length)},null,2));await b.close();
+ console.log(JSON.stringify({checks,errors,accessibility:axeResults.filter(r=>r.violations.length)},null,2));await b.close();assert.deepEqual(errors,[]);assert.ok(axeResults.every(r=>!r.violations.length));
 })().catch(e=>{console.error(e);process.exit(1)});

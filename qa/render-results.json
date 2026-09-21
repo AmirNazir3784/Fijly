@@ -14,9 +14,9 @@
       "width": 1440,
       "screen": "overview",
       "overflow": false,
-      "title": "FIJLY Studio — Dashboard",
+      "title": "FIJLY Studio — Client Portal",
       "h1": [
-        "Good morning, Alex"
+        "Welcome, Alex"
       ],
       "overflows": []
     },
@@ -67,16 +67,6 @@
       "title": "Analytics — FIJLY Studio",
       "h1": [
         "Analytics"
-      ],
-      "overflows": []
-    },
-    {
-      "width": 1440,
-      "screen": "team",
-      "overflow": false,
-      "title": "Team — FIJLY Studio",
-      "h1": [
-        "Team"
       ],
       "overflows": []
     },
@@ -104,9 +94,9 @@
       "width": 1024,
       "screen": "overview",
       "overflow": false,
-      "title": "FIJLY Studio — Dashboard",
+      "title": "FIJLY Studio — Client Portal",
       "h1": [
-        "Good morning, Alex"
+        "Welcome, Alex"
       ],
       "overflows": []
     },
@@ -157,16 +147,6 @@
       "title": "Analytics — FIJLY Studio",
       "h1": [
         "Analytics"
-      ],
-      "overflows": []
-    },
-    {
-      "width": 1024,
-      "screen": "team",
-      "overflow": false,
-      "title": "Team — FIJLY Studio",
-      "h1": [
-        "Team"
       ],
       "overflows": []
     },
@@ -194,9 +174,9 @@
       "width": 768,
       "screen": "overview",
       "overflow": false,
-      "title": "FIJLY Studio — Dashboard",
+      "title": "FIJLY Studio — Client Portal",
       "h1": [
-        "Good morning, Alex"
+        "Welcome, Alex"
       ],
       "overflows": []
     },
@@ -247,16 +227,6 @@
       "title": "Analytics — FIJLY Studio",
       "h1": [
         "Analytics"
-      ],
-      "overflows": []
-    },
-    {
-      "width": 768,
-      "screen": "team",
-      "overflow": false,
-      "title": "Team — FIJLY Studio",
-      "h1": [
-        "Team"
       ],
       "overflows": []
     },
@@ -284,9 +254,9 @@
       "width": 375,
       "screen": "overview",
       "overflow": false,
-      "title": "FIJLY Studio — Dashboard",
+      "title": "FIJLY Studio — Client Portal",
       "h1": [
-        "Good morning, Alex"
+        "Welcome, Alex"
       ],
       "overflows": []
     },
@@ -337,16 +307,6 @@
       "title": "Analytics — FIJLY Studio",
       "h1": [
         "Analytics"
-      ],
-      "overflows": []
-    },
-    {
-      "width": 375,
-      "screen": "team",
-      "overflow": false,
-      "title": "Team — FIJLY Studio",
-      "h1": [
-        "Team"
       ],
       "overflows": []
     },
@@ -374,9 +334,9 @@
       "width": 390,
       "screen": "overview",
       "overflow": false,
-      "title": "FIJLY Studio — Dashboard",
+      "title": "FIJLY Studio — Client Portal",
       "h1": [
-        "Good morning, Alex"
+        "Welcome, Alex"
       ],
       "overflows": []
     },
@@ -427,16 +387,6 @@
       "title": "Analytics — FIJLY Studio",
       "h1": [
         "Analytics"
-      ],
-      "overflows": []
-    },
-    {
-      "width": 390,
-      "screen": "team",
-      "overflow": false,
-      "title": "Team — FIJLY Studio",
-      "h1": [
-        "Team"
       ],
       "overflows": []
     },

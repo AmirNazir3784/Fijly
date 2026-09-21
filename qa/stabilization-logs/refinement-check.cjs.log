@@ -1,0 +1,14 @@
+{
+  "checks": [
+    "1440: hero bounds, CTA plan context, all concept dialogs, validation, email fallback, contact focus",
+    "1280: hero bounds, CTA plan context, all concept dialogs, validation, email fallback, contact focus",
+    "1024: hero bounds, CTA plan context, all concept dialogs, validation, email fallback, contact focus",
+    "768: hero bounds, CTA plan context, all concept dialogs, validation, email fallback, contact focus",
+    "390: hero bounds, CTA plan context, all concept dialogs, validation, email fallback, contact focus",
+    "375: hero bounds, CTA plan context, all concept dialogs, validation, email fallback, contact focus",
+    "Mock endpoint accepted/rejected responses; rejected brief retained",
+    "Studio motion preview advances, pauses and restarts"
+  ],
+  "errors": [],
+  "accessibility": []
+}

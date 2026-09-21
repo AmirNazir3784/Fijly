@@ -1,0 +1,282 @@
+{
+  "measuredAt": "2026-09-21T13:56:16.395Z",
+  "note": "Local static server, Chromium, three fresh contexts. Diagnostic timings, not a production SLA. Gzip sizes are estimates; the QA server serves uncompressed files.",
+  "reports": [
+    {
+      "portal": "studio",
+      "samples": [
+        {
+          "domReadyMs": 618.5,
+          "loadMs": 618.7999999998137,
+          "domNodes": 930,
+          "resources": 20
+        },
+        {
+          "domReadyMs": 543,
+          "loadMs": 545.8000000002794,
+          "domNodes": 930,
+          "resources": 20
+        },
+        {
+          "domReadyMs": 556.3000000002794,
+          "loadMs": 556.7000000001863,
+          "domNodes": 930,
+          "resources": 20,
+          "noopUpdates": {
+            "tenNoopSavesMs": 31.800000000279397,
+            "domMutations": 0
+          }
+        }
+      ]
+    },
+    {
+      "portal": "admin",
+      "samples": [
+        {
+          "domReadyMs": 481.1999999997206,
+          "loadMs": 481.29999999981374,
+          "domNodes": 1777,
+          "resources": 15
+        },
+        {
+          "domReadyMs": 494.29999999981374,
+          "loadMs": 494.29999999981374,
+          "domNodes": 1777,
+          "resources": 15
+        },
+        {
+          "domReadyMs": 522.8999999999069,
+          "loadMs": 523,
+          "domNodes": 1777,
+          "resources": 15,
+          "noopUpdates": {
+            "tenNoopSavesMs": 0.7000000001862645,
+            "domMutations": 0
+          }
+        }
+      ]
+    }
+  ],
+  "portalAssets": [
+    {
+      "portal": "studio",
+      "jsCssFiles": 14,
+      "jsCssBytes": 193702,
+      "jsCssGzipBytes": 49512
+    },
+    {
+      "portal": "admin",
+      "jsCssFiles": 13,
+      "jsCssBytes": 213361,
+      "jsCssGzipBytes": 52937
+    }
+  ],
+  "sizes": [
+    {
+      "file": "js/admin-data.js",
+      "bytes": 7761,
+      "gzipBytes": 2239
+    },
+    {
+      "file": "js/admin-sections.js",
+      "bytes": 36507,
+      "gzipBytes": 8652
+    },
+    {
+      "file": "js/admin.js",
+      "bytes": 15127,
+      "gzipBytes": 4158
+    },
+    {
+      "file": "js/client-portal.js",
+      "bytes": 23093,
+      "gzipBytes": 6591
+    },
+    {
+      "file": "js/config.js",
+      "bytes": 324,
+      "gzipBytes": 248
+    },
+    {
+      "file": "js/contact.js",
+      "bytes": 6201,
+      "gzipBytes": 2231
+    },
+    {
+      "file": "js/hero.js",
+      "bytes": 2620,
+      "gzipBytes": 964
+    },
+    {
+      "file": "js/main.js",
+      "bytes": 4698,
+      "gzipBytes": 1568
+    },
+    {
+      "file": "js/mock-service.js",
+      "bytes": 36146,
+      "gzipBytes": 9792
+    },
+    {
+      "file": "js/studio-shell.js",
+      "bytes": 6797,
+      "gzipBytes": 2173
+    },
+    {
+      "file": "js/studio.js",
+      "bytes": 3838,
+      "gzipBytes": 1257
+    },
+    {
+      "file": "js/video-gallery.js",
+      "bytes": 9949,
+      "gzipBytes": 3400
+    },
+    {
+      "file": "js/workflow.js",
+      "bytes": 24156,
+      "gzipBytes": 7210
+    },
+    {
+      "file": "css/admin.css",
+      "bytes": 10774,
+      "gzipBytes": 2505
+    },
+    {
+      "file": "css/base.css",
+      "bytes": 3311,
+      "gzipBytes": 1314
+    },
+    {
+      "file": "css/client-portal.css",
+      "bytes": 5044,
+      "gzipBytes": 1537
+    },
+    {
+      "file": "css/components.css",
+      "bytes": 17677,
+      "gzipBytes": 3572
+    },
+    {
+      "file": "css/dashboard.css",
+      "bytes": 44078,
+      "gzipBytes": 7957
+    },
+    {
+      "file": "css/fonts.css",
+      "bytes": 3748,
+      "gzipBytes": 683
+    },
+    {
+      "file": "css/marketing.css",
+      "bytes": 48795,
+      "gzipBytes": 10947
+    },
+    {
+      "file": "css/variables.css",
+      "bytes": 5099,
+      "gzipBytes": 1876
+    },
+    {
+      "file": "css/workflow.css",
+      "bytes": 2180,
+      "gzipBytes": 806
+    },
+    {
+      "file": "assets/concept-aiflow.svg",
+      "bytes": 2685,
+      "gzipBytes": 1035
+    },
+    {
+      "file": "assets/concept-clouddesk.svg",
+      "bytes": 3766,
+      "gzipBytes": 1082
+    },
+    {
+      "file": "assets/concept-finly.svg",
+      "bytes": 2388,
+      "gzipBytes": 981
+    },
+    {
+      "file": "assets/concept-taskpilot.svg",
+      "bytes": 3758,
+      "gzipBytes": 1078
+    },
+    {
+      "file": "assets/favicon.ico",
+      "bytes": 4286,
+      "gzipBytes": 265
+    },
+    {
+      "file": "assets/favicon.svg",
+      "bytes": 161,
+      "gzipBytes": 153
+    },
+    {
+      "file": "assets/fonts/jetbrains-mono-cyrillic-ext.woff2",
+      "bytes": 1640,
+      "gzipBytes": 1663
+    },
+    {
+      "file": "assets/fonts/jetbrains-mono-cyrillic.woff2",
+      "bytes": 8872,
+      "gzipBytes": 8895
+    },
+    {
+      "file": "assets/fonts/jetbrains-mono-greek.woff2",
+      "bytes": 6836,
+      "gzipBytes": 6859
+    },
+    {
+      "file": "assets/fonts/jetbrains-mono-latin-ext.woff2",
+      "bytes": 11624,
+      "gzipBytes": 11647
+    },
+    {
+      "file": "assets/fonts/jetbrains-mono-latin.woff2",
+      "bytes": 31432,
+      "gzipBytes": 31460
+    },
+    {
+      "file": "assets/fonts/jetbrains-mono-vietnamese.woff2",
+      "bytes": 5888,
+      "gzipBytes": 5911
+    },
+    {
+      "file": "assets/fonts/jetbrainsmono-OFL.txt",
+      "bytes": 4399,
+      "gzipBytes": 1970
+    },
+    {
+      "file": "assets/fonts/plus-jakarta-sans-cyrillic-ext.woff2",
+      "bytes": 1716,
+      "gzipBytes": 1739
+    },
+    {
+      "file": "assets/fonts/plus-jakarta-sans-latin-ext.woff2",
+      "bytes": 21728,
+      "gzipBytes": 21756
+    },
+    {
+      "file": "assets/fonts/plus-jakarta-sans-latin.woff2",
+      "bytes": 27348,
+      "gzipBytes": 27376
+    },
+    {
+      "file": "assets/fonts/plus-jakarta-sans-vietnamese.woff2",
+      "bytes": 8352,
+      "gzipBytes": 8375
+    },
+    {
+      "file": "assets/fonts/plusjakartasans-OFL.txt",
+      "bytes": 4402,
+      "gzipBytes": 1982
+    },
+    {
+      "file": "assets/og-image.png",
+      "bytes": 97839,
+      "gzipBytes": 95983
+    }
+  ],
+  "duplicateFiles": []
+}

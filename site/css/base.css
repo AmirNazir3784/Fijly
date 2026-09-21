@@ -6,7 +6,7 @@
    - Tablet:  768px to 1023px      @media (min-width: 768px) and (max-width: 1023px)
    - Desktop: 1024px and up        @media (min-width: 1024px)
 
-   Webfonts (Plus Jakarta Sans, JetBrains Mono) are loaded by a <link> in each
+   Local WOFF2 fonts (Plus Jakarta Sans, JetBrains Mono) load via a <link> in each
    page's <head>, not by @import here, so the font request starts in parallel
    with this stylesheet instead of waiting for it to parse.
    ========================================================================== */
