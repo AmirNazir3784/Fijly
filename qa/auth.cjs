@@ -50,7 +50,7 @@ fs.mkdirSync('qa/screenshots',{recursive:true});
     assert.equal(await page.locator('.sidebar-user__name').innerText(),'Morgan Blake');
     assert.equal(await page.locator('#set-admin-name').inputValue(),'Morgan Blake');
     assert.deepEqual(await page.evaluate(()=>window.FIJLY_AUTH),{userId:qaUsers.admin2.id,role:'admin',clientId:null,fullName:'Morgan Blake',email:'morgan@fijly.example'});
-    // Mock data keeps working alongside auth.
+    // Studio data renders from the database.
     assert.equal(await page.locator('#admin-stats .stat-card').count(),4);
     await page.goto(base+'admin.html#requests');await portalReady(page);assert.ok(await page.locator('#screen-requests tbody tr').count()>0);
     // Already signed in: login.html forwards to the portal.
@@ -62,7 +62,7 @@ fs.mkdirSync('qa/screenshots',{recursive:true});
     await page.goto(base+'admin.html');await page.waitForURL('**/login.html');
     assert.equal(await page.evaluate(k=>localStorage.getItem(k),require('./runtime.cjs').STORAGE_KEY),null);
     await ctx.close();}
-  checks.push('Admin: sign in -> admin.html, real name in sidebar and Settings, FIJLY_AUTH set, mock data renders, login.html forwards when signed in, sign out -> login.html, other tab follows, session cleared');
+  checks.push('Admin: sign in -> admin.html, real name in sidebar and Settings, FIJLY_AUTH set, studio data renders, login.html forwards when signed in, sign out -> login.html, other tab follows, session cleared');
 
   // 4. Client: studio.html only; admin.html redirects to the client portal.
   {const {ctx,page}=await fresh();await page.goto(base+'login.html');await page.locator('#login-card[data-state="ready"]').waitFor();
@@ -84,7 +84,24 @@ fs.mkdirSync('qa/screenshots',{recursive:true});
   {const {ctx,page}=await fresh('noprofile');await page.goto(base+'admin.html');await page.waitForURL('**/login.html');await ctx.close();}
   checks.push('No profile row: sign-in refused with a clear message; an existing session without a profile is signed out of the portals');
 
-  // 6. SDK unavailable: the portal stays covered with retry and sign-in options.
+  // 6. No workspace: a client account without client_id sees a welcome message
+  // (no portal data is loaded), and an admin opening the Client portal is
+  // pointed to the Admin portal.
+  {const {ctx,page}=await fresh('unlinked');const rest=[];page.on('request',r=>{if(/\/rest\/v1\/(?!profiles)/.test(r.url()))rest.push(r.url());});
+    await page.goto(base+'studio.html');await page.locator('.no-workspace-message').waitFor();
+    assert.match(await page.locator('#auth-loading').innerText(),/Welcome to FIJLY Studio[\s\S]*Your workspace is being set up/);
+    assert.equal(await page.locator('#auth-loading a[href="index.html"]').innerText(),'← Back to fijly.com');
+    assert.equal(await page.locator('#studio').evaluate(e=>e.inert),true);assert.deepEqual(rest,[],'no workspace data requested');
+    await scan(page,'no-workspace');
+    await page.locator('#auth-loading [data-sign-out]').click();await page.waitForURL('**/login.html');
+    await ctx.close();}
+  {const {ctx,page}=await fresh('admin');await page.goto(base+'studio.html');await page.locator('.no-workspace-message').waitFor();
+    assert.match(await page.locator('#auth-loading').innerText(),/This is the Client portal/);assert.equal(await page.locator('#auth-loading a[href="admin.html"]').count(),1);
+    await page.locator('#auth-loading a[href="admin.html"]').click();await page.waitForURL('**/admin.html');await portalReady(page);
+    await ctx.close();}
+  checks.push('No linked workspace: client sees the welcome message with sign out and a link home, no data is loaded; an admin on the Client portal is sent to the Admin portal');
+
+  // 7. SDK unavailable: the portal stays covered with retry and sign-in options.
   {const {ctx,page}=await fresh('admin');await ctx.route('https://cdn.jsdelivr.net/**',route=>route.abort());
     const failures=errors.length;await page.goto(base+'admin.html');
     await page.locator('#auth-loading .auth-loading__actions').waitFor();
@@ -95,7 +112,7 @@ fs.mkdirSync('qa/screenshots',{recursive:true});
     await ctx.close();}
   checks.push('SDK blocked: overlay stays up with an explanation, Try again and Go to sign in; the portal stays inert');
 
-  // 7. The landing page is public and never contacts Supabase.
+  // 8. The landing page is public and never contacts Supabase.
   {const {ctx,page}=await fresh();const requests=[];page.on('request',r=>requests.push(r.url()));
     await page.goto(base+'index.html',{waitUntil:'load'});
     assert.equal(requests.filter(u=>/supabase|jsdelivr/.test(u)).length,0);

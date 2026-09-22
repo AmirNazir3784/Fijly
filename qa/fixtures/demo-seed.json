@@ -1,0 +1,1136 @@
+{
+ "schema": 3,
+ "snapshot": "2026-09-20",
+ "clients": [
+  {
+   "id": "northbeam",
+   "name": "Northbeam",
+   "contact": "Alex Rivera",
+   "email": "alex@northbeam.example",
+   "industry": "SaaS portfolio",
+   "status": "Active",
+   "notes": "Product launch and onboarding videos across the Northbeam product portfolio."
+  },
+  {
+   "id": "layerbase",
+   "name": "Layerbase",
+   "contact": "Priya Shah",
+   "email": "priya@layerbase.example",
+   "industry": "Developer tools",
+   "status": "Active",
+   "notes": "Keep technical explanations clear. Product team reviews scripts before animation."
+  },
+  {
+   "id": "orbitly",
+   "name": "Orbitly",
+   "contact": "Jordan Lee",
+   "email": "jordan@orbitly.example",
+   "industry": "Customer success",
+   "status": "Active",
+   "notes": "Monthly product releases. Deliver square and widescreen versions."
+  },
+  {
+   "id": "clearpath",
+   "name": "Clearpath",
+   "contact": "Morgan Ellis",
+   "email": "morgan@clearpath.example",
+   "industry": "Analytics",
+   "status": "Active",
+   "notes": "Focus on the reporting workflow and time saved for operations leads."
+  },
+  {
+   "id": "relay",
+   "name": "Relay",
+   "contact": "Taylor Brooks",
+   "email": "taylor@relay.example",
+   "industry": "Collaboration",
+   "status": "Onboarding",
+   "notes": "Awaiting brand guidelines and a product walkthrough recording."
+  },
+  {
+   "id": "linearwave",
+   "name": "Linearwave",
+   "contact": "Casey Kim",
+   "email": "casey@linearwave.example",
+   "industry": "Workflow automation",
+   "status": "Paused",
+   "notes": "Next production cycle starts after the product refresh."
+  }
+ ],
+ "activity": [],
+ "requests": [
+  {
+   "id": "req-1",
+   "client": "northbeam",
+   "title": "AIFlow / Product launch",
+   "platform": "Website",
+   "videoType": "SaaS Launch",
+   "instructions": "Show the core product workflow clearly, with concise narration and a clear next step.",
+   "references": [
+    "https://example.com/creative-reference"
+   ],
+   "attachments": [
+    {
+     "name": "brand-guidelines.pdf",
+     "size": 124000,
+     "type": "application/pdf"
+    }
+   ],
+   "requestedAt": "2026-09-14T10:00:00Z",
+   "deadline": "2026-09-23",
+   "priority": "High",
+   "assignedEditor": "Maya Chen",
+   "length": "60–90 sec",
+   "status": "In Production"
+  },
+  {
+   "id": "req-2",
+   "client": "northbeam",
+   "title": "CloudDesk / Homepage explainer",
+   "platform": "Website",
+   "videoType": "Homepage Video",
+   "instructions": "Show the core product workflow clearly, with concise narration and a clear next step.",
+   "references": [
+    "https://example.com/creative-reference"
+   ],
+   "attachments": [
+    {
+     "name": "brand-guidelines.pdf",
+     "size": 124000,
+     "type": "application/pdf"
+    }
+   ],
+   "requestedAt": "2026-09-14T10:00:00Z",
+   "deadline": "2026-09-22",
+   "priority": "Normal",
+   "assignedEditor": "Devon Park",
+   "length": "60–90 sec",
+   "status": "In Production"
+  },
+  {
+   "id": "req-3",
+   "client": "northbeam",
+   "title": "TaskPilot / Product demo",
+   "platform": "Website",
+   "videoType": "Product Demo",
+   "instructions": "Show the core product workflow clearly, with concise narration and a clear next step.",
+   "references": [
+    "https://example.com/creative-reference"
+   ],
+   "attachments": [
+    {
+     "name": "brand-guidelines.pdf",
+     "size": 124000,
+     "type": "application/pdf"
+    }
+   ],
+   "requestedAt": "2026-09-14T10:00:00Z",
+   "deadline": "2026-09-30",
+   "priority": "Normal",
+   "assignedEditor": "Maya Chen",
+   "length": "60–90 sec",
+   "status": "In Production"
+  },
+  {
+   "id": "req-4",
+   "client": "northbeam",
+   "title": "Finly / Tutorial series",
+   "platform": "Website",
+   "videoType": "Tutorial",
+   "instructions": "Show the core product workflow clearly, with concise narration and a clear next step.",
+   "references": [
+    "https://example.com/creative-reference"
+   ],
+   "attachments": [
+    {
+     "name": "brand-guidelines.pdf",
+     "size": 124000,
+     "type": "application/pdf"
+    }
+   ],
+   "requestedAt": "2026-09-14T10:00:00Z",
+   "deadline": "2026-09-17",
+   "priority": "High",
+   "assignedEditor": "Devon Park",
+   "length": "60–90 sec",
+   "status": "Completed"
+  },
+  {
+   "id": "req-5",
+   "client": "layerbase",
+   "title": "API workspace launch",
+   "platform": "Website",
+   "videoType": "SaaS Launch",
+   "instructions": "Show the core product workflow clearly, with concise narration and a clear next step.",
+   "references": [
+    "https://example.com/creative-reference"
+   ],
+   "attachments": [
+    {
+     "name": "brand-guidelines.pdf",
+     "size": 124000,
+     "type": "application/pdf"
+    }
+   ],
+   "requestedAt": "2026-09-14T10:00:00Z",
+   "deadline": "2026-09-24",
+   "priority": "Normal",
+   "assignedEditor": "Maya Chen",
+   "length": "60–90 sec",
+   "status": "In Production"
+  },
+  {
+   "id": "req-6",
+   "client": "layerbase",
+   "title": "Getting started",
+   "platform": "Website",
+   "videoType": "Tutorial",
+   "instructions": "Show the core product workflow clearly, with concise narration and a clear next step.",
+   "references": [
+    "https://example.com/creative-reference"
+   ],
+   "attachments": [
+    {
+     "name": "brand-guidelines.pdf",
+     "size": 124000,
+     "type": "application/pdf"
+    }
+   ],
+   "requestedAt": "2026-09-14T10:00:00Z",
+   "deadline": "2026-09-25",
+   "priority": "Normal",
+   "assignedEditor": "Devon Park",
+   "length": "60–90 sec",
+   "status": "In Production"
+  },
+  {
+   "id": "req-7",
+   "client": "orbitly",
+   "title": "Customer health overview",
+   "platform": "Website",
+   "videoType": "Product Demo",
+   "instructions": "Show the core product workflow clearly, with concise narration and a clear next step.",
+   "references": [
+    "https://example.com/creative-reference"
+   ],
+   "attachments": [
+    {
+     "name": "brand-guidelines.pdf",
+     "size": 124000,
+     "type": "application/pdf"
+    }
+   ],
+   "requestedAt": "2026-09-14T10:00:00Z",
+   "deadline": "2026-09-28",
+   "priority": "High",
+   "assignedEditor": "Maya Chen",
+   "length": "60–90 sec",
+   "status": "In Production"
+  },
+  {
+   "id": "req-8",
+   "client": "orbitly",
+   "title": "Release highlights",
+   "platform": "Website",
+   "videoType": "Product Promo",
+   "instructions": "Show the core product workflow clearly, with concise narration and a clear next step.",
+   "references": [
+    "https://example.com/creative-reference"
+   ],
+   "attachments": [
+    {
+     "name": "brand-guidelines.pdf",
+     "size": 124000,
+     "type": "application/pdf"
+    }
+   ],
+   "requestedAt": "2026-09-14T10:00:00Z",
+   "deadline": "2026-09-18",
+   "priority": "Normal",
+   "assignedEditor": "Devon Park",
+   "length": "60–90 sec",
+   "status": "Completed"
+  },
+  {
+   "id": "req-9",
+   "client": "clearpath",
+   "title": "Reporting, explained",
+   "platform": "Website",
+   "videoType": "Explainer",
+   "instructions": "Show the core product workflow clearly, with concise narration and a clear next step.",
+   "references": [
+    "https://example.com/creative-reference"
+   ],
+   "attachments": [
+    {
+     "name": "brand-guidelines.pdf",
+     "size": 124000,
+     "type": "application/pdf"
+    }
+   ],
+   "requestedAt": "2026-09-14T10:00:00Z",
+   "deadline": "2026-09-29",
+   "priority": "Normal",
+   "assignedEditor": "Maya Chen",
+   "length": "60–90 sec",
+   "status": "In Production"
+  },
+  {
+   "id": "req-10",
+   "client": "clearpath",
+   "title": "Homepage story",
+   "platform": "Website",
+   "videoType": "Homepage Video",
+   "instructions": "Show the core product workflow clearly, with concise narration and a clear next step.",
+   "references": [
+    "https://example.com/creative-reference"
+   ],
+   "attachments": [
+    {
+     "name": "brand-guidelines.pdf",
+     "size": 124000,
+     "type": "application/pdf"
+    }
+   ],
+   "requestedAt": "2026-09-14T10:00:00Z",
+   "deadline": "2026-10-02",
+   "priority": "High",
+   "assignedEditor": "Devon Park",
+   "length": "60–90 sec",
+   "status": "In Production"
+  },
+  {
+   "id": "req-11",
+   "client": "linearwave",
+   "title": "Workflow introduction",
+   "platform": "Website",
+   "videoType": "Explainer",
+   "instructions": "Show the core product workflow clearly, with concise narration and a clear next step.",
+   "references": [
+    "https://example.com/creative-reference"
+   ],
+   "attachments": [
+    {
+     "name": "brand-guidelines.pdf",
+     "size": 124000,
+     "type": "application/pdf"
+    }
+   ],
+   "requestedAt": "2026-09-14T10:00:00Z",
+   "deadline": "2026-09-10",
+   "priority": "Normal",
+   "assignedEditor": "Maya Chen",
+   "length": "60–90 sec",
+   "status": "Completed"
+  },
+  {
+   "id": "pending-1",
+   "client": "northbeam",
+   "title": "Northbeam / Onboarding",
+   "platform": "Website",
+   "videoType": "Tutorial",
+   "instructions": "Explain connecting a data source and creating the first report.",
+   "references": [],
+   "attachments": [],
+   "requestedAt": "2026-09-18T10:00:00Z",
+   "deadline": "2026-09-30",
+   "priority": "High",
+   "assignedEditor": "",
+   "length": "60–90 sec",
+   "status": "Under Review"
+  },
+  {
+   "id": "pending-2",
+   "client": "northbeam",
+   "title": "AIFlow / Feature promo",
+   "platform": "LinkedIn",
+   "videoType": "Product Promo",
+   "instructions": "Introduce the new automation features in a concise social video.",
+   "references": [],
+   "attachments": [],
+   "requestedAt": "2026-09-19T10:00:00Z",
+   "deadline": "2026-10-04",
+   "priority": "Normal",
+   "assignedEditor": "",
+   "length": "60–90 sec",
+   "status": "Submitted"
+  },
+  {
+   "id": "pending-3",
+   "client": "northbeam",
+   "title": "Finly / Pricing explainer",
+   "platform": "YouTube",
+   "videoType": "Explainer",
+   "instructions": "Explain how to choose the right product configuration.",
+   "references": [],
+   "attachments": [],
+   "requestedAt": "2026-09-20T10:00:00Z",
+   "deadline": "2026-10-09",
+   "priority": "Normal",
+   "assignedEditor": "",
+   "length": "60–90 sec",
+   "status": "Submitted"
+  }
+ ],
+ "videos": [
+  {
+   "id": "video-1",
+   "requestId": "req-1",
+   "status": "In Production",
+   "versions": [
+    {
+     "id": "ver-1",
+     "number": 1,
+     "filename": "draft-v1.mp4",
+     "notes": "Initial production draft.",
+     "createdAt": "2026-09-18T10:00:00Z",
+     "simulated": true,
+     "revisionId": null
+    }
+   ],
+   "feedback": [],
+   "activity": [
+    {
+     "id": "event-04887dbc-f8f6-4c4d-9ca7-ec1cf61ff679",
+     "at": "2026-09-14T10:00:00Z",
+     "text": "Request moved into production."
+    }
+   ]
+  },
+  {
+   "id": "video-2",
+   "requestId": "req-2",
+   "status": "Client Review",
+   "versions": [
+    {
+     "id": "ver-2",
+     "number": 1,
+     "filename": "draft-v1.mp4",
+     "notes": "Initial production draft.",
+     "createdAt": "2026-09-18T10:00:00Z",
+     "simulated": true,
+     "revisionId": null
+    }
+   ],
+   "feedback": [],
+   "activity": [
+    {
+     "id": "event-f517e0ee-8367-4998-ae2c-02892891e278",
+     "at": "2026-09-14T10:00:00Z",
+     "text": "Request moved into production."
+    }
+   ]
+  },
+  {
+   "id": "video-3",
+   "requestId": "req-3",
+   "status": "In Production",
+   "versions": [],
+   "feedback": [],
+   "activity": [
+    {
+     "id": "event-bb1235b2-2928-4ab7-8439-42c581afd2f9",
+     "at": "2026-09-14T10:00:00Z",
+     "text": "Request moved into production."
+    }
+   ]
+  },
+  {
+   "id": "video-4",
+   "requestId": "req-4",
+   "status": "Completed",
+   "versions": [
+    {
+     "id": "ver-4",
+     "number": 1,
+     "filename": "draft-v1.mp4",
+     "notes": "Initial production draft.",
+     "createdAt": "2026-09-18T10:00:00Z",
+     "simulated": true,
+     "revisionId": null
+    }
+   ],
+   "feedback": [],
+   "activity": [
+    {
+     "id": "event-a05e99bc-19b5-44b1-8073-92eb4b965c35",
+     "at": "2026-09-14T10:00:00Z",
+     "text": "Request moved into production."
+    },
+    {
+     "id": "event-completed-video-4",
+     "at": "2026-09-19T15:00:00Z",
+     "text": "Status changed to Completed / V1."
+    }
+   ],
+   "completedAt": "2026-09-19T15:00:00Z"
+  },
+  {
+   "id": "video-5",
+   "requestId": "req-5",
+   "status": "In Production",
+   "versions": [
+    {
+     "id": "ver-5",
+     "number": 1,
+     "filename": "draft-v1.mp4",
+     "notes": "Initial production draft.",
+     "createdAt": "2026-09-18T10:00:00Z",
+     "simulated": true,
+     "revisionId": null
+    }
+   ],
+   "feedback": [],
+   "activity": [
+    {
+     "id": "event-3f9d94b1-4a94-4f7f-98c7-a2b33cb81c43",
+     "at": "2026-09-14T10:00:00Z",
+     "text": "Request moved into production."
+    }
+   ]
+  },
+  {
+   "id": "video-6",
+   "requestId": "req-6",
+   "status": "Client Review",
+   "versions": [
+    {
+     "id": "ver-6",
+     "number": 1,
+     "filename": "draft-v1.mp4",
+     "notes": "Initial production draft.",
+     "createdAt": "2026-09-18T10:00:00Z",
+     "simulated": true,
+     "revisionId": null
+    }
+   ],
+   "feedback": [],
+   "activity": [
+    {
+     "id": "event-0d215fd0-a9f0-4055-ac62-e102a4745513",
+     "at": "2026-09-14T10:00:00Z",
+     "text": "Request moved into production."
+    }
+   ]
+  },
+  {
+   "id": "video-7",
+   "requestId": "req-7",
+   "status": "In Revision",
+   "versions": [
+    {
+     "id": "ver-7",
+     "number": 1,
+     "filename": "draft-v1.mp4",
+     "notes": "Initial production draft.",
+     "createdAt": "2026-09-18T10:00:00Z",
+     "simulated": true,
+     "revisionId": null
+    }
+   ],
+   "feedback": [
+    {
+     "id": "feedback-seed",
+     "version": 1,
+     "at": "2026-09-20T09:00:00Z",
+     "author": "Jordan Lee",
+     "text": "Please slow down the health-score walkthrough at 00:18 and add a clearer closing CTA."
+    }
+   ],
+   "activity": [
+    {
+     "id": "event-fec73d60-1da8-4c95-aead-d64f69b11fff",
+     "at": "2026-09-14T10:00:00Z",
+     "text": "Request moved into production."
+    },
+    {
+     "id": "event-1bdc28d8-04ac-4835-b09a-b68e7ab1444a",
+     "at": "2026-09-20T09:00:00Z",
+     "text": "Revision round 1 requested on V1."
+    }
+   ]
+  },
+  {
+   "id": "video-8",
+   "requestId": "req-8",
+   "status": "Completed",
+   "versions": [
+    {
+     "id": "ver-8",
+     "number": 1,
+     "filename": "draft-v1.mp4",
+     "notes": "Initial production draft.",
+     "createdAt": "2026-09-18T10:00:00Z",
+     "simulated": true,
+     "revisionId": null
+    }
+   ],
+   "feedback": [],
+   "activity": [
+    {
+     "id": "event-34913436-0e18-46f8-ad64-7288fc767099",
+     "at": "2026-09-14T10:00:00Z",
+     "text": "Request moved into production."
+    },
+    {
+     "id": "event-completed-video-8",
+     "at": "2026-09-20T11:00:00Z",
+     "text": "Status changed to Completed / V1."
+    }
+   ],
+   "completedAt": "2026-09-20T11:00:00Z"
+  },
+  {
+   "id": "video-9",
+   "requestId": "req-9",
+   "status": "Client Review",
+   "versions": [
+    {
+     "id": "ver-9",
+     "number": 1,
+     "filename": "draft-v1.mp4",
+     "notes": "Initial production draft.",
+     "createdAt": "2026-09-18T10:00:00Z",
+     "simulated": true,
+     "revisionId": null
+    }
+   ],
+   "feedback": [],
+   "activity": [
+    {
+     "id": "event-dcc97c96-785f-4ae1-b998-af4fb8717a0a",
+     "at": "2026-09-14T10:00:00Z",
+     "text": "Request moved into production."
+    }
+   ]
+  },
+  {
+   "id": "video-10",
+   "requestId": "req-10",
+   "status": "In Production",
+   "versions": [],
+   "feedback": [],
+   "activity": [
+    {
+     "id": "event-3632877c-be74-4051-9e22-5d538c86556b",
+     "at": "2026-09-14T10:00:00Z",
+     "text": "Request moved into production."
+    }
+   ]
+  },
+  {
+   "id": "video-11",
+   "requestId": "req-11",
+   "status": "Completed",
+   "versions": [
+    {
+     "id": "ver-11",
+     "number": 1,
+     "filename": "draft-v1.mp4",
+     "notes": "Initial production draft.",
+     "createdAt": "2026-09-18T10:00:00Z",
+     "simulated": true,
+     "revisionId": null
+    }
+   ],
+   "feedback": [],
+   "activity": [
+    {
+     "id": "event-62418d87-4829-4eea-a53f-29cc5c61fb07",
+     "at": "2026-09-14T10:00:00Z",
+     "text": "Request moved into production."
+    },
+    {
+     "id": "event-completed-video-11",
+     "at": "2026-09-20T16:30:00Z",
+     "text": "Status changed to Completed / V1."
+    }
+   ],
+   "completedAt": "2026-09-20T16:30:00Z"
+  }
+ ],
+ "revisions": [
+  {
+   "id": "revision-seed",
+   "videoId": "video-7",
+   "round": 1,
+   "feedbackId": "feedback-seed",
+   "requestedAt": "2026-09-20T09:00:00Z",
+   "status": "Revision Requested",
+   "baseVersion": 1,
+   "submittedVersion": null,
+   "resolvedAt": null
+  }
+ ],
+ "assets": [
+  {
+   "id": "asset-1",
+   "client": "northbeam",
+   "name": "northbeam-logo-primary.svg",
+   "category": "Logo",
+   "fileType": "svg",
+   "size": 18400,
+   "uploadedAt": "2026-08-04T09:15:00Z",
+   "notes": "Primary mark. Use on light backgrounds.",
+   "simulated": true
+  },
+  {
+   "id": "asset-2",
+   "client": "northbeam",
+   "name": "northbeam-logo-reverse.svg",
+   "category": "Logo",
+   "fileType": "svg",
+   "size": 17900,
+   "uploadedAt": "2026-08-04T09:16:00Z",
+   "notes": "Reverse mark for dark scenes.",
+   "simulated": true
+  },
+  {
+   "id": "asset-3",
+   "client": "northbeam",
+   "name": "northbeam-brand-guidelines.pdf",
+   "category": "Brand Guidelines",
+   "fileType": "pdf",
+   "size": 4820000,
+   "uploadedAt": "2026-08-04T09:20:00Z",
+   "notes": "Colour, spacing and tone of voice.",
+   "simulated": true
+  },
+  {
+   "id": "asset-4",
+   "client": "northbeam",
+   "name": "inter-variable.woff2",
+   "category": "Fonts",
+   "fileType": "woff2",
+   "size": 268000,
+   "uploadedAt": "2026-08-05T11:02:00Z",
+   "notes": "",
+   "simulated": true
+  },
+  {
+   "id": "asset-5",
+   "client": "northbeam",
+   "name": "dashboard-walkthrough.mov",
+   "category": "B-roll",
+   "fileType": "mov",
+   "size": 412000000,
+   "uploadedAt": "2026-09-02T14:40:00Z",
+   "notes": "Screen capture of the reporting flow.",
+   "simulated": true
+  },
+  {
+   "id": "asset-6",
+   "client": "northbeam",
+   "name": "product-ui-set.zip",
+   "category": "Product Images",
+   "fileType": "zip",
+   "size": 22400000,
+   "uploadedAt": "2026-09-02T14:45:00Z",
+   "notes": "Exported at 2x.",
+   "simulated": true
+  },
+  {
+   "id": "asset-7",
+   "client": "layerbase",
+   "name": "layerbase-logo-lockup.svg",
+   "category": "Logo",
+   "fileType": "svg",
+   "size": 21200,
+   "uploadedAt": "2026-08-11T10:05:00Z",
+   "notes": "",
+   "simulated": true
+  },
+  {
+   "id": "asset-8",
+   "client": "layerbase",
+   "name": "layerbase-guidelines.pdf",
+   "category": "Brand Guidelines",
+   "fileType": "pdf",
+   "size": 3100000,
+   "uploadedAt": "2026-08-11T10:07:00Z",
+   "notes": "Technical terminology reference.",
+   "simulated": true
+  },
+  {
+   "id": "asset-9",
+   "client": "layerbase",
+   "name": "engineering-team-headshots.zip",
+   "category": "Headshots",
+   "fileType": "zip",
+   "size": 48200000,
+   "uploadedAt": "2026-08-19T16:30:00Z",
+   "notes": "Six contributors, neutral background.",
+   "simulated": true
+  },
+  {
+   "id": "asset-10",
+   "client": "orbitly",
+   "name": "orbitly-logo-primary.png",
+   "category": "Logo",
+   "fileType": "png",
+   "size": 96000,
+   "uploadedAt": "2026-07-28T08:50:00Z",
+   "notes": "",
+   "simulated": true
+  },
+  {
+   "id": "asset-11",
+   "client": "orbitly",
+   "name": "release-highlights-broll.mp4",
+   "category": "B-roll",
+   "fileType": "mp4",
+   "size": 256000000,
+   "uploadedAt": "2026-09-10T13:12:00Z",
+   "notes": "Raw capture, unedited.",
+   "simulated": true
+  },
+  {
+   "id": "asset-12",
+   "client": "orbitly",
+   "name": "competitor-reference-deck.pdf",
+   "category": "Reference Files",
+   "fileType": "pdf",
+   "size": 1840000,
+   "uploadedAt": "2026-09-10T13:20:00Z",
+   "notes": "Tone reference supplied by the client.",
+   "simulated": true
+  },
+  {
+   "id": "asset-13",
+   "client": "clearpath",
+   "name": "clearpath-logo.svg",
+   "category": "Logo",
+   "fileType": "svg",
+   "size": 15600,
+   "uploadedAt": "2026-08-22T09:00:00Z",
+   "notes": "",
+   "simulated": true
+  },
+  {
+   "id": "asset-14",
+   "client": "clearpath",
+   "name": "reporting-screens.zip",
+   "category": "Product Images",
+   "fileType": "zip",
+   "size": 18900000,
+   "uploadedAt": "2026-09-05T15:25:00Z",
+   "notes": "Reporting workflow, light theme.",
+   "simulated": true
+  },
+  {
+   "id": "asset-15",
+   "client": "relay",
+   "name": "relay-logo-draft.png",
+   "category": "Logo",
+   "fileType": "png",
+   "size": 88000,
+   "uploadedAt": "2026-09-18T12:00:00Z",
+   "notes": "Draft mark; confirm before animation.",
+   "simulated": true
+  },
+  {
+   "id": "asset-16",
+   "client": "relay",
+   "name": "voice-and-tone.docx",
+   "category": "Reference Files",
+   "fileType": "docx",
+   "size": 74000,
+   "uploadedAt": "2026-09-18T12:04:00Z",
+   "notes": "",
+   "simulated": true
+  },
+  {
+   "id": "asset-17",
+   "client": "linearwave",
+   "name": "linearwave-brand-kit.zip",
+   "category": "Other",
+   "fileType": "zip",
+   "size": 12600000,
+   "uploadedAt": "2026-09-12T10:30:00Z",
+   "notes": "Mixed assets, needs sorting into categories.",
+   "simulated": true
+  }
+ ],
+ "settings": {
+  "adminName": "Sam Ortiz",
+  "adminRole": "Studio producer",
+  "adminEmail": "sam@fijly.example",
+  "studioName": "FIJLY Studio",
+  "studioEmail": "hello@fijly.example",
+  "studioLocation": "Remote / GMT+1",
+  "notifyNewRequest": true,
+  "notifyRevision": true,
+  "notifyApproval": false,
+  "notifyWeeklyDigest": true,
+  "defaultPriority": "Normal",
+  "defaultLeadDays": 10,
+  "defaultLength": "60–90 sec"
+ },
+ "clientSettings": {},
+ "scripts": [
+  {
+   "id": "script-video-1",
+   "client": "northbeam",
+   "videoId": "video-1",
+   "title": "AIFlow / Product launch / Script",
+   "status": "Client Review",
+   "version": 1,
+   "updatedAt": "2026-09-14T10:00:00Z",
+   "scenes": [
+    {
+     "label": "Opening",
+     "text": "Introduce AIFlow and the everyday problem this saas launch helps explain."
+    },
+    {
+     "label": "Product walkthrough",
+     "text": "Show the core workflow step by step. Show the core product workflow clearly, with concise narration and a clear next step."
+    },
+    {
+     "label": "Closing",
+     "text": "Invite viewers to explore Northbeam and take the next step with the product."
+    }
+   ],
+   "feedback": []
+  },
+  {
+   "id": "script-video-2",
+   "client": "northbeam",
+   "videoId": "video-2",
+   "title": "CloudDesk / Homepage explainer / Script",
+   "status": "Approved",
+   "version": 1,
+   "updatedAt": "2026-09-14T10:00:00Z",
+   "scenes": [
+    {
+     "label": "Opening",
+     "text": "Introduce CloudDesk and the everyday problem this homepage video helps explain."
+    },
+    {
+     "label": "Product walkthrough",
+     "text": "Show the core workflow step by step. Show the core product workflow clearly, with concise narration and a clear next step."
+    },
+    {
+     "label": "Closing",
+     "text": "Invite viewers to explore Northbeam and take the next step with the product."
+    }
+   ],
+   "feedback": []
+  },
+  {
+   "id": "script-video-3",
+   "client": "northbeam",
+   "videoId": "video-3",
+   "title": "TaskPilot / Product demo / Script",
+   "status": "Approved",
+   "version": 1,
+   "updatedAt": "2026-09-14T10:00:00Z",
+   "scenes": [
+    {
+     "label": "Opening",
+     "text": "Introduce TaskPilot and the everyday problem this product demo helps explain."
+    },
+    {
+     "label": "Product walkthrough",
+     "text": "Show the core workflow step by step. Show the core product workflow clearly, with concise narration and a clear next step."
+    },
+    {
+     "label": "Closing",
+     "text": "Invite viewers to explore Northbeam and take the next step with the product."
+    }
+   ],
+   "feedback": []
+  },
+  {
+   "id": "script-video-4",
+   "client": "northbeam",
+   "videoId": "video-4",
+   "title": "Finly / Tutorial series / Script",
+   "status": "Client Review",
+   "version": 1,
+   "updatedAt": "2026-09-14T10:00:00Z",
+   "scenes": [
+    {
+     "label": "Opening",
+     "text": "Introduce Finly and the everyday problem this tutorial helps explain."
+    },
+    {
+     "label": "Product walkthrough",
+     "text": "Show the core workflow step by step. Show the core product workflow clearly, with concise narration and a clear next step."
+    },
+    {
+     "label": "Closing",
+     "text": "Invite viewers to explore Northbeam and take the next step with the product."
+    }
+   ],
+   "feedback": []
+  },
+  {
+   "id": "script-video-5",
+   "client": "layerbase",
+   "videoId": "video-5",
+   "title": "API workspace launch / Script",
+   "status": "Approved",
+   "version": 1,
+   "updatedAt": "2026-09-14T10:00:00Z",
+   "scenes": [
+    {
+     "label": "Opening",
+     "text": "Introduce API workspace launch and the everyday problem this saas launch helps explain."
+    },
+    {
+     "label": "Product walkthrough",
+     "text": "Show the core workflow step by step. Show the core product workflow clearly, with concise narration and a clear next step."
+    },
+    {
+     "label": "Closing",
+     "text": "Invite viewers to explore Layerbase and take the next step with the product."
+    }
+   ],
+   "feedback": []
+  },
+  {
+   "id": "script-video-6",
+   "client": "layerbase",
+   "videoId": "video-6",
+   "title": "Getting started / Script",
+   "status": "Approved",
+   "version": 1,
+   "updatedAt": "2026-09-14T10:00:00Z",
+   "scenes": [
+    {
+     "label": "Opening",
+     "text": "Introduce Getting started and the everyday problem this tutorial helps explain."
+    },
+    {
+     "label": "Product walkthrough",
+     "text": "Show the core workflow step by step. Show the core product workflow clearly, with concise narration and a clear next step."
+    },
+    {
+     "label": "Closing",
+     "text": "Invite viewers to explore Layerbase and take the next step with the product."
+    }
+   ],
+   "feedback": []
+  },
+  {
+   "id": "script-video-7",
+   "client": "orbitly",
+   "videoId": "video-7",
+   "title": "Customer health overview / Script",
+   "status": "Client Review",
+   "version": 1,
+   "updatedAt": "2026-09-14T10:00:00Z",
+   "scenes": [
+    {
+     "label": "Opening",
+     "text": "Introduce Customer health overview and the everyday problem this product demo helps explain."
+    },
+    {
+     "label": "Product walkthrough",
+     "text": "Show the core workflow step by step. Show the core product workflow clearly, with concise narration and a clear next step."
+    },
+    {
+     "label": "Closing",
+     "text": "Invite viewers to explore Orbitly and take the next step with the product."
+    }
+   ],
+   "feedback": []
+  },
+  {
+   "id": "script-video-8",
+   "client": "orbitly",
+   "videoId": "video-8",
+   "title": "Release highlights / Script",
+   "status": "Approved",
+   "version": 1,
+   "updatedAt": "2026-09-14T10:00:00Z",
+   "scenes": [
+    {
+     "label": "Opening",
+     "text": "Introduce Release highlights and the everyday problem this product promo helps explain."
+    },
+    {
+     "label": "Product walkthrough",
+     "text": "Show the core workflow step by step. Show the core product workflow clearly, with concise narration and a clear next step."
+    },
+    {
+     "label": "Closing",
+     "text": "Invite viewers to explore Orbitly and take the next step with the product."
+    }
+   ],
+   "feedback": []
+  },
+  {
+   "id": "script-video-9",
+   "client": "clearpath",
+   "videoId": "video-9",
+   "title": "Reporting, explained / Script",
+   "status": "Approved",
+   "version": 1,
+   "updatedAt": "2026-09-14T10:00:00Z",
+   "scenes": [
+    {
+     "label": "Opening",
+     "text": "Introduce Reporting, explained and the everyday problem this explainer helps explain."
+    },
+    {
+     "label": "Product walkthrough",
+     "text": "Show the core workflow step by step. Show the core product workflow clearly, with concise narration and a clear next step."
+    },
+    {
+     "label": "Closing",
+     "text": "Invite viewers to explore Clearpath and take the next step with the product."
+    }
+   ],
+   "feedback": []
+  },
+  {
+   "id": "script-video-10",
+   "client": "clearpath",
+   "videoId": "video-10",
+   "title": "Homepage story / Script",
+   "status": "Client Review",
+   "version": 1,
+   "updatedAt": "2026-09-14T10:00:00Z",
+   "scenes": [
+    {
+     "label": "Opening",
+     "text": "Introduce Homepage story and the everyday problem this homepage video helps explain."
+    },
+    {
+     "label": "Product walkthrough",
+     "text": "Show the core workflow step by step. Show the core product workflow clearly, with concise narration and a clear next step."
+    },
+    {
+     "label": "Closing",
+     "text": "Invite viewers to explore Clearpath and take the next step with the product."
+    }
+   ],
+   "feedback": []
+  },
+  {
+   "id": "script-video-11",
+   "client": "linearwave",
+   "videoId": "video-11",
+   "title": "Workflow introduction / Script",
+   "status": "Approved",
+   "version": 1,
+   "updatedAt": "2026-09-14T10:00:00Z",
+   "scenes": [
+    {
+     "label": "Opening",
+     "text": "Introduce Workflow introduction and the everyday problem this explainer helps explain."
+    },
+    {
+     "label": "Product walkthrough",
+     "text": "Show the core workflow step by step. Show the core product workflow clearly, with concise narration and a clear next step."
+    },
+    {
+     "label": "Closing",
+     "text": "Invite viewers to explore Linearwave and take the next step with the product."
+    }
+   ],
+   "feedback": []
+  }
+ ]
+}

@@ -1,4 +1,4 @@
-const {chromium,base,routes,widths}=require('./runtime.cjs');
+const {chromium,base,routes,widths,qaUsers}=require('./runtime.cjs');
 const assert=require('assert/strict'),fs=require('fs'),crypto=require('crypto');
 (async()=>{
   const browser=await chromium.launch(),ctx=await browser.newContext(),a=await ctx.newPage(),b=await ctx.newPage(),c=await ctx.newPage(),d=await ctx.newPage();
@@ -11,7 +11,6 @@ const assert=require('assert/strict'),fs=require('fs'),crypto=require('crypto');
   const save=async p=>{await p.locator('#profile-save').click();await p.locator('#profile-status:not([hidden])').waitFor();assert.match(await p.locator('#profile-status').innerText(),/Profile updated/);};
   await go(a,'admin','settings');await go(b,'admin','settings');await go(c,'studio','settings');await go(d,'studio','settings');
   const original=await a.evaluate(()=>JSON.stringify(['requests','videos','revisions','scripts','assets'].map(k=>FijlyMock.state[k])));
-  const clients=await c.evaluate(()=>FijlyMock.state.clients.map(x=>({...x})));
   // Admin: name and photo are saved to the Supabase profile (it has no phone
   // column). Another Admin tab sees saved changes once its data refreshes.
   await open(a);assert.equal(await a.locator('#profile-email').getAttribute('readonly'),'');assert.equal(await a.locator('#profile-role').getAttribute('readonly'),'');
@@ -25,14 +24,18 @@ const assert=require('assert/strict'),fs=require('fs'),crypto=require('crypto');
   await open(a);await a.locator('#profile-name').fill('Discard this');await a.keyboard.press('Escape');assert.equal(await a.locator('.sidebar-user__name').innerText(),'Sam Final');assert.equal(await a.locator('.sidebar-user').evaluate(e=>e===document.activeElement),true);
   await open(a);await a.locator('#profile-photo-file').setInputFiles({name:'bad.txt',mimeType:'text/plain',buffer:Buffer.from('bad')});assert.match(await a.locator('#profile-photo-error').innerText(),/PNG, JPG or WebP/);await a.locator('#profile-remove-photo').click();await save(a);await b.evaluate(()=>FijlyData.load());await b.waitForFunction(()=>FijlyMock.state.settings.adminPhoto==='');assert.equal(await a.locator('.sidebar-user img').count(),0);await close(a);
   checks.push('Admin name/photo save to the profile, remove, cancel, validation, reload, refresh into other tabs and unsaved Settings edits; no phone field (no column)');
-  // Client personal identity updates the existing contact record, never company
-  // identity, workflow records, permissions or request preferences.
-  const prefs=await c.evaluate(()=>FijlyMock.client.preferences());
-  await open(c);const email=await c.locator('#profile-email').inputValue();await c.locator('#profile-name').fill('Alex Studio');await c.locator('#profile-phone').fill('+92 300 1234567');await c.locator('#profile-photo-file').setInputFiles({name:'photo.png',mimeType:'image/png',buffer:Buffer.from(png,'base64')});await c.waitForFunction(()=>!document.querySelector('#profile-save').disabled);await save(c);await d.waitForFunction(()=>FijlyMock.client.current().contact==='Alex Studio');assert.equal(await d.locator('#client-contact').inputValue(),'Alex Studio');assert.equal(await d.locator('.sidebar-user img').count(),1);assert.equal(await d.locator('#client-email').inputValue(),email);assert.equal(await c.locator('#profile-role').inputValue(),'Client');assert.deepEqual(await c.evaluate(()=>FijlyMock.client.preferences()),prefs);await close(c);
-  await go(c,'studio','overview');assert.match(await c.locator('#h-overview').innerText(),/Alex/);// Pending Part 3B: the contact change reaching the Admin portal's database.
-  await c.evaluate(()=>FijlyMock.client.select('layerbase'));assert.equal(await c.locator('.sidebar-user img').count(),0);await open(c);assert.equal(await c.locator('#profile-phone').inputValue(),'');await c.locator('#profile-name').fill('Unsaved foreign draft');await c.evaluate(()=>FijlyMock.client.select('northbeam'));assert.equal(await c.locator('#profile-dialog').evaluate(e=>e.open),false);assert.equal(await c.locator('.sidebar-user__name').innerText(),'Alex Studio');
-  const untouched=await c.evaluate(()=>FijlyMock.state.clients.filter(x=>x.id!=='northbeam'));assert.deepEqual(untouched,clients.filter(x=>x.id!=='northbeam'));assert.equal(await a.evaluate(()=>JSON.stringify(['requests','videos','revisions','scripts','assets'].map(k=>FijlyMock.state[k]))),original);
-  checks.push('Client contact/phone/photo sync to client Settings (session mock), preserved email/role/preferences, client isolation, cancelled edits and unchanged production records');
+  // Client: "Your profile" is the signed-in person's own profile (name and
+  // photo on `profiles`). The company contact, workflow records and request
+  // preferences are untouched; another tab shows the change after a refresh.
+  const workflowRows=()=>JSON.stringify(['requests','videos','revisions','scripts','assets','clients'].map(k=>browser.fijlyDb[k]));
+  const before=workflowRows(),prefs=await c.evaluate(()=>FijlyMock.client.preferences()),contactBefore=await c.locator('#client-contact').inputValue();
+  await open(c);assert.equal(await c.locator('#profile-phone').isVisible(),false);assert.equal(await c.locator('#profile-email').inputValue(),qaUsers.client.email);await c.locator('#profile-name').fill('Casey Studio');await c.locator('#profile-photo-file').setInputFiles({name:'photo.png',mimeType:'image/png',buffer:Buffer.from(png,'base64')});await c.waitForFunction(()=>!document.querySelector('#profile-save').disabled);await save(c);
+  await d.evaluate(()=>FijlyData.load());await d.waitForFunction(()=>document.querySelector('.sidebar-user__name').textContent==='Casey Studio');assert.equal(await d.locator('.sidebar-user img').count(),1);assert.equal(await d.locator('.sidebar-user__email').innerText(),'Northbeam');assert.equal(await d.locator('#client-contact').inputValue(),contactBefore);assert.equal(await c.locator('#profile-role').inputValue(),'Client');assert.deepEqual(await c.evaluate(()=>FijlyMock.client.preferences()),prefs);await close(c);
+  const stored=browser.fijlyDb.profiles.find(x=>x.id===qaUsers.client.id);assert.equal(stored.full_name,'Casey Studio');assert.match(stored.avatar_url,/^data:image\//);
+  await go(c,'studio','overview');assert.match(await c.locator('#h-overview').innerText(),/Casey/);
+  await open(c);await c.locator('#profile-name').fill('Unsaved draft');await c.keyboard.press('Escape');assert.equal(await c.locator('.sidebar-user__name').innerText(),'Casey Studio');
+  assert.equal(workflowRows(),before,'a profile edit changes no workflow or company records');
+  checks.push('Client profile: name/photo saved to the signed-in user\'s profile, workspace shown under the name, no phone field, company contact and preferences untouched, cancelled edits discarded, other tabs update on refresh');
   // Shell checks across every route, every requested width; short viewports
   // force sidebar scrolling while leaving its footer reachable and visible.
   fs.mkdirSync('qa/screenshots',{recursive:true});
@@ -67,7 +70,10 @@ const assert=require('assert/strict'),fs=require('fs'),crypto=require('crypto');
   // index.html may differ only by its three Sign in / Studio links, which now
   // point to login.html; restoring them must reproduce the baseline bytes.
   const bytes=file=>file==='site/index.html'?Buffer.from(fs.readFileSync(file,'latin1').replaceAll('href="login.html"','href="studio.html"'),'latin1'):fs.readFileSync(file);
-  for(const [file,hash] of Object.entries(baseline))if(!allowed.includes(file))assert.equal(crypto.createHash('sha256').update(bytes(file)).digest('hex'),hash,file+' unchanged');
+  // Part 3B retired the session mock: these two files must be gone.
+  const retired=['site/js/admin-data.js','site/js/mock-service.js'];
+  for(const file of retired)assert.equal(fs.existsSync(file),false,file+' retired');
+  for(const [file,hash] of Object.entries(baseline))if(!allowed.includes(file)&&!retired.includes(file))assert.equal(crypto.createHash('sha256').update(bytes(file)).digest('hex'),hash,file+' unchanged');
   checks.push('Baseline hash guard: workflow implementation, status logic, fixture data, dashboard renderer, public pages and assets unchanged');
   fs.writeFileSync('qa/studio-polish-results.json',JSON.stringify({checks,scans,errors},null,2));await browser.close();assert.deepEqual(errors,[]);console.log(JSON.stringify({checks,scans:scans.length,errors},null,2));
 })().catch(e=>{console.error(e);process.exit(1);});

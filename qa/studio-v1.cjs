@@ -15,12 +15,9 @@ const { pathToFileURL } = require('url');
   page.on('request', r => {
     // axe fetches stylesheets for its CSS audit; those are not application APIs.
     if (runningAxe && r.method() === 'GET' && (/\.css(?:$|\?)/.test(r.url()) || r.url().startsWith('https://fonts.googleapis.com/css2?'))) return;
-    // Backend traffic is Supabase only. The Admin portal reads and writes its
-    // REST API (Part 3A); the Client portal may only check the session and its
-    // own profile, since its data is still the session mock until Part 3B.
-    const supabase = /^https:\/\/eaddovqkarognynnybeh\.supabase\.co\/(auth\/v1\/|rest\/v1\/)/.test(r.url());
-    const clientData = /\/rest\/v1\//.test(r.url()) && !/\/rest\/v1\/profiles\?select=\*&id=eq\./.test(r.url()) && /studio\.html/.test(r.frame().url());
-    if (supabase && !clientData) return;
+    // Both portals read and write the Supabase auth and REST APIs (Parts 3A/3B).
+    // Any other backend request is a failure.
+    if (/^https:\/\/eaddovqkarognynnybeh\.supabase\.co\/(auth\/v1\/|rest\/v1\/)/.test(r.url())) return;
     if (['fetch', 'xhr'].includes(r.resourceType()) || r.method() !== 'GET') requests.push(r.url());
   });
   const routes = { studio: ['overview', 'projects', 'requests', 'assets', 'scripts', 'analytics', 'settings'], admin: ['dashboard', 'clients', 'requests', 'videos', 'revisions', 'assets', 'scripts', 'analytics', 'settings'] };
@@ -131,9 +128,10 @@ const { pathToFileURL } = require('url');
   assert.match(await page.locator('#preview-video').innerText(), / · (Client Review|In Production|In Revision|Draft Ready|Approved|Completed)$/);
   assert.equal(await page.locator('.scene').count(), 5);
   await page.locator('.sidebar-link[data-screen="settings"]').click();
-  await page.locator('label[for="set-digest"]').click();
-  assert.equal(await page.locator('#set-digest').isChecked(), true);
-  assert.equal(await page.locator('#set-digest').getAttribute('aria-checked'), 'true');
+  // Notification switches had no database columns and were removed; the
+  // stored defaults (platform, length) remain.
+  assert.equal(await page.locator('#client-settings-form input[type="checkbox"]').count(), 0);
+  assert.equal(await page.locator('#client-default-platform').count(), 1);
   await page.locator('.sidebar-link[data-screen="requests"]').click();
   // Counts are relative: the list is driven by shared state, whose seed may grow.
   const cardsBefore = await page.locator('[data-request-list] .list-card').count();
@@ -144,14 +142,13 @@ const { pathToFileURL } = require('url');
   await page.locator('#req-name').fill('Northbeam / New onboarding');
   await page.locator('#req-brief').fill('Explain connecting a data source and exporting the first report.');
   await page.getByRole('button', { name: 'Submit request' }).click();
-  assert.equal(await page.locator('[data-request-list] .list-card').count(), cardsBefore + 1);
+  await page.waitForFunction(n => document.querySelectorAll('[data-request-list] .list-card').length === n, cardsBefore + 1);
   assert.equal(Number(await page.locator('[data-request-count]').textContent()), openBefore + 1);
-  // Phase 2 persists the mock in sessionStorage, so a reload keeps the request
-  // instead of resetting to fixtures as V1 did.
+  // The request is stored in the database, so a reload keeps it.
   await page.reload();
   assert.equal(await page.locator('[data-request-list] .list-card').count(), cardsBefore + 1,
-    'session mock should survive reload');
-  checks.push('Client filters, preview placeholder, storyboard, settings switches, validated local requests and session persistence');
+    'the request should survive a reload');
+  checks.push('Client filters, preview placeholder, storyboard, stored settings defaults, validated requests and database persistence');
 
   await load('admin', 'clients');
   await page.locator('#client-search').fill('alex');

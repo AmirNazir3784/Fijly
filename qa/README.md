@@ -36,15 +36,15 @@ and saves screenshots plus `qa/admin-analytics-visual-results.json`.
   `studio-workflow`, `studio-workflow-probe`, `studio-workflow-sweep`,
   `studio-stability`.
 - `auth`: login page, signed-out redirects, admin/client role routing, real names in the sidebar, sign-out, cross-tab sign-out, missing-profile refusal, blocked-SDK fallback and a public landing page. `runtime.cjs` serves the pinned Supabase SDK from `qa/vendor/` and mocks the Supabase endpoints; every other suite starts signed in as a mock admin whose name matches the mock Settings.
-- Part 3A (Admin portal on Supabase): `supabase-emulator.cjs` stands in for the
-  Supabase REST API — one in-memory database per launched browser, seeded by
-  running the real `mock-service.js` and converting its records to rows, with
-  the live project's column names (unknown columns fail as in PostgREST) and a
-  simple RLS stand-in. `simClient` writes the rows the Part 3B Client portal
-  will write (requests, revision feedback, approvals), so Admin workflows are
-  tested end to end. On admin pages, older suites' `FijlyMock` refers to
-  `FijlyData`. Checks that need the Client portal to read the database are
-  marked "Pending Part 3B" in the suites.
+- Supabase in QA: `supabase-emulator.cjs` stands in for the Supabase REST API —
+  one in-memory database per launched browser, seeded from
+  `fixtures/demo-seed.json` (the demo records of the retired session mock),
+  with the live project's column names (unknown columns fail as in PostgREST)
+  and an RLS stand-in (admins see everything; a client only its workspace).
+  By default the Admin portal acts as the admin user and the Client portal as
+  the Northbeam client user, so one context can drive both portals against the
+  same database; tabs refresh (`FijlyData.load()`) to see each other's writes.
+  Older suites' `FijlyMock` refers to `FijlyData` in both portals.
 - `round-b`: queue/badge counts, triage, submission feedback, assets, script visibility, deadline links, mobile cards and analytics date boundaries.
 - `studio-polish`: all portal headers, sidebar footer, logo navigation, profile editing/photo handling, shared references, keyboard focus and accessibility at all five widths; protected-file scope guard.
 - `functional`, `accessibility`, `refinement-check`, `final_browser`: current

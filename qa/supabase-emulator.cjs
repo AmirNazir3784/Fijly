@@ -2,14 +2,15 @@
    - Tables and columns are the live project's, as probed with the public key
      on 2026-09-22; unknown columns fail like PostgREST, so a query that would
      break against the real database also breaks here.
-   - Seeded by running the real mock-service.js (with admin-data.js) in a
-     sandbox and converting its records into rows, so existing suites see the
-     same clients, requests, videos, revisions, scripts and assets.
-   - RLS stand-in: admins read and write everything; a client reads its own
-     client's rows and its own profile; anonymous callers see nothing.
+   - Seeded from fixtures/demo-seed.json (the demo records of the retired
+     session mock) converted into rows, so suites see the same clients,
+     requests, videos, revisions, scripts and assets.
+   - RLS stand-in: admins read and write everything; a client reads and
+     writes its own client's rows (directly or through their video or script)
+     and its own profile, never admin_settings; anonymous callers see nothing.
    Supports what the portals send: select with eq filters, order and limit;
    insert, update and delete with return=representation; single objects. */
-const fs = require('fs'), path = require('path'), vm = require('vm'), crypto = require('crypto');
+const fs = require('fs'), path = require('path'), crypto = require('crypto');
 
 const COLUMNS = {
   profiles: 'id email full_name role client_id avatar_url created_at updated_at',
@@ -29,16 +30,11 @@ const COLUMNS = {
 Object.keys(COLUMNS).forEach(table => { COLUMNS[table] = new Set(COLUMNS[table].split(' ')); });
 const UNIQUE = { versions: ['video_id', 'version_number'], revisions: ['video_id', 'round_number'], admin_settings: ['admin_id'], client_settings: ['client_id'] };
 
-// Runs the Client-portal mock exactly as the browser would, to get its seed state.
+// The demo records the portals were built against, frozen from the retired
+// session mock (mock-service.js + admin-data.js) when both portals moved to
+// Supabase in Part 3B.
 function mockSeedState() {
-  const site = path.join(__dirname, '..', 'site', 'js');
-  const sandbox = { sessionStorage: { getItem() { return null; }, setItem() {} }, crypto: { randomUUID: () => crypto.randomUUID() }, URL, Event: class {}, console };
-  sandbox.window = sandbox;
-  sandbox.dispatchEvent = () => {};
-  vm.createContext(sandbox);
-  vm.runInContext(fs.readFileSync(path.join(site, 'admin-data.js'), 'utf8'), sandbox);
-  vm.runInContext(fs.readFileSync(path.join(site, 'mock-service.js'), 'utf8'), sandbox);
-  return JSON.parse(JSON.stringify(sandbox.FijlyMock.state, (key, value) => key === 'projects' ? undefined : value));
+  return JSON.parse(fs.readFileSync(path.join(__dirname, 'fixtures', 'demo-seed.json'), 'utf8'));
 }
 
 function createDb(users) {
@@ -88,11 +84,21 @@ function handle(db, caller, method, url, headers, body) {
     if (!match) return error(400, 'QA000', 'QA emulator supports eq filters only: ' + key + '=' + value);
     filters.push([key, match[1]]);
   }
+  // The client a row belongs to: directly, or through its video or script.
+  const owner = row => {
+    if (table === 'clients') return row.id;
+    if (columns.has('client_id')) return row.client_id;
+    if (columns.has('video_id')) { const video = db.videos.find(v => v.id === row.video_id); return video && video.client_id; }
+    if (table === 'script_scenes') { const script = db.scripts.find(x => x.id === row.script_id); return script && script.client_id; }
+    return null;
+  };
+  const own = row => !!(caller && caller.profile && caller.profile.client_id && owner(row) === caller.profile.client_id);
   const visible = row => {
     if (!caller) return false;
     if (role === 'admin') return true;
     if (table === 'profiles') return row.id === caller.id;
-    return columns.has('client_id') && caller.profile && row.client_id === caller.profile.client_id;
+    if (table === 'admin_settings') return false;
+    return own(row);
   };
   const matches = row => filters.every(([key, value]) => String(row[key]) === value);
   const single = /vnd\.pgrst\.object/.test(headers.accept || ''), represent = /return=representation/.test(headers.prefer || '') || single;
@@ -102,7 +108,7 @@ function handle(db, caller, method, url, headers, body) {
     return represent || method === 'GET' ? { status: status || 200, body: copy } : { status: 204 };
   };
   const unknown = row => Object.keys(row).find(key => !columns.has(key));
-  const writable = row => role === 'admin' || (table === 'profiles' && row.id === caller.id);
+  const writable = row => role === 'admin' || (table === 'profiles' ? row.id === caller.id : table !== 'admin_settings' && own(row));
   if (!caller) return error(401, '42501', 'permission denied for table ' + table);
 
   if (method === 'GET') {
@@ -148,9 +154,10 @@ function handle(db, caller, method, url, headers, body) {
   return error(405, 'QA000', 'Method not supported by the QA emulator: ' + method);
 }
 
-/* Simulated client. Until Part 3B the Client portal still writes to its session
-   mock, so QA plays the client by writing the rows the Supabase Client portal
-   will write, then reloads the Admin portal to process them for real. */
+/* Simulated client: writes the same rows the Client portal writes (a request,
+   revision feedback, an approval) straight to the test database, for suites
+   that focus on the studio side. studio-client and round-b drive the real
+   Client portal instead. */
 const simClient = {
   submitRequest(db, values) {
     const now = new Date().toISOString(), row = Object.assign({ id: crypto.randomUUID(), status: 'Submitted', priority: 'Normal', platform: 'Website', video_type: 'Explainer', length: '60–90 sec', reference_urls: [], attachment_names: [], submitted_by: null, created_at: now, updated_at: now }, values);

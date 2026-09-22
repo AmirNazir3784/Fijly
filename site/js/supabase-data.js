@@ -1,16 +1,18 @@
 'use strict';
 
 // FIJLY Studio — Supabase Data Service
-// Replaces FijlyMock with real database queries for the Admin portal.
+// The data layer of both portals: real database queries in place of the
+// retired session mock.
 //
 // Two layers:
 //   FijlyData.admin.*  thin async queries against the live schema (raw rows).
 //   FijlyData itself   the surface the Admin UI already uses: `state` in the
 //                      mock's shapes, the same read helpers and workflow rules,
 //                      and async writes that persist, reload and notify.
-// RLS decides what each account may read or write; nothing is filtered here.
-// Workflow rules, statuses and formatters mirror mock-service.js, which the
-// Client portal keeps using until Part 3B.
+//   FijlyData.client   the Client portal's view: the signed-in client's own
+//                      workspace (window.FIJLY_AUTH.clientId), same shapes.
+// RLS decides what each account may read or write; the client view also
+// checks ownership so a stray record can never render in the wrong portal.
 
 (function () {
   var videoStatuses = ['In Production', 'Draft Ready', 'Client Review', 'Approved', 'In Revision', 'Completed'];
@@ -23,6 +25,8 @@
   var lengths = ['15–30 sec', '30–45 sec', '60–90 sec', '90–120 sec', '2–3 min', '3 min+'];
   var statusTones = { Submitted: 'badge-info', 'Under Review': 'badge-info', 'In Production': 'badge-warning', 'Draft Ready': 'badge-info', 'Client Review': 'badge-warning', 'In Revision': 'badge-warning', Approved: 'badge-success', Completed: 'badge-success', 'Revision Requested': 'badge-warning', Resolved: 'badge-success', Draft: '' };
   var TABLE_LIMIT = 1000; // PostgREST's default page size; ample for one studio.
+  var SCRIPT_FEEDBACK = 'Script revision requested'; // activity action carrying a client's script feedback
+  var platforms = ['Website', 'YouTube', 'LinkedIn', 'Instagram', 'Paid ads'];
 
   /* Formatting (same output as the mock) --------------------------------- */
   function toDate(value) {
@@ -244,10 +248,23 @@
       if (!scenesByScript.has(s.script_id)) scenesByScript.set(s.script_id, []);
       scenesByScript.get(s.script_id).push({ id: s.id, order: s.scene_order, label: s.label || 'Scene ' + s.scene_order, text: s.content || '' });
     });
+    // Client script feedback has no table of its own: each request for changes
+    // is an activity entry on the script's video (see client.reviewScript).
+    // Round n of feedback was given on version n, and every reopened revision
+    // is a new version, so the version follows from the feedback count.
+    var scriptAsks = rows.activity.filter(function (a) { return a.action === SCRIPT_FEEDBACK && a.video_id; }).reverse();
     var scripts = rows.scripts.map(function (s) {
-      return { id: s.id, client: s.client_id, videoId: s.video_id, title: s.title || '', status: scriptStatuses.includes(s.status) ? s.status : 'Draft', version: 1, createdAt: s.created_at || '', updatedAt: s.updated_at || s.created_at || '',
-        scenes: (scenesByScript.get(s.id) || []).sort(function (a, b) { return a.order - b.order; }), feedback: [] };
+      var owner = clientById.get(s.client_id);
+      var feedback = scriptAsks.filter(function (a) { return a.video_id === s.video_id; }).map(function (a, index) {
+        var author = profiles.get(a.actor_id);
+        return { at: a.created_at, version: index + 1, author: (author && author.full_name) || (owner && owner.contact) || 'Client', text: a.details || '' };
+      });
+      var status = scriptStatuses.includes(s.status) ? s.status : 'Draft';
+      return { id: s.id, client: s.client_id, videoId: s.video_id, title: s.title || '', status: status, version: 1 + feedback.length - (status === 'Revision Requested' && feedback.length ? 1 : 0), createdAt: s.created_at || '', updatedAt: s.updated_at || s.created_at || '',
+        scenes: (scenesByScript.get(s.id) || []).sort(function (a, b) { return a.order - b.order; }), feedback: feedback };
     });
+    var clientSettings = {};
+    (rows.clientSettings || []).forEach(function (cs) { clientSettings[cs.client_id] = { defaultLength: lengths.includes(cs.default_length) ? cs.default_length : '', platform: cs.default_platform || '' }; });
     var me = profiles.get(profile && profile.id) || profile || {};
     var st = rows.settings || {};
     var settings = {
@@ -258,10 +275,10 @@
       defaultLeadDays: Number.isInteger(st.default_lead_days) ? st.default_lead_days : 10,
       defaultLength: lengths.includes(st.default_length) ? st.default_length : '60–90 sec'
     };
-    return { clients: clients, requests: requests, videos: videos, revisions: revisions, assets: assets, scripts: scripts, settings: settings, me: me, settingsRow: st };
+    return { clients: clients, requests: requests, videos: videos, revisions: revisions, assets: assets, scripts: scripts, settings: settings, clientSettings: clientSettings, me: me, settingsRow: st };
   }
 
-  var listeners = [], loading = null, settingsRow = null, lastLoaded = 0;
+  var listeners = [], loading = null, settingsRow = null, lastLoaded = 0, me = {};
   function notify(changed) {
     var keys = changed || ['clients', 'requests', 'videos', 'revisions', 'assets', 'scripts', 'settings', 'clientSettings'];
     listeners.forEach(function (listener) {
@@ -274,10 +291,13 @@
     if (loading) return loading;
     loading = (async function () {
       if (!profile) profile = await getUserProfile();
-      var results = await Promise.all([admin.getClients(), admin.getRequests(), admin.getVideos(), admin.getVersions(), admin.getFeedback(), admin.getRevisions(), admin.getAssets(), admin.getScripts(), admin.getScriptScenes(), admin.getActivity(), admin.getProfiles(), admin.getSettings()]);
-      var next = mapState({ clients: results[0], requests: results[1], videos: results[2], versions: results[3], feedback: results[4], revisions: results[5], assets: results[6], scripts: results[7], scenes: results[8], activity: results[9], profiles: results[10], settings: results[11] });
-      settingsRow = next.settingsRow;
-      ['clients', 'requests', 'videos', 'revisions', 'assets', 'scripts', 'settings'].forEach(function (key) { state[key] = next[key]; });
+      if (!profile) fail('Your session has ended. Sign in again.');
+      // RLS returns only what this account may see: everything for an admin,
+      // the client's own workspace for a client. Studio settings are admin-only.
+      var results = await Promise.all([admin.getClients(), admin.getRequests(), admin.getVideos(), admin.getVersions(), admin.getFeedback(), admin.getRevisions(), admin.getAssets(), admin.getScripts(), admin.getScriptScenes(), admin.getActivity(), admin.getProfiles(), profile.role === 'admin' ? admin.getSettings() : null, admin.all('client_settings')]);
+      var next = mapState({ clients: results[0], requests: results[1], videos: results[2], versions: results[3], feedback: results[4], revisions: results[5], assets: results[6], scripts: results[7], scenes: results[8], activity: results[9], profiles: results[10], settings: results[11], clientSettings: results[12] });
+      settingsRow = next.settingsRow; me = next.me;
+      ['clients', 'requests', 'videos', 'revisions', 'assets', 'scripts', 'settings', 'clientSettings'].forEach(function (key) { state[key] = next[key]; });
       loaded = true; lastLoaded = Date.now();
       notify();
     })();
@@ -309,7 +329,7 @@
     load().catch(function (error) { showDataError('Couldn’t refresh studio data', friendly(error)); });
   });
 
-  /* Read helpers and workflow rules (as in mock-service.js) ---------------- */
+  /* Read helpers and workflow rules (ported from the retired session mock) - */
   function get(collection, identifier) {
     var item = state[collection].find(function (record) { return record.id === identifier; });
     if (!item) fail('This record is no longer available.');
@@ -382,15 +402,152 @@
   }
 
   /* ======================================================================
-     FijlyData: the Admin UI's data service
+     FijlyData.client: the signed-in client's own workspace
+     ====================================================================== */
+  function clientId() { return (window.FIJLY_AUTH && window.FIJLY_AUTH.clientId) || null; }
+  function ownerOf(collection, record) {
+    if (collection === 'videos') return requestFor(record).client;
+    if (collection === 'revisions') return requestFor(get('videos', record.videoId)).client;
+    return record.client;
+  }
+  function owned(collection, identifier) {
+    var record = get(collection, identifier);
+    if (ownerOf(collection, record) !== clientId()) fail('This record is not available in your workspace.');
+    return record;
+  }
+  function workspaceRecords(collection) {
+    var id = clientId();
+    if (!id) return [];
+    return state[collection].filter(function (record) { try { return ownerOf(collection, record) === id; } catch (_) { return false; } });
+  }
+  function requireWorkspace() {
+    var workspace = client.current();
+    if (!workspace) fail('No client workspace is linked to this account. Contact the FIJLY team.');
+    return workspace;
+  }
+  async function ready() { if (!loaded) await load(); }
+
+  var client = {
+    /* Reads from the loaded workspace (the surface the Client screens use). */
+    current: function () { return state.clients.find(function (c) { return c.id === clientId(); }) || null; },
+    records: workspaceRecords,
+    get: owned,
+    preferences: function () {
+      var saved = state.clientSettings[clientId()] || {};
+      // Only default length and platform are stored; the notification
+      // switches have no columns and keep their defaults.
+      return { autoshare: true, digest: false, review: true, defaultLength: saved.defaultLength || state.settings.defaultLength || '60–90 sec', platform: saved.platform || 'Website' };
+    },
+
+    /* Async queries. RLS already limits the data to this workspace. */
+    getWorkspace: async function () { await ready(); return requireWorkspace(); },
+    getOverviewStats: async function () {
+      await ready(); requireWorkspace();
+      var videos = workspaceRecords('videos'), requests = workspaceRecords('requests');
+      return {
+        activeProjects: videos.filter(function (v) { return v.status !== 'Completed'; }).length + pendingRequests(clientId()).length,
+        pendingRequests: pendingRequests(clientId()).length,
+        videosDelivered: videos.filter(function (v) { return v.status === 'Completed'; }).length,
+        waitingForReview: videos.filter(function (v) { return v.status === 'Client Review'; }).length,
+        revisionsInProgress: videos.filter(function (v) { return v.status === 'In Revision'; }).length,
+        revisionRounds: workspaceRecords('revisions').length,
+        videos: videos, requests: requests
+      };
+    },
+    getVideos: async function () { await ready(); return workspaceRecords('videos'); },
+    getVideo: async function (id) { await ready(); return owned('videos', id); },
+    getRequests: async function () { await ready(); return workspaceRecords('requests'); },
+    getAssets: async function () { await ready(); return workspaceRecords('assets'); },
+    // Drafts stay with the studio until they are sent for review.
+    getScripts: async function () { await ready(); return workspaceRecords('scripts').filter(function (x) { return x.status !== 'Draft'; }); },
+    getScript: async function (id) { await ready(); return owned('scripts', id); },
+    getAnalytics: async function () {
+      await ready();
+      var videos = workspaceRecords('videos');
+      return { completed: videos.filter(function (v) { return v.status === 'Completed'; }).length, inProgress: videos.filter(function (v) { return v.status !== 'Completed'; }).length,
+        awaitingReview: videos.filter(function (v) { return v.status === 'Client Review'; }).length, approved: videos.filter(function (v) { return v.status === 'Approved'; }).length,
+        revisionRounds: workspaceRecords('revisions').length, videos: videos, revisions: workspaceRecords('revisions') };
+    },
+    getSettings: async function () { await ready(); return { workspace: requireWorkspace(), settings: client.preferences() }; },
+
+    /* Writes. Each validates first, then persists, reloads and notifies. */
+    createRequest: function (input, attachments) {
+      var workspace = requireWorkspace(), values = normalize(input);
+      var names = (attachments || []).map(function (file) { return String((file && file.name) || '').trim(); }).filter(Boolean);
+      return mutate(async function () {
+        var me = await admin.me();
+        var row = data(await db().from('requests').insert({ client_id: workspace.id, submitted_by: me.id, title: values.title, platform: values.platform, video_type: values.videoType, brief: values.instructions, deadline: values.deadline, priority: values.priority, reference_urls: values.references, length: values.length, attachment_names: names, status: 'Submitted' }).select().single());
+        await admin.logActivity(workspace.id, null, 'Request submitted', values.title);
+        return function () { return get('requests', row.id); };
+      });
+    },
+    approve: function (identifier) {
+      var video = owned('videos', identifier);
+      if (video.status !== 'Client Review') fail('This video is not awaiting your review.');
+      return mutate(function () { return transition(video, 'Approved'); });
+    },
+    revise: function (identifier, feedback) { owned('videos', identifier); return FijlyData.requestRevision(identifier, feedback); },
+    addAsset: function (input) {
+      var values = Object.assign({}, input, { client: requireWorkspace().id });
+      delete values.id;
+      return FijlyData.saveAsset(values);
+    },
+    // Workspace details live on the client record; defaults on client_settings.
+    saveProfile: function (values) {
+      var workspace = requireWorkspace();
+      var name = requireValue(values.name, 'Company name'), contact = requireValue(values.contact, 'Contact name'), email = requireValue(values.email, 'Email');
+      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) fail('Enter a valid email address.');
+      if (!lengths.includes(values.defaultLength)) fail('Choose a valid default length.');
+      if (!platforms.includes(values.platform)) fail('Choose a valid platform.');
+      var website = String(values.website || '').trim();
+      if (website) { var url; try { url = new URL(website); } catch (_) { fail('Enter the website as a full address, starting with https://'); } if (!['http:', 'https:'].includes(url.protocol)) fail('Enter the website as a full address, starting with https://'); }
+      return mutate(async function () {
+        await admin.updateClient(workspace.id, { name: name, contact_name: contact, contact_email: email, website: website || null });
+        var preferences = { default_length: values.defaultLength, default_platform: values.platform };
+        if (state.clientSettings[workspace.id]) data(await db().from('client_settings').update(preferences).eq('client_id', workspace.id).select());
+        else data(await db().from('client_settings').insert(Object.assign({ client_id: workspace.id }, preferences)).select());
+      });
+    },
+    // The client approves a script or asks for changes during Client Review.
+    // Feedback is kept as an activity entry on the script's video.
+    reviewScript: function (identifier, status, feedback) {
+      var script = owned('scripts', identifier);
+      if (script.status !== 'Client Review' || !['Approved', 'Revision Requested'].includes(status)) fail('This script is not awaiting review.');
+      var text = status === 'Revision Requested' ? requireValue(feedback, 'Feedback') : '';
+      return mutate(async function () {
+        await admin.updateScript(identifier, { status: status, updated_at: stamp() }, { status: 'Client Review' });
+        if (text) await admin.logActivity(script.client, script.videoId, SCRIPT_FEEDBACK, text);
+      });
+    }
+  };
+  // The names used in the Part 3B brief, for the same operations.
+  client.approveVideo = client.approve;
+  client.requestRevision = client.revise;
+  client.approveScript = function (identifier) { return client.reviewScript(identifier, 'Approved'); };
+  client.requestScriptRevision = function (identifier, text) { return client.reviewScript(identifier, 'Revision Requested', text); };
+  client.updateWorkspace = function (values) { return client.saveProfile(Object.assign({}, client.current(), client.preferences(), values)); };
+
+  /* ======================================================================
+     FijlyData: the data service both portals use
      ====================================================================== */
   var FijlyData = {
     admin: admin,
+    client: client,
     state: state,
+    // The signed-in person's own profile row (name, email, photo, role).
+    get me() { return me; },
+    // Personal profile: name and photo are saved to `profiles`.
+    saveMyProfile: function (values) {
+      var patch = {};
+      if (values.fullName !== undefined) patch.full_name = requireValue(values.fullName, 'Your name');
+      if (values.photo !== undefined) patch.avatar_url = values.photo || null;
+      if (!Object.keys(patch).length) return Promise.resolve(me);
+      return mutate(async function () { var user = await admin.me(); await admin.updateProfile(user.id, patch); return function () { return me; }; });
+    },
     persistent: true,
     // Fields the mock offered that the live schema has no column for. The UI
     // hides these controls rather than accepting edits it cannot save.
-    capabilities: { clientIndustry: false, studioLocation: false, weeklyDigest: false, adminRole: false, adminPhone: false, adminEmailEditable: false, scriptVersion: false, scriptFeedback: false, requestEditorBeforeProduction: false, attachmentSizes: false },
+    capabilities: { clientIndustry: false, studioLocation: false, weeklyDigest: false, adminRole: false, adminPhone: false, adminEmailEditable: false, scriptVersion: true, scriptFeedback: true, requestEditorBeforeProduction: false, attachmentSizes: false },
     videoStatuses: videoStatuses, revisionStatuses: revisionStatuses, requestStatuses: requestStatuses, scriptStatuses: scriptStatuses, assetCategories: assetCategories,
     formatDate: formatDate, formatDateTime: formatDateTime, formatBytes: formatBytes,
     statusClass: function (status) { return 'badge ' + (statusTones[status] || ''); },

@@ -1,9 +1,8 @@
-/* Round B behavior and browser regression coverage. Part 3A: the Admin portal (a)
-   reads Supabase through FijlyData; the Client portal (c) still runs on the
-   session mock, so the client's side of each step is written to the database
-   (simClient) and the Admin portal refreshes. Client-portal views of those
-   records are pending Part 3B. */
-const {chromium, base}=require('./runtime.cjs'),{simClient}=require('./supabase-emulator.cjs');
+/* Round B behavior and browser regression coverage. Both portals read and
+   write Supabase (Parts 3A/3B): the Admin tab (a) as the admin user, the
+   Client tab (c) as the Northbeam client user, on one test database. Each tab
+   refreshes to see the other's writes. */
+const {chromium, base}=require('./runtime.cjs');
 const assert=require('assert/strict'),fs=require('fs');
 (async()=>{
   const browser=await chromium.launch(),ctx=await browser.newContext(),a=await ctx.newPage(),c=await ctx.newPage();
@@ -11,8 +10,6 @@ const assert=require('assert/strict'),fs=require('fs');
   for(const p of [a,c]){p.setDefaultTimeout(10000);p.on('pageerror',e=>errors.push(e.message));p.on('console',m=>{if(m.type()==='error')errors.push(m.text());});}
   const go=(p,portal,screen)=>p.goto(base+portal+'.html#'+screen);
   const scan=async(p,label)=>{await p.addScriptTag({path:'qa/axe.min.js'});scans.push({label,violations:await p.evaluate(async()=>(await axe.run(document,{runOnly:{type:'tag',values:['wcag2a','wcag2aa','wcag21aa','best-practice']}})).violations.map(v=>({id:v.id,targets:v.nodes.map(n=>n.target)})))});};
-  // A client-uploaded asset record, as the Part 3B Client portal will write it.
-  const simClient_asset=(db,name,size)=>db.assets.push({id:'client-'+name,client_id:'northbeam',name,category:'Reference Files',file_type:name.split('.').pop(),file_size:size,file_url:null,notes:'',uploaded_by:null,created_at:new Date().toISOString(),updated_at:new Date().toISOString()});
   await go(a,'admin','dashboard');await go(c,'studio','overview');
   const seed=await a.evaluate(()=>JSON.parse(JSON.stringify(FijlyMock.state)));
   async function checkQueue(){
@@ -40,9 +37,8 @@ const assert=require('assert/strict'),fs=require('fs');
   assert.notEqual(await a.evaluate(()=>FijlyMock.statusClass('Submitted')),await a.evaluate(()=>FijlyMock.statusClass('In Production')));
   await go(c,'studio','requests');await c.getByRole('button',{name:'Submit request',exact:true}).click();assert.equal(await c.locator('#req-name').getAttribute('aria-invalid'),'true');assert.equal(await c.locator('#req-brief-error').isVisible(),true);
   await c.locator('#req-name').fill('Round B request');await c.locator('#req-brief').fill('A useful walkthrough.');await c.locator('#req-references').fill('example.com');await c.getByRole('button',{name:'Submit request',exact:true}).click();assert.equal(await c.locator('#req-references-error').isVisible(),true);assert.equal(await c.locator('#req-references').evaluate(e=>e.nextElementSibling.id),'req-references-error');await scan(c,'inline submission errors');
-  await c.locator('#req-references').fill('https://example.com/reference');await c.getByRole('button',{name:'Submit request',exact:true}).click();assert.match(await c.locator('[data-request-note]').innerText(),/Request submitted/);assert.doesNotMatch(await c.locator('[data-request-note]').innerText(),/Admin|internal/);assert.equal(await c.locator('[data-request-note]').getAttribute('class'),'workflow-notice');assert.equal(await c.locator('[aria-invalid="true"]').count(),0);
+  await c.locator('#req-references').fill('https://example.com/reference');await c.getByRole('button',{name:'Submit request',exact:true}).click();await c.waitForFunction(()=>/Request submitted/.test(document.querySelector('[data-request-note]').textContent));assert.doesNotMatch(await c.locator('[data-request-note]').innerText(),/Admin|internal/);assert.equal(await c.locator('[data-request-note]').getAttribute('class'),'workflow-notice');assert.equal(await c.locator('[aria-invalid="true"]').count(),0);
   // The Client portal form was validated above (session mock); the same submission reaches the database here.
-  simClient.submitRequest(browser.fijlyDb,{client_id:'northbeam',title:'Round B request',brief:'A useful walkthrough.',reference_urls:['https://example.com/reference'],deadline:'2026-10-10'});
   await a.evaluate(()=>FijlyData.load());await a.waitForFunction(()=>FijlyMock.state.requests.some(r=>r.title==='Round B request'));await checkQueue();
   const produced=await a.evaluate(async()=>(await FijlyMock.produce(FijlyMock.state.requests.find(r=>r.title==='Round B request').id)).id);
   checks.push('Needs-review default and all-record filter; distinct shared status tones; success banner and field-level errors; client submissions reach the Admin queue from the database');
@@ -50,25 +46,26 @@ const assert=require('assert/strict'),fs=require('fs');
   assert.equal(await c.locator('#client-asset-category option').count(),9);
   assert.deepEqual(await c.evaluate(()=>[1024,1048576,1572864,0].map(FijlyMock.formatBytes)),['1.0 KB','1.0 MB','1.5 MB','0 KB']);
   await c.locator('#client-asset-category').selectOption('Other');await c.locator('#client-asset-search').fill('missing-file');assert.equal(await c.locator('[data-client-assets] button').count(),0);
-  await c.locator('#client-add-asset').click();await c.locator('#client-asset-file').setInputFiles({name:'round-b-brand.pdf',mimeType:'application/pdf',buffer:Buffer.alloc(1572864)});await c.locator('#client-asset-kind').selectOption('Reference Files');await c.getByRole('button',{name:'Save asset',exact:true}).click();assert.match(await c.locator('#client-asset-success').innerText(),/round-b-brand.pdf added/);assert.equal(await c.locator('[data-client-assets] button').filter({hasText:'round-b-brand.pdf'}).count(),1);assert.match(await c.locator('[data-client-assets]').innerText(),/1.5 MB/);
+  await c.locator('#client-add-asset').click();await c.locator('#client-asset-file').setInputFiles({name:'round-b-brand.pdf',mimeType:'application/pdf',buffer:Buffer.alloc(1572864)});await c.locator('#client-asset-kind').selectOption('Reference Files');await c.getByRole('button',{name:'Save asset',exact:true}).click();await c.waitForFunction(()=>/round-b-brand\.pdf added/.test(document.querySelector('#client-asset-success').textContent));assert.equal(await c.locator('[data-client-assets] button').filter({hasText:'round-b-brand.pdf'}).count(),1);assert.match(await c.locator('[data-client-assets]').innerText(),/1.5 MB/);
   await c.locator('#client-asset-category').selectOption('Reference Files');await c.locator('#client-asset-search').fill('round-b-brand');assert.equal(await c.locator('[data-client-assets] button').count(),1);
-  simClient_asset(browser.fijlyDb,'round-b-brand.pdf',1572864);await a.evaluate(()=>FijlyData.load());await go(a,'admin','assets');await a.locator('#asset-search').fill('round-b-brand');assert.match(await a.locator('#asset-rows').innerText(),/1\.5 MB/);await a.locator('#asset-rows button').first().click();assert.match(await a.locator('#delete-asset').getAttribute('class'),/btn-danger/);await a.locator('#delete-asset').click();assert.equal(await a.locator('#asset-confirm').evaluate(d=>d.open),true);assert.match(await a.locator('#asset-confirm-ok').getAttribute('class'),/btn-danger/);await a.locator('#asset-confirm-cancel').click();await a.keyboard.press('Escape');
+  await a.evaluate(()=>FijlyData.load());await go(a,'admin','assets');await a.locator('#asset-search').fill('round-b-brand');assert.match(await a.locator('#asset-rows').innerText(),/1\.5 MB/);await a.locator('#asset-rows button').first().click();assert.match(await a.locator('#delete-asset').getAttribute('class'),/btn-danger/);await a.locator('#delete-asset').click();assert.equal(await a.locator('#asset-confirm').evaluate(d=>d.open),true);assert.match(await a.locator('#asset-confirm-ok').getAttribute('class'),/btn-danger/);await a.locator('#asset-confirm-cancel').click();await a.keyboard.press('Escape');
   checks.push('Assets shown once, all categories searchable, shared KB/MB formatting and add feedback; destructive removal styling and confirmation preserved');
   const scriptId=await a.evaluate(id=>FijlyMock.state.scripts.find(s=>s.videoId===id).id,produced);assert.equal(await a.evaluate(id=>FijlyMock.get('scripts',id).status,scriptId),'Draft');
   await a.evaluate(id=>FijlyMock.adminSendScriptForReview(id),scriptId);assert.equal(browser.fijlyDb.scripts.find(s=>s.id===scriptId).status,'Client Review');await checkQueue();
-  browser.fijlyDb.scripts.find(s=>s.id===scriptId).status='Revision Requested';await a.evaluate(()=>FijlyData.load());await a.waitForFunction(id=>FijlyMock.get('scripts',id).status==='Revision Requested',scriptId);await checkQueue();
+  await c.evaluate(async id=>{await FijlyData.load();await FijlyData.client.reviewScript(id,'Revision Requested','Clarify the opening scene.');},scriptId);await a.evaluate(()=>FijlyData.load());await a.waitForFunction(id=>FijlyMock.get('scripts',id).status==='Revision Requested',scriptId);await checkQueue();
   await a.evaluate(id=>FijlyMock.adminReviewScript(id),scriptId);assert.equal(await a.evaluate(id=>FijlyMock.get('scripts',id).status,scriptId),'Draft');await checkQueue();
   await a.evaluate(id=>FijlyMock.adminSendScriptForReview(id),scriptId);assert.equal(await a.evaluate(id=>FijlyMock.get('scripts',id).status,scriptId),'Client Review');
-  browser.fijlyDb.scripts.find(s=>s.id===scriptId).status='Approved';await a.evaluate(()=>FijlyData.load());await a.waitForFunction(id=>FijlyMock.get('scripts',id).status==='Approved',scriptId);await checkQueue();
-  await go(c,'studio','scripts');await c.evaluate(()=>FijlyMock.client.select('relay'));assert.match(await c.locator('#screen-scripts').innerText(),/No scripts ready for review/);await c.evaluate(()=>FijlyMock.client.select('northbeam'));
+  await c.evaluate(async id=>{await FijlyData.load();await FijlyData.client.reviewScript(id,'Approved');},scriptId);await a.evaluate(()=>FijlyData.load());await a.waitForFunction(id=>FijlyMock.get('scripts',id).status==='Approved',scriptId);await checkQueue();
+  // Empty state: a workspace with no shared scripts explains what comes next.
+  await go(c,'studio','scripts');const heldScripts=browser.fijlyDb.scripts.filter(x=>x.client_id==='northbeam');browser.fijlyDb.scripts=browser.fijlyDb.scripts.filter(x=>x.client_id!=='northbeam');await c.evaluate(()=>FijlyData.load());assert.match(await c.locator('#screen-scripts').innerText(),/No scripts ready for review/);browser.fijlyDb.scripts.push(...heldScripts);await c.evaluate(()=>FijlyData.load());
   checks.push('Studio script review cycle (send, client revision request, reopen, resend, client approval) keeps the queue exact; Client portal empty state. Pending Part 3B: client script view and feedback text');
   await a.evaluate(async id=>{await FijlyMock.addVersion(id);await FijlyMock.setVideoStatus(id,'Draft Ready');},produced);await checkQueue();
   await go(a,'admin','dashboard');await a.locator('[data-action-section="videos"][data-action-id="'+produced+'"]').click();assert.equal(await a.locator('#workflow-detail-title').innerText(),'Round B request');await a.keyboard.press('Escape');
   await a.evaluate(id=>FijlyMock.setVideoStatus(id,'Client Review'),produced);
-  simClient.requestRevision(browser.fijlyDb,produced,'Use a clearer opening.');await a.evaluate(()=>FijlyData.load());await a.waitForFunction(id=>FijlyMock.get('videos',id).status==='In Revision',produced);await checkQueue();
+  await c.evaluate(async id=>{await FijlyData.load();await FijlyData.client.revise(id,'Use a clearer opening.');},produced);await a.evaluate(()=>FijlyData.load());await a.waitForFunction(id=>FijlyMock.get('videos',id).status==='In Revision',produced);await checkQueue();
   await a.evaluate(async id=>{const revision=FijlyMock.activeRevision(FijlyMock.get('videos',id));await FijlyMock.setRevisionStatus(revision.id,'In Revision');await FijlyMock.addVersion(id);await FijlyMock.setVideoStatus(id,'Draft Ready');},produced);await checkQueue();
   await a.evaluate(id=>FijlyMock.setVideoStatus(id,'Client Review'),produced);await checkQueue();
-  simClient.approve(browser.fijlyDb,produced);await a.evaluate(()=>FijlyData.load());await a.waitForFunction(id=>FijlyMock.get('videos',id).status==='Approved',produced);await checkQueue();
+  await c.evaluate(async id=>{await FijlyData.load();await FijlyData.client.approve(id);},produced);await a.evaluate(()=>FijlyData.load());await a.waitForFunction(id=>FijlyMock.get('videos',id).status==='Approved',produced);await checkQueue();
   await a.evaluate(id=>FijlyMock.setVideoStatus(id,'Completed'),produced);await checkQueue();assert.equal(await a.locator('[data-action-badge="videos"]').isVisible(),false);
   checks.push('Queue and badge counts track draft sharing, requested/in-progress revisions, client approval (database) and final completion, including live zero state');
   // Frozen clock and boundary fixtures: old seeds, future dates, inclusive start,

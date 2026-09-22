@@ -53,14 +53,15 @@ fs.mkdirSync('qa/screenshots',{recursive:true});
  await p.locator('#client-project-search').fill('no-such-title');assert.match(await p.locator('.projects-table tbody').innerText(),/No videos match this filter/);await p.locator('#client-project-search').fill('');
  checks.push('All project filters and real search empty state');
  await p.locator('[data-screen="settings"].sidebar-link').click();
- for(const id of ['set-autoshare','set-digest']){
-  const input=p.locator('#'+id);const original=await input.isChecked();await p.locator(`label[for="${id}"]`).click();assert.equal(await input.isChecked(),!original);assert.equal(await input.getAttribute('aria-checked'),String(!original));
-  await input.focus();await p.keyboard.press('Space');assert.equal(await input.isChecked(),original);assert.equal(await input.getAttribute('aria-checked'),String(original));assert.equal(await input.getAttribute('role'),'switch');
- }checks.push('Both settings switches: labels, mouse, Space, role and ARIA state');
+ // Client notification switches had no database columns and were removed;
+ // the stored defaults remain. (Admin Settings switches are covered in studio-admin-sections.)
+ assert.equal(await p.locator('#client-settings-form input[type="checkbox"]').count(),0);
+ assert.equal(await p.locator('#client-default-platform').count(),1);assert.equal(await p.locator('#set-length').count(),1);
+ checks.push('Client settings: no unsaved notification switches; stored default platform and length present');
  await p.locator('[data-screen="overview"].sidebar-link').click();assert.equal(await p.locator('#preview .canvas, #preview .timeline, [data-play-toggle], [data-fullscreen]').count(),0);assert.match(await p.locator('#preview-message').innerText(),/Draft ready for review/);
  checks.push('Preview play/pause mouse and keyboard, synchronized names, fullscreen');
  await p.locator('[data-screen="requests"].sidebar-link').click();const before=await p.locator('[data-request-list] .list-card').count();await p.locator('[data-request-form] [type="submit"]').click();assert.equal(await p.locator('[data-request-list] .list-card').count(),before);
- await p.locator('#req-name').fill('Functional regression');await p.locator('#req-brief').fill('Show the core workflow.');await p.locator('[data-request-form] [type="submit"]').click();assert.equal(await p.locator('[data-request-list] .list-card').count(),before+1);checks.push('Request validation and mock submission');
+ await p.locator('#req-name').fill('Functional regression');await p.locator('#req-brief').fill('Show the core workflow.');await p.locator('[data-request-form] [type="submit"]').click();await p.waitForFunction(n=>document.querySelectorAll('[data-request-list] .list-card').length===n,before+1);checks.push('Request validation and database submission');
  await p.setViewportSize({width:375,height:800});await p.goto(base+'studio.html#projects');await p.reload();const table=p.locator('#screen-projects .projects-table');assert.equal(await table.evaluate(e=>getComputedStyle(e).display),'block');assert.equal(await table.evaluate(e=>e.scrollWidth>e.clientWidth+1),false);await table.locator('button').first().focus();await p.keyboard.press('Enter');assert.equal(await p.locator('#workflow-detail').evaluate(e=>e.open),true);await p.keyboard.press('Escape');checks.push('Projects mobile cards: no horizontal scrolling; keyboard opens the record');
  for(const width of [1440,1024,768,375,390]){
   await p.setViewportSize({width,height:900});await p.goto(base+'index.html');
