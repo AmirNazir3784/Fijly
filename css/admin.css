@@ -138,7 +138,7 @@
 /* Analytics ---------------------------------------------------------------- */
 .admin-analytics-grid { margin-top: 18px; }
 #analytics-kpis { margin-top: 18px; }
-#analytics-kpis .stat-card__label { font-size: 12.5px; font-weight: 600; color: var(--text-muted); }
+#analytics-kpis .stat-card__label { font-size: var(--text-meta); font-weight: var(--weight-semibold); color: var(--text-primary); }
 
 .admin-trend { display: flex; align-items: flex-end; gap: 10px; height: 160px; margin-top: 18px; padding: 0 2px; }
 .admin-trend__col { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 8px; height: 100%; }
@@ -171,4 +171,257 @@
   .admin-trend { height: 130px; gap: 6px; }
   .admin-trend__label { font-size: 9px; }
   .admin-settings-actions .btn { width: 100%; }
+}
+
+/* ==========================================================================
+   Typography and hierarchy — admin
+   Same scale as dashboard.css. Admin-owned classes use `.studio-body` so they
+   apply in dialogs too; layout content uses `.studio-body .studio-layout`.
+   ========================================================================== */
+
+/* Metadata ------------------------------------------------------------------ */
+.studio-body :is(.admin-muted, .admin-date, .admin-due, .admin-result-count,
+  .admin-pipeline-label, .admin-trend__legend, .admin-activity p) {
+  font-family: var(--font-body);
+  font-size: var(--text-meta);
+  font-weight: var(--weight-normal);
+  font-variant-numeric: tabular-nums;
+  line-height: var(--leading-normal);
+  color: var(--text-light);
+}
+
+.studio-body .admin-pipeline-label strong {
+  font-weight: var(--weight-semibold);
+  color: var(--text-primary);
+}
+
+.studio-body .admin-client-overview strong {
+  font-size: var(--text-section-heading);
+  font-weight: var(--weight-bold);
+}
+
+.studio-body :is(.admin-portal-label, .admin-nav-later, .admin-eyebrow) {
+  font-size: var(--text-xs);
+}
+
+.studio-body .admin-trend__label {
+  font-size: var(--text-small);
+}
+
+/* Narrow charts: dates break onto two short lines instead of colliding. */
+@media (max-width: 600px) {
+  .studio-body .admin-trend__label {
+    font-size: var(--text-xs);
+    line-height: var(--leading-tight);
+    text-align: center;
+    white-space: normal;
+  }
+}
+
+.studio-body .admin-clients-table th:first-child {
+  width: 24%;
+}
+
+.studio-body :is(.admin-portal-label, .admin-eyebrow) {
+  font-weight: var(--weight-semibold);
+  letter-spacing: .06em;
+}
+
+.studio-body .admin-save-status {
+  font-size: var(--text-meta);
+}
+
+.studio-body .admin-empty p {
+  font-size: var(--text-body);
+  line-height: var(--leading-normal);
+}
+
+.studio-body .admin-script-state {
+  font-size: var(--text-meta);
+}
+
+.studio-body .admin-script-editor {
+  font-size: var(--text-body);
+}
+
+/* Panel heads, toolbars and tables ------------------------------------------ */
+.studio-body .studio-layout .admin-panel-head {
+  padding: var(--space-lg);
+}
+
+.studio-body .studio-layout .admin-panel-head--plain {
+  padding: 0 0 var(--space-lg);
+}
+
+.studio-body .studio-layout .admin-client-toolbar {
+  padding: var(--space-lg) var(--space-lg) 0;
+}
+
+.studio-body .studio-layout .admin-result-count {
+  padding: var(--space-md) var(--space-lg);
+}
+
+@media (min-width: 601px) {
+  .admin-body .studio-layout .table :is(th, td) {
+    padding: var(--space-md);
+  }
+
+  .admin-body .studio-layout .table :is(th, td):first-child {
+    padding-left: var(--space-lg);
+  }
+
+  .admin-body .studio-layout .table :is(th, td):last-child {
+    padding-right: var(--space-lg);
+  }
+}
+
+/* Large dashboard cards */
+@media (min-width: 1024px) {
+  .studio-body .studio-layout :is(.admin-dashboard-grid > .panel:not(.panel--flush), .admin-action-panel) {
+    padding: var(--space-xl);
+  }
+}
+
+/* Needs your action ---------------------------------------------------------- */
+/* The whole row opens the item: the title button's hit area is stretched over
+   the row, so the action label is genuinely clickable, with no script change. */
+.studio-body .studio-layout .admin-action-queue {
+  margin-inline: calc(-1 * var(--space-md));
+}
+
+.studio-body .studio-layout .admin-action-queue li {
+  position: relative;
+  padding: var(--space-md);
+  transition: background-color .15s ease;
+}
+
+.studio-body .studio-layout .admin-action-queue li:hover {
+  background: var(--surface-light);
+}
+
+.studio-body .studio-layout .admin-action-queue li:has(.btn-link:focus-visible) {
+  background: var(--surface-light);
+  outline: 2px solid var(--primary);
+  outline-offset: -2px;
+}
+
+.studio-body .studio-layout .admin-action-queue .btn-link {
+  font-size: var(--text-body);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-tight);
+  color: var(--text-primary);
+}
+
+.studio-body .studio-layout .admin-action-queue .btn-link:focus-visible {
+  outline: none;
+}
+
+.studio-body .studio-layout .admin-action-queue .btn-link::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+
+.studio-body .studio-layout .admin-action-queue .admin-muted {
+  margin-top: var(--space-xs);
+  font-size: var(--text-meta);
+  color: var(--text-muted);
+}
+
+.studio-body .studio-layout .admin-action-queue .admin-action-label {
+  font-size: var(--text-meta);
+  font-weight: var(--weight-semibold);
+  color: var(--primary);
+}
+
+.studio-body .studio-layout .admin-action-queue .admin-action-label::after {
+  content: " →";
+  content: " →" / "";
+  display: inline-block;
+  margin-left: var(--space-xs);
+  transition: transform .15s ease;
+}
+
+.studio-body .studio-layout .admin-action-queue li:hover .admin-action-label {
+  color: var(--primary-hover);
+}
+
+.studio-body .studio-layout .admin-action-queue li:hover .admin-action-label::after {
+  transform: translateX(3px);
+}
+
+/* Dialogs --------------------------------------------------------------------- */
+.studio-body .admin-dialog-head h2 {
+  font-size: var(--text-section-heading);
+  font-weight: var(--weight-bold);
+  line-height: var(--leading-tight);
+  letter-spacing: -.015em;
+}
+
+.studio-body .admin-dialog h3 {
+  font-size: var(--text-card-title);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-tight);
+  letter-spacing: normal;
+}
+
+.studio-body .admin-detail-facts dt {
+  font-size: var(--text-small);
+  font-weight: var(--weight-semibold);
+  color: var(--text-light);
+}
+
+.studio-body .admin-detail-facts dd {
+  font-size: var(--text-body);
+  font-weight: var(--weight-semibold);
+  color: var(--text-primary);
+}
+
+.studio-body :is(.admin-detail-notes, .admin-dialog .comment__text, .admin-dialog .script-scene__text) {
+  font-size: var(--text-body);
+  line-height: var(--leading-relaxed);
+  color: var(--text-muted);
+}
+
+.studio-body :is(.admin-project-list strong, .admin-dialog .comment__name) {
+  font-size: var(--text-body);
+  font-weight: var(--weight-semibold);
+}
+
+.studio-body .admin-dialog .comment__time {
+  font-family: var(--font-body);
+  font-size: var(--text-meta);
+  color: var(--text-light);
+}
+
+.studio-body .admin-dialog .comment {
+  padding: var(--space-md);
+}
+
+.studio-body .admin-dialog .btn {
+  font-size: var(--text-body);
+  font-weight: var(--weight-medium);
+}
+
+.studio-body .admin-dialog :is(.btn-primary, .btn-dark, .btn-success, .btn-danger) {
+  font-weight: var(--weight-semibold);
+}
+
+.studio-body .admin-dialog :is(.btn--xs, .btn--sm, .profile-photo-actions .btn, .btn-link) {
+  font-size: var(--text-meta);
+  font-weight: var(--weight-semibold);
+}
+
+.studio-body .admin-dialog :is(.badge, .status-pill) {
+  font-size: var(--text-xs);
+}
+
+@media (max-width: 767px) {
+  .studio-body .studio-layout .admin-client-toolbar {
+    padding: var(--space-md) var(--space-md) 0;
+  }
+
+  .studio-body .studio-layout .admin-result-count {
+    padding: var(--space-md);
+  }
 }
