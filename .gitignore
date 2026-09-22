@@ -1,3 +1,11 @@
+# QA screenshots (regenerated on each run)
+qa/screenshots/
+qa/visual-sheets/
+qa/refinement-before/
+qa/refinement-after/
+qa/before/
+qa/refinement-baseline/
+
 # OS files
 .DS_Store
 Thumbs.db
