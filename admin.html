@@ -23,10 +23,26 @@
   <link rel="stylesheet" href="css/admin.css">
   <link rel="stylesheet" href="css/workflow.css">
 <link rel="stylesheet" href="css/studio-polish.css">
+<style>
+  /* Auth check overlay: painted with the first frame so the portal never flashes. */
+  .auth-loading { position: fixed; inset: 0; z-index: 9999; display: flex; align-items: center; justify-content: center; padding: var(--space-lg); background: var(--surface-white); }
+  .auth-loading__inner { display: flex; flex-direction: column; align-items: center; gap: var(--space-md); max-width: 360px; text-align: center; font-family: var(--font-body); }
+  .auth-loading__spinner { width: 40px; height: 40px; border: 3px solid var(--border-default); border-top-color: var(--primary); border-radius: 50%; animation: auth-spin .6s linear infinite; }
+  .auth-loading__text { color: var(--text-muted); font-size: var(--text-body); line-height: var(--leading-normal); }
+  .auth-loading__actions { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--space-sm); }
+  @keyframes auth-spin { to { transform: rotate(360deg); } }
+</style>
+<noscript><style>.auth-loading { display: none; }</style></noscript>
 </head>
 <body class="studio-body admin-body">
+<div class="auth-loading" id="auth-loading" role="status" aria-live="polite">
+  <div class="auth-loading__inner">
+    <div class="auth-loading__spinner" aria-hidden="true"></div>
+    <p class="auth-loading__text">Loading FIJLY Studio…</p>
+  </div>
+</div>
 <a class="skip-link" href="#studio-content">Skip to content</a>
-<div class="studio-layout" id="studio" data-default-screen="dashboard" data-portal-title="FIJLY Admin">
+<div class="studio-layout" id="studio" data-default-screen="dashboard" data-portal-title="FIJLY Admin" inert>
   <aside class="sidebar" id="sidebar" aria-label="Admin navigation">
     <div class="sidebar-header">
 <a class="sidebar-home" href="index.html" aria-label="FIJLY home">
@@ -65,6 +81,10 @@
           <span class="sidebar-user__email" id="admin-role">Studio producer</span>
         </span>
       </button>
+<button class="sidebar-signout" type="button" data-sign-out>
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
+<span class="sidebar-signout__label">Sign out</span>
+</button>
 
 
     </div>
@@ -306,6 +326,10 @@
   <p class="workflow-error admin-script-error" id="script-detail-error" role="alert"></p>
   <div class="admin-dialog-foot"><button class="btn btn-ghost btn--md dialog-dismiss" type="button" data-close-script-detail>Close</button><button class="btn btn-outline btn--md" type="button" id="script-save" hidden>Save draft</button><button class="btn btn-primary btn--md" type="button" id="script-action" hidden></button></div>
 </dialog>
+<!-- Auth: pinned SDK with subresource integrity, then the guard, before any portal JS -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.116.0/dist/umd/supabase.js" integrity="sha384-iLddHTLokph6Omwoyid4XKxHaWa6w41BnoEj0q5oOrzmYPpHIKt1wyjReA7s//pP" crossorigin="anonymous"></script>
+<script src="js/supabase-client.js"></script>
+<script src="js/portal-auth.js"></script>
 <script src="js/studio-shell.js"></script>
 <script src="js/admin-data.js"></script>
 <script src="js/mock-service.js"></script>
