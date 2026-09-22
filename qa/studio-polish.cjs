@@ -60,7 +60,10 @@ const assert=require('assert/strict'),fs=require('fs'),crypto=require('crypto');
   const baseline=JSON.parse(fs.readFileSync('qa/polish-baseline-hashes.json','utf8'));
   const allowed=['site/admin.html','site/studio.html','site/js/studio-shell.js','site/js/mock-service.js','site/js/client-portal.js','site/js/admin-sections.js',
     'site/css/variables.css','site/css/dashboard.css','site/css/admin.css','site/css/workflow.css','site/css/client-portal.css'];
-  for(const [file,hash] of Object.entries(baseline))if(!allowed.includes(file))assert.equal(crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex'),hash,file+' unchanged');
+  // index.html may differ only by its three Sign in / Studio links, which now
+  // point to login.html; restoring them must reproduce the baseline bytes.
+  const bytes=file=>file==='site/index.html'?Buffer.from(fs.readFileSync(file,'latin1').replaceAll('href="login.html"','href="studio.html"'),'latin1'):fs.readFileSync(file);
+  for(const [file,hash] of Object.entries(baseline))if(!allowed.includes(file))assert.equal(crypto.createHash('sha256').update(bytes(file)).digest('hex'),hash,file+' unchanged');
   checks.push('Baseline hash guard: workflow implementation, status logic, fixture data, dashboard renderer, public pages and assets unchanged');
   fs.writeFileSync('qa/studio-polish-results.json',JSON.stringify({checks,scans,errors},null,2));await browser.close();assert.deepEqual(errors,[]);console.log(JSON.stringify({checks,scans:scans.length,errors},null,2));
 })().catch(e=>{console.error(e);process.exit(1);});

@@ -6,6 +6,7 @@ Production website and client/admin portals for FIJLY, a premium video productio
 
 - `site/` — Production files (upload contents to web host)
   - `index.html` — Marketing landing page
+  - `login.html` — Portal sign-in (Supabase Auth)
   - `studio.html` — Client portal (7 screens)
   - `admin.html` — Admin portal (9 screens)
   - `css/` — Stylesheets (design tokens, components, layouts)
@@ -16,7 +17,9 @@ Production website and client/admin portals for FIJLY, a premium video productio
 ## Tech Stack
 
 Plain HTML + CSS + JavaScript. No build step, no framework, no dependencies.
-Fonts are self-hosted. Zero external CDN calls.
+Fonts are self-hosted. The landing page makes no external calls; the portals and
+sign-in page load the pinned Supabase JS SDK from jsDelivr (with subresource integrity)
+and authenticate against Supabase. Portal data is still mock data until Part 3.
 
 ## Local Development
 

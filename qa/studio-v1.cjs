@@ -15,6 +15,9 @@ const { pathToFileURL } = require('url');
   page.on('request', r => {
     // axe fetches stylesheets for its CSS audit; those are not application APIs.
     if (runningAxe && r.method() === 'GET' && (/\.css(?:$|\?)/.test(r.url()) || r.url().startsWith('https://fonts.googleapis.com/css2?'))) return;
+    // Auth is the only backend traffic: the session check and the caller's own
+    // profile row. Any other request means portal data left the session mock.
+    if (/^https:\/\/eaddovqkarognynnybeh\.supabase\.co\/(auth\/v1\/|rest\/v1\/profiles\?select=\*&id=eq\.)/.test(r.url())) return;
     if (['fetch', 'xhr'].includes(r.resourceType()) || r.method() !== 'GET') requests.push(r.url());
   });
   const routes = { studio: ['overview', 'projects', 'requests', 'assets', 'scripts', 'analytics', 'settings'], admin: ['dashboard', 'clients', 'requests', 'videos', 'revisions', 'assets', 'scripts', 'analytics', 'settings'] };
@@ -62,11 +65,12 @@ const { pathToFileURL } = require('url');
       assert.equal(await page.locator('.studio-main').evaluate(e => e.inert), false);
     }
     await page.locator('[data-sidebar-open]').click();
-    await page.locator('.sidebar-user').focus();
+    // Sign out is the sidebar's last control; Tab wraps to the logo.
+    await page.locator('[data-sign-out]').focus();
     await page.keyboard.press('Tab');
     assert.equal(await page.locator('.sidebar-home').evaluate(e => e === document.activeElement), true);
     await page.keyboard.press('Shift+Tab');
-    assert.equal(await page.locator('.sidebar-user').evaluate(e => e === document.activeElement), true);
+    assert.equal(await page.locator('[data-sign-out]').evaluate(e => e === document.activeElement), true);
     await page.keyboard.press('Escape');
     assert.equal(await page.locator('[data-sidebar-open]').getAttribute('aria-expanded'), 'false');
     await page.locator('[data-sidebar-open]').click();

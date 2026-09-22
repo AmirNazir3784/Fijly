@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign In — FIJLY Studio</title>
+  <meta name="description" content="Sign in to your FIJLY Studio video production workspace.">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#0C0E13">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="assets/favicon.ico" sizes="32x32">
+  <link rel="stylesheet" href="css/fonts.css">
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/base.css">
+  <style>
+    /* Sign-in page. Colours, type, spacing and radii come from variables.css. */
+    .login {
+      display: grid;
+      grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+      min-height: 100vh;
+      min-height: 100dvh;
+      background: var(--surface-white);
+    }
+
+    /* Brand panel: the portal sidebar's dark surface */
+    .login__brand {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: var(--space-2xl);
+      padding: var(--space-2xl);
+      background: linear-gradient(160deg, var(--sidebar-plan-start), var(--surface-dark) 55%);
+      color: var(--text-lighter);
+    }
+
+    .login__logo {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      color: var(--surface-white);
+    }
+
+    .login__logo:hover { color: var(--surface-white); }
+
+    .login__mark {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 34px;
+      height: 34px;
+      border-radius: var(--radius-md);
+      background: var(--primary);
+      box-shadow: var(--shadow-logo);
+    }
+
+    .login__wordmark {
+      display: flex;
+      flex-direction: column;
+      line-height: 1;
+    }
+
+    .login__word {
+      font-size: var(--text-card-title);
+      font-weight: 800;
+      letter-spacing: .14em;
+    }
+
+    .login__sub {
+      margin-top: 3px;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: .22em;
+      color: var(--text-lighter);
+    }
+
+    .login__pitch { max-width: 440px; }
+
+    .login__eyebrow {
+      margin-bottom: var(--space-md);
+      font-family: var(--font-mono);
+      font-size: var(--text-xs);
+      font-weight: var(--weight-semibold);
+      letter-spacing: .08em;
+      color: var(--primary-soft-line);
+    }
+
+    .login__tagline {
+      font-size: var(--text-page-title);
+      font-weight: var(--weight-bold);
+      line-height: var(--leading-tight);
+      letter-spacing: -.025em;
+      color: var(--surface-white);
+    }
+
+    .login__intro {
+      margin-top: var(--space-md);
+      font-size: var(--text-body);
+      line-height: var(--leading-relaxed);
+    }
+
+    .login__points {
+      display: grid;
+      gap: var(--space-md);
+      margin-top: var(--space-xl);
+      font-size: var(--text-meta);
+      color: var(--surface-muted);
+    }
+
+    .login__points li {
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+    }
+
+    .login__points svg { flex: none; color: var(--success-light); }
+
+    .login__foot {
+      font-family: var(--font-mono);
+      font-size: var(--text-xs);
+      letter-spacing: .06em;
+      color: var(--text-lighter);
+    }
+
+    /* Form panel */
+    .login__panel {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: var(--space-2xl) var(--space-lg);
+    }
+
+    .login__card {
+      width: 100%;
+      max-width: 400px;
+    }
+
+    .login__title {
+      font-size: var(--text-page-title);
+      font-weight: var(--weight-bold);
+      line-height: var(--leading-tight);
+      letter-spacing: -.025em;
+    }
+
+    .login__subtitle {
+      margin-top: var(--space-sm);
+      font-size: var(--text-body);
+      line-height: var(--leading-normal);
+      color: var(--text-muted);
+    }
+
+    .login__checking {
+      display: none;
+      align-items: center;
+      gap: var(--space-sm);
+      margin-top: var(--space-xl);
+      font-size: var(--text-meta);
+      color: var(--text-muted);
+    }
+
+    .login__card[data-state="checking"] .login__checking { display: flex; }
+    .login__card[data-state="checking"] .login__form { display: none; }
+
+    .login__form {
+      display: grid;
+      gap: var(--space-lg);
+      margin-top: var(--space-xl);
+    }
+
+    .login__label {
+      display: block;
+      margin-bottom: var(--space-sm);
+      font-size: var(--text-meta);
+      font-weight: var(--weight-semibold);
+    }
+
+    .login__field { position: relative; }
+
+    .login__input {
+      width: 100%;
+      height: 48px;
+      padding: 0 14px;
+      border: 1px solid var(--border-dark);
+      border-radius: var(--radius-md);
+      background: var(--surface-white);
+      font-size: var(--text-body);
+      color: var(--text-primary);
+      transition: border-color .15s ease, box-shadow .15s ease;
+    }
+
+    .login__input::placeholder { color: var(--text-placeholder); }
+    .login__input:hover { border-color: var(--border-hover); }
+
+    .login__input:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px var(--primary-tint);
+    }
+
+    .login__input[readonly] { background: var(--surface-light); }
+    .login__field .login__input { padding-right: 76px; }
+
+    .login__toggle {
+      position: absolute;
+      top: 50%;
+      right: 6px;
+      height: 36px;
+      padding: 0 12px;
+      border: 0;
+      border-radius: var(--radius-sm);
+      background: none;
+      color: var(--primary);
+      font-size: var(--text-small);
+      font-weight: var(--weight-semibold);
+      transform: translateY(-50%);
+    }
+
+    .login__toggle:hover { background: var(--primary-tint); }
+
+    .login__error {
+      padding: 12px 14px;
+      border-left: 3px solid var(--danger);
+      border-radius: var(--radius-sm);
+      background: var(--red-soft);
+      font-size: var(--text-meta);
+      line-height: var(--leading-normal);
+      color: var(--text-primary);
+    }
+
+    .login__submit {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--space-sm);
+      width: 100%;
+      height: 48px;
+      border: 0;
+      border-radius: var(--radius-md);
+      background: var(--primary);
+      box-shadow: var(--shadow-primary-sm);
+      color: var(--surface-white);
+      font-size: var(--text-body);
+      font-weight: var(--weight-semibold);
+      transition: background-color .15s ease;
+    }
+
+    .login__submit:hover { background: var(--primary-hover-btn); }
+    .login__submit:disabled { background: var(--primary-hover-btn); cursor: progress; }
+
+    .login__spinner {
+      width: 16px;
+      height: 16px;
+      border: 2px solid var(--primary-tint);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: login-spin .6s linear infinite;
+    }
+
+    .login__submit .login__spinner {
+      display: none;
+      border-color: var(--primary-soft-line);
+      border-top-color: var(--surface-white);
+    }
+
+    .login__submit[aria-busy="true"] .login__spinner { display: block; }
+
+    @keyframes login-spin { to { transform: rotate(360deg); } }
+
+    .login__note {
+      font-size: var(--text-small);
+      line-height: var(--leading-normal);
+      color: var(--text-light);
+      text-align: center;
+    }
+
+    .login__back {
+      display: inline-flex;
+      margin-top: var(--space-2xl);
+      font-size: var(--text-meta);
+      font-weight: var(--weight-semibold);
+      color: var(--text-muted);
+    }
+
+    .login__back:hover { color: var(--primary); }
+
+    @media (max-width: 899px) {
+      .login { grid-template-columns: minmax(0, 1fr); align-content: start; }
+      .login__brand { gap: var(--space-lg); padding: var(--space-lg) var(--gutter); }
+      .login__tagline { font-size: var(--text-section-heading); }
+      .login__intro, .login__points, .login__foot, .login__eyebrow { display: none; }
+      .login__panel { align-items: flex-start; padding: var(--space-xl) var(--gutter) var(--space-2xl); }
+    }
+
+    /* 16px keeps iOS from zooming into focused fields. */
+    @media (max-width: 767px) {
+      .login__input { font-size: 16px; }
+    }
+  </style>
+  <noscript><style>.login__card[data-state="checking"] .login__checking { display: none; }</style></noscript>
+</head>
+<body>
+  <div class="login">
+    <aside class="login__brand" aria-label="FIJLY Studio">
+      <a class="login__logo" href="index.html" aria-label="FIJLY home">
+        <span class="login__mark"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M8 5v14l11-7z" fill="currentColor"/></svg></span>
+        <span class="login__wordmark"><span class="login__word">FIJLY</span><span class="login__sub">STUDIO</span></span>
+      </a>
+      <div class="login__pitch">
+        <p class="login__eyebrow">CLIENT WORKSPACE</p>
+        <p class="login__tagline">Video production for SaaS teams</p>
+        <p class="login__intro">Request videos, review drafts and approve scripts with the FIJLY team, all in one place.</p>
+        <ul class="login__points">
+          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>Every project, deadline and version in view</li>
+          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>Feedback and approvals in one thread</li>
+          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>Brand assets kept with your workspace</li>
+        </ul>
+      </div>
+      <p class="login__foot">PRIVATE WORKSPACE · INVITE ONLY</p>
+    </aside>
+
+    <main class="login__panel">
+      <div class="login__card" id="login-card" data-state="checking">
+        <h1 class="login__title">Sign in to FIJLY Studio</h1>
+        <p class="login__subtitle">Access your video production dashboard</p>
+
+        <p class="login__checking" role="status"><span class="login__spinner" aria-hidden="true"></span>Checking your session…</p>
+        <noscript><p class="login__error">JavaScript is required to sign in to FIJLY Studio.</p></noscript>
+
+        <form class="login__form" id="login-form">
+          <p class="login__error" id="login-error" role="alert" hidden></p>
+          <div>
+            <label class="login__label" for="login-email">Email</label>
+            <input class="login__input" id="login-email" name="email" type="email" autocomplete="username" inputmode="email" autocapitalize="none" spellcheck="false" placeholder="you@company.com" required>
+          </div>
+          <div>
+            <label class="login__label" for="login-password">Password</label>
+            <div class="login__field">
+              <input class="login__input" id="login-password" name="password" type="password" autocomplete="current-password" required>
+              <button class="login__toggle" id="login-toggle" type="button" aria-controls="login-password" aria-pressed="false" aria-label="Show password">Show</button>
+            </div>
+          </div>
+          <button class="login__submit" id="login-submit" type="submit" aria-busy="false"><span class="login__spinner" aria-hidden="true"></span><span id="login-submit-label">Sign in</span></button>
+          <p class="login__note">Accounts are created by the FIJLY team. Need access? Ask your producer.</p>
+        </form>
+
+        <a class="login__back" href="index.html">← Back to fijly.com</a>
+      </div>
+    </main>
+  </div>
+
+  <!-- Supabase SDK: pinned version with subresource integrity -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.116.0/dist/umd/supabase.js" integrity="sha384-iLddHTLokph6Omwoyid4XKxHaWa6w41BnoEj0q5oOrzmYPpHIKt1wyjReA7s//pP" crossorigin="anonymous"></script>
+  <script src="js/supabase-client.js"></script>
+  <script>
+    // Login page logic
+    (function () {
+      'use strict';
+      var card = document.getElementById('login-card');
+      var form = document.getElementById('login-form');
+      var email = document.getElementById('login-email');
+      var password = document.getElementById('login-password');
+      var toggle = document.getElementById('login-toggle');
+      var submit = document.getElementById('login-submit');
+      var submitLabel = document.getElementById('login-submit-label');
+      var error = document.getElementById('login-error');
+
+      function showError(message) { error.textContent = message; error.hidden = false; }
+      function clearError() { error.hidden = true; error.textContent = ''; }
+      function ready() { card.dataset.state = 'ready'; }
+      function portalFor(profile) { return profile ? PORTAL_FOR_ROLE[profile.role] : null; }
+
+      function busy(on, text) {
+        submit.disabled = on;
+        submit.setAttribute('aria-busy', String(on));
+        submitLabel.textContent = text || (on ? 'Signing in…' : 'Sign in');
+        email.readOnly = password.readOnly = on;
+      }
+
+      function describe(err) {
+        var text = String((err && err.message) || '').toLowerCase();
+        if (/invalid login credentials/.test(text) || (err && err.status === 400)) return 'That email and password don’t match an account. Check them and try again.';
+        if (/email not confirmed/.test(text)) return 'This account hasn’t been confirmed yet. Contact the FIJLY team.';
+        if (err && err.status === 429) return 'Too many sign-in attempts. Wait a minute, then try again.';
+        if ((err && err.name === 'AuthRetryableFetchError') || /fetch|network/.test(text)) return 'We couldn’t reach the sign-in service. Check your connection and try again.';
+        return 'Sign in didn’t work. Please try again.';
+      }
+
+      toggle.addEventListener('click', function () {
+        var show = password.type === 'password';
+        password.type = show ? 'text' : 'password';
+        toggle.textContent = show ? 'Hide' : 'Show';
+        toggle.setAttribute('aria-pressed', String(show));
+        toggle.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+      });
+
+      if (!initSupabase()) {
+        ready();
+        showError('We couldn’t load the sign-in service. Check your connection and refresh the page.');
+        submit.disabled = true;
+        return;
+      }
+
+      // Already signed in: go straight to the right portal instead of the form.
+      (async function () {
+        try {
+          if (await getSession()) {
+            var portal = portalFor(await getUserProfile());
+            if (portal) { window.location.replace(portal); return; }
+            await signOut({ redirect: false });
+          }
+        } catch (_) { /* Fall through to the form; signing in retries the check. */ }
+        ready();
+      })();
+
+      form.addEventListener('submit', async function (event) {
+        event.preventDefault();
+        clearError();
+        busy(true);
+        try {
+          var result = await signIn(email.value.trim(), password.value);
+          if (result.error) throw result.error;
+          var portal = portalFor(await getUserProfile());
+          if (!portal) {
+            await signOut({ redirect: false });
+            busy(false);
+            showError('Your account isn’t set up for FIJLY Studio yet. Contact the FIJLY team.');
+            return;
+          }
+          busy(true, 'Opening your workspace…');
+          window.location.replace(portal);
+        } catch (err) {
+          busy(false);
+          showError(describe(err));
+          password.focus();
+          password.select();
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

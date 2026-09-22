@@ -7,7 +7,7 @@ node qa/run-all.cjs
 ```
 
 The runner starts a local static file server on port 8766, or uses the existing
-server there. It executes all 19 maintained checks, writes per-suite logs to
+server there. It executes all 20 maintained checks, writes per-suite logs to
 `qa/stabilization-logs/`, and exits nonzero if any check fails. Screenshots are regenerated
 under `qa/screenshots/`, `qa/refinement-after/` and `qa/visual-sheets/` on each
 run; they are run artifacts and are not kept in the repository.
@@ -25,11 +25,17 @@ No dependencies are installed by the runner. Python needs the existing
 BeautifulSoup and html5lib packages for static checks. Playwright's Chromium
 browser must already be installed.
 
+For the Admin Analytics presentation pass, run `node qa/admin-analytics-visual.cjs`
+against the local server. It compares all client/date combinations with the
+committed renderer, checks all five widths with axe and keyboard navigation,
+and saves screenshots plus `qa/admin-analytics-visual-results.json`.
+
 ## Maintained checks
 
 - Seven Studio suites: `studio-v1`, `studio-client`, `studio-admin-sections`,
   `studio-workflow`, `studio-workflow-probe`, `studio-workflow-sweep`,
   `studio-stability`.
+- `auth`: login page, signed-out redirects, admin/client role routing, real names in the sidebar, sign-out, cross-tab sign-out, missing-profile refusal, blocked-SDK fallback and a public landing page. `runtime.cjs` serves the pinned Supabase SDK from `qa/vendor/` and mocks the Supabase endpoints; every other suite starts signed in as a mock admin whose name matches the mock Settings.
 - `round-b`: queue/badge counts, triage, submission feedback, assets, script visibility, deadline links, mobile cards and analytics date boundaries.
 - `studio-polish`: all portal headers, sidebar footer, logo navigation, profile editing/photo handling, shared references, keyboard focus and accessibility at all five widths; protected-file scope guard.
 - `functional`, `accessibility`, `refinement-check`, `final_browser`: current

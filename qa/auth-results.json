@@ -1,0 +1,22 @@
+{
+  "checks": [
+    "Signed out: studio.html and admin.html redirect to login.html; the portal starts inert under the loading overlay",
+    "Login form: labels, email type, show/hide toggle, wrong-password error with the button restored, no overflow at five widths, axe clean",
+    "Admin: sign in -> admin.html, real name in sidebar and Settings, FIJLY_AUTH set, mock data renders, login.html forwards when signed in, sign out -> login.html, other tab follows, session cleared",
+    "Client: sign in -> studio.html with the real name and client id; admin.html redirects to studio.html; sign out works",
+    "No profile row: sign-in refused with a clear message; an existing session without a profile is signed out of the portals",
+    "SDK blocked: overlay stays up with an explanation, Try again and Go to sign in; the portal stays inert",
+    "Landing page: public, no Supabase or CDN requests; both Sign in links and the footer Studio link point to login.html"
+  ],
+  "scans": [
+    {
+      "label": "login/1440",
+      "violations": []
+    },
+    {
+      "label": "login/390",
+      "violations": []
+    }
+  ],
+  "errors": []
+}

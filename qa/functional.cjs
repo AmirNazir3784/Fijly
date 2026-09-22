@@ -32,8 +32,8 @@ fs.mkdirSync('qa/screenshots',{recursive:true});
  for(const close of ['escape','button','backdrop']){
   await open.click();assert.equal(await p.evaluate(()=>document.querySelector('#sidebar').contains(document.activeElement)),true);
   assert.equal(await p.locator('.studio-main').evaluate(e=>e.inert),true);
-  await p.locator('.sidebar-user').focus();await p.keyboard.press('Tab');assert.equal(await p.evaluate(()=>document.activeElement.className),'sidebar-home');
-  await p.keyboard.press('Shift+Tab');assert.equal(await p.evaluate(()=>document.activeElement.classList.contains('sidebar-user')),true);
+  await p.locator('[data-sign-out]').focus();await p.keyboard.press('Tab');assert.equal(await p.evaluate(()=>document.activeElement.className),'sidebar-home');
+  await p.keyboard.press('Shift+Tab');assert.equal(await p.evaluate(()=>document.activeElement.classList.contains('sidebar-signout')),true);
   if(close==='escape')await p.keyboard.press('Escape');
   if(close==='button')await p.locator('.sidebar-close').click();
   if(close==='backdrop')await p.locator('.sidebar-backdrop').click({position:{x:340,y:400}});
@@ -77,8 +77,8 @@ fs.mkdirSync('qa/screenshots',{recursive:true});
   checks.push(`${width}px marketing: anchors, menus where applicable, FAQ mouse/keyboard, overflow`);
  }
  await p.emulateMedia({reducedMotion:'reduce'});await p.reload();assert.equal(await p.locator('[data-hero-play]').getAttribute('aria-label'),'Play motion study');
- await p.setViewportSize({width:1440,height:900});await p.locator('.nav__actions a[href="studio.html"]').click();assert.match(p.url(),/studio.html/);await p.locator('.sidebar-home').click();assert.match(p.url(),/index.html/);await p.locator('.footer a[href="studio.html"]').click();assert.match(p.url(),/studio.html/);
- checks.push('Motion study reduced-motion preference, Sign in and footer Studio links, return to website');
+ await p.setViewportSize({width:1440,height:900});await p.locator('.nav__actions a[href="login.html"]').click();await p.waitForURL('**/admin.html');await p.locator('.sidebar-home').click();assert.match(p.url(),/index.html/);await p.locator('.footer a[href="login.html"]').click();await p.waitForURL('**/admin.html');
+ checks.push('Motion study reduced-motion preference, Sign in and footer Studio links go through login.html (signed in: straight to the portal), return to website');
  // Render an OG image directly from the existing page, preserving the design.
  await p.setViewportSize({width:1200,height:900});await p.goto(base+'index.html');await p.evaluate(()=>document.fonts.ready);await p.screenshot({path:'qa/screenshots/marketing-og-check.png',clip:{x:0,y:0,width:1200,height:630}});
  for(const file of ['privacy.html','terms.html','404.html'])for(const width of [1440,768,375]){await p.setViewportSize({width,height:900});await p.goto(base+file);assert.equal(await p.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);await p.screenshot({path:`qa/screenshots/${file}-${width}.png`,fullPage:true});}
