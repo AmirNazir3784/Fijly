@@ -16,7 +16,10 @@ if (!playwright) throw new Error('Install Playwright locally or set PLAYWRIGHT_M
    integrity hash, so QA serves the identical vendored file and mocks only the
    Supabase HTTP endpoints. The real SDK and guard code run; no network, no
    bypass in production code. Contexts start signed in as `admin` unless
-   created with { fijlyAuth: 'client' | 'admin2' | null }. */
+   created with { fijlyAuth: 'client' | 'admin2' | null }.
+   The REST API is served by supabase-emulator.cjs: one in-memory database per
+   launched browser, shared by its contexts and tabs like a real backend. */
+const emulator = require('./supabase-emulator.cjs');
 const SDK = fs.readFileSync(path.join(__dirname, 'vendor', 'supabase-js-2.116.0.js'));
 const SDK_URL = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.116.0/dist/umd/supabase.js';
 const SUPABASE = 'https://eaddovqkarognynnybeh.supabase.co';
@@ -32,12 +35,11 @@ const b64 = value => Buffer.from(JSON.stringify(value)).toString('base64url');
 const accessToken = user => b64({ alg: 'HS256', typ: 'JWT' }) + '.' + b64({ sub: user.id, email: user.email, role: 'authenticated', aud: 'authenticated', iat: 1790000000, exp: 4102444800 }) + '.qa';
 const authUser = user => ({ id: user.id, aud: 'authenticated', role: 'authenticated', email: user.email, app_metadata: { provider: 'email' }, user_metadata: {}, created_at: '2026-01-01T00:00:00Z' });
 const session = user => ({ access_token: accessToken(user), token_type: 'bearer', expires_in: 3600, expires_at: 4102444800, refresh_token: 'qa-refresh-' + user.id, user: authUser(user) });
-const profileRow = user => user.profile && ({ id: user.id, email: user.email, created_at: '2026-01-01T00:00:00Z', ...user.profile });
 const byToken = header => Object.values(qaUsers).find(user => header === 'Bearer ' + accessToken(user));
 const cors = { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*', 'access-control-allow-methods': 'GET,POST,PATCH,DELETE,OPTIONS', 'access-control-expose-headers': '*' };
 const json = (route, status, body) => route.fulfill({ status, headers: { ...cors, 'content-type': 'application/json' }, body: body === undefined ? '' : JSON.stringify(body) });
 
-async function installSupabaseMock(context, as = 'admin') {
+async function installSupabaseMock(context, as = 'admin', db = emulator.createDb(qaUsers)) {
   await context.route(SDK_URL, route => route.fulfill({ status: 200, headers: { ...cors, 'content-type': 'application/javascript' }, body: SDK }));
   await context.route(SUPABASE + '/**', async route => {
     const request = route.request(), url = new URL(request.url()), method = request.method();
@@ -52,11 +54,9 @@ async function installSupabaseMock(context, as = 'admin') {
     }
     if (url.pathname === '/auth/v1/user') return caller ? json(route, 200, authUser(caller)) : json(route, 401, { code: 401, error_code: 'bad_jwt', msg: 'invalid JWT' });
     if (url.pathname === '/auth/v1/logout') return route.fulfill({ status: 204, headers: cors });
-    if (url.pathname === '/rest/v1/profiles' && method === 'GET') {
-      const id = (url.searchParams.get('id') || '').replace(/^eq\./, '');
-      const rows = caller && caller.id === id && caller.profile ? [profileRow(caller)] : []; // RLS: own row only
-      if (/vnd\.pgrst\.object/.test(request.headers()['accept'] || '')) return rows.length ? json(route, 200, rows[0]) : json(route, 406, { code: 'PGRST116', message: 'JSON object requested, multiple (or no) rows returned' });
-      return json(route, 200, rows);
+    if (url.pathname.startsWith('/rest/v1/')) {
+      const result = emulator.handle(db, caller, method, url, request.headers(), request.postDataJSON());
+      return result.status === 204 ? route.fulfill({ status: 204, headers: cors }) : json(route, result.status, result.body);
     }
     return json(route, 404, { message: 'Not mocked in QA: ' + method + ' ' + url.pathname });
   });
@@ -65,6 +65,11 @@ async function installSupabaseMock(context, as = 'admin') {
   await context.addInitScript(({ key, seed }) => {
     try { if (!localStorage.getItem('fijly-qa-auth-seeded')) { localStorage.setItem('fijly-qa-auth-seeded', '1'); if (seed) localStorage.setItem(key, seed); } } catch (_) { /* about:blank */ }
   }, { key: STORAGE_KEY, seed });
+  // Older suites address the Admin data service by its mock name. On the Admin
+  // portal (which no longer loads the mock) that name points at FijlyData.
+  await context.addInitScript(() => {
+    if (/admin\.html$/.test(location.pathname)) Object.defineProperty(window, 'FijlyMock', { configurable: true, get() { return window.FijlyData; } });
+  });
 }
 
 // A portal navigation resolves once its auth check has settled (overlay gone,
@@ -85,10 +90,11 @@ function settleAuth(page) {
 
 function withAuth(browser) {
   const newContext = browser.newContext.bind(browser);
+  browser.fijlyDb = emulator.createDb(qaUsers);
   browser.newContext = async (options = {}) => {
     const { fijlyAuth = 'admin', ...rest } = options;
     const context = await newContext(rest);
-    await installSupabaseMock(context, fijlyAuth);
+    await installSupabaseMock(context, fijlyAuth, browser.fijlyDb);
     const newPage = context.newPage.bind(context);
     context.newPage = async (...args) => settleAuth(await newPage(...args));
     return context;

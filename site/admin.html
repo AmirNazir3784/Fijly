@@ -92,7 +92,7 @@
 
   <div class="sidebar-backdrop" data-sidebar-close></div>
   <main class="studio-main">
-    <p class="studio-demo-note visually-hidden">Admin workspace &middot; Mock data. Changes stay in this mock session; no data is sent.</p>
+    <p class="studio-demo-note visually-hidden">Admin workspace &middot; Live studio data. Changes are saved to the FIJLY database.</p>
     <header class="studio-topbar">
 <button class="icon-btn studio-topbar__menu" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="sidebar" data-sidebar-open>
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
@@ -101,7 +101,7 @@
       <a class="btn btn-outline btn--xs btn--semibold admin-portal-switch" href="studio.html">Client portal <span aria-hidden="true">&nearr;</span></a>
     </header>
     <div class="studio-content" id="studio-content" tabindex="-1">
-      <noscript><p class="panel">Enable JavaScript to browse the mock Admin workspace.</p></noscript>
+      <noscript><p class="panel">Enable JavaScript to use the Admin workspace.</p></noscript>
       <section class="screen" id="screen-dashboard" data-screen="dashboard" data-title="Dashboard" aria-labelledby="h-dashboard">
         <div class="page-head page-head--row page-head--overview">
           <div><div class="page-head__date" id="dashboard-date">OPERATIONS</div><h1 id="h-dashboard">Production at a glance</h1><p>A clear view of every client and the work moving forward.</p></div>
@@ -229,34 +229,31 @@
             <ul class="admin-client-overview" id="analytics-quality"></ul>
           </section>
         </div>
-        <p class="admin-save-status">Figures are derived from the current mock records, not from a reporting service.</p>
+        <p class="admin-save-status">Figures are derived from the studio’s current records, not from a reporting service.</p>
       </section>
 
       <section class="screen" id="screen-settings" data-screen="settings" data-title="Settings" aria-labelledby="h-settings" hidden>
-        <div class="page-head"><h1 id="h-settings">Settings</h1><p>Admin Portal preferences for this mock workspace.</p></div>
+        <div class="page-head"><h1 id="h-settings">Settings</h1><p>Your profile and the studio’s default preferences.</p></div>
         <form id="settings-form">
           <div class="admin-settings-grid">
             <section class="panel" aria-labelledby="h-set-profile">
               <h2 id="h-set-profile">Admin profile</h2>
               <p class="panel__sub">How you appear inside the Admin Portal.</p>
               <div class="form-group"><label class="field-label" for="set-admin-name">Your name</label><input class="input" id="set-admin-name" name="adminName" required maxlength="80" autocomplete="name"></div>
-              <div class="form-group"><label class="field-label" for="set-admin-role">Role</label><input class="input" id="set-admin-role" name="adminRole" maxlength="80"></div>
-              <div class="form-group"><label class="field-label" for="set-admin-email">Email</label><input class="input" id="set-admin-email" name="adminEmail" type="email" required maxlength="120" autocomplete="email"></div>
+              <div class="form-group"><label class="field-label" for="set-admin-email">Sign-in email</label><input class="input" id="set-admin-email" name="adminEmail" type="email" readonly aria-describedby="set-admin-email-hint" autocomplete="email"><p class="field-hint" id="set-admin-email-hint">Your sign-in address. It is managed in Supabase Auth, not here.</p></div>
             </section>
             <section class="panel" aria-labelledby="h-set-studio">
               <h2 id="h-set-studio">Studio information</h2>
               <p class="panel__sub">Shown alongside client-facing production details.</p>
               <div class="form-group"><label class="field-label" for="set-studio-name">Studio name</label><input class="input" id="set-studio-name" name="studioName" required maxlength="80" autocomplete="organization"></div>
               <div class="form-group"><label class="field-label" for="set-studio-email">Contact email</label><input class="input" id="set-studio-email" name="studioEmail" type="email" maxlength="120"></div>
-              <div class="form-group"><label class="field-label" for="set-studio-location">Location / hours</label><input class="input" id="set-studio-location" name="studioLocation" maxlength="80"></div>
             </section>
             <section class="panel" aria-labelledby="h-set-notify">
               <h2 id="h-set-notify">Notification preferences</h2>
-              <p class="panel__sub">Which production events you want surfaced. No email is sent in this preview.</p>
+              <p class="panel__sub">Which production events you want surfaced. Saved to your account; email notifications are not sent yet.</p>
               <label class="setting-row" for="set-notify-request"><span><span class="setting-row__title">New video request</span><span class="setting-row__sub">A client submits a brief</span></span><span class="toggle-switch"><input type="checkbox" id="set-notify-request" name="notifyNewRequest"><span class="toggle-switch__track"></span></span></label>
               <label class="setting-row" for="set-notify-revision"><span><span class="setting-row__title">Revision requested</span><span class="setting-row__sub">A client asks for another round</span></span><span class="toggle-switch"><input type="checkbox" id="set-notify-revision" name="notifyRevision"><span class="toggle-switch__track"></span></span></label>
               <label class="setting-row" for="set-notify-approval"><span><span class="setting-row__title">Video approved</span><span class="setting-row__sub">A client approves a draft</span></span><span class="toggle-switch"><input type="checkbox" id="set-notify-approval" name="notifyApproval"><span class="toggle-switch__track"></span></span></label>
-              <label class="setting-row" for="set-notify-digest"><span><span class="setting-row__title">Weekly summary</span><span class="setting-row__sub">Every Monday morning</span></span><span class="toggle-switch"><input type="checkbox" id="set-notify-digest" name="notifyWeeklyDigest"><span class="toggle-switch__track"></span></span></label>
             </section>
             <section class="panel" aria-labelledby="h-set-workflow">
               <h2 id="h-set-workflow">Default workflow preferences</h2>
@@ -271,7 +268,7 @@
             <button class="btn btn-primary btn--md" type="submit">Save settings</button>
           </div>
           <p class="admin-save-status" id="settings-status" role="status"></p>
-          <p class="panel__sub">Preferences are stored in this mock session only. No account, billing, plan, or team permission is created.</p>
+          <p class="panel__sub">Saved to your account. No billing, plan, or team permission is created.</p>
         </form>
       </section>
     </div>
@@ -288,9 +285,9 @@
     <div class="admin-dialog-fields">
       <div class="form-group"><label class="field-label" for="client-name">Company name</label><input class="input" id="client-name" name="company" required maxlength="80" autocomplete="organization"></div>
       <div class="admin-form-row"><div class="form-group"><label class="field-label" for="client-contact">Primary contact</label><input class="input" id="client-contact" name="contact" required maxlength="80" autocomplete="name"></div><div class="form-group"><label class="field-label" for="client-email">Email</label><input class="input" id="client-email" name="email" type="email" required maxlength="150" autocomplete="email"></div></div>
-      <div class="admin-form-row"><div class="form-group"><label class="field-label" for="client-industry">Industry</label><input class="input" id="client-industry" name="industry" maxlength="80"></div><div class="form-group"><label class="field-label" for="edit-client-status">Status</label><select class="input" id="edit-client-status" name="status"><option>Onboarding</option><option>Active</option><option>Paused</option></select></div></div>
+      <div class="admin-form-row"><div class="form-group"><label class="field-label" for="client-website">Website <span class="admin-muted">(optional)</span></label><input class="input" id="client-website" name="website" type="url" maxlength="200" placeholder="https://" autocomplete="url"></div><div class="form-group"><label class="field-label" for="edit-client-status">Status</label><select class="input" id="edit-client-status" name="status"><option>Onboarding</option><option>Active</option><option>Paused</option></select></div></div>
       <div class="form-group"><label class="field-label" for="client-notes">Production notes</label><textarea class="input" id="client-notes" name="notes" rows="3" maxlength="1000"></textarea></div>
-      <p class="panel__sub" id="client-form-note">Mock record only. No account or invitation will be created.</p>
+      <p class="panel__sub" id="client-form-note">Saves the client record. Sign-in accounts for the client are created separately in Supabase.</p>
     </div>
     <div class="admin-dialog-foot"><button class="btn btn-ghost btn--md dialog-dismiss" type="button" data-close-editor>Cancel</button><button class="btn btn-primary btn--md" type="submit">Save client</button></div>
   </form>
@@ -329,10 +326,9 @@
 <!-- Auth: pinned SDK with subresource integrity, then the guard, before any portal JS -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.116.0/dist/umd/supabase.js" integrity="sha384-iLddHTLokph6Omwoyid4XKxHaWa6w41BnoEj0q5oOrzmYPpHIKt1wyjReA7s//pP" crossorigin="anonymous"></script>
 <script src="js/supabase-client.js"></script>
+<script src="js/supabase-data.js"></script>
 <script src="js/portal-auth.js"></script>
 <script src="js/studio-shell.js"></script>
-<script src="js/admin-data.js"></script>
-<script src="js/mock-service.js"></script>
 <script src="js/admin.js"></script>
 <script src="js/workflow.js"></script>
 <script src="js/admin-sections.js"></script>

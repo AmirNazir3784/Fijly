@@ -425,3 +425,34 @@
     padding: var(--space-md);
   }
 }
+
+/* Data errors ----------------------------------------------------------------
+   Shown when a Supabase read or write fails outside a dialog. Dark text on the
+   soft red surface keeps AA contrast; the banner stays until dismissed. */
+.data-error-banner {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  margin-bottom: var(--space-md);
+  padding: var(--space-sm) var(--space-sm) var(--space-sm) var(--space-lg);
+  border-left: 3px solid var(--danger);
+  border-radius: var(--radius-md);
+  background: var(--red-soft);
+  color: var(--text-primary);
+  font-size: var(--text-meta);
+  font-weight: var(--weight-medium);
+  line-height: var(--leading-normal);
+}
+
+.data-error-banner p { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+
+.data-error-banner__close {
+  flex: none;
+  min-height: 36px;
+  padding: 0 var(--space-md);
+  border: 1px solid var(--border-dark);
+  border-radius: var(--radius-sm);
+  background: var(--surface-white);
+  font-size: var(--text-small);
+  font-weight: var(--weight-semibold);
+}

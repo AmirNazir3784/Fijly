@@ -71,22 +71,24 @@ const url = (portal, route) => require('./runtime.cjs').base+`${portal}.html#${r
 
   /* 3 ── three revision rounds, driven through the service, stay intact ──── */
   await p.goto(url('admin', 'videos'));
-  const multi = await p.evaluate(() => {
+  const multi = await p.evaluate(async () => {
     // Build V1 -> R1 -> V2 -> R2 -> V3 -> R3 -> V4 on a fresh video, using the
-    // same service calls the UI buttons make.
+    // same service calls the UI buttons make. Each write reloads the state
+    // from the database, so the video is looked up again after every step.
     const req = FijlyMock.state.requests.find(r => r.status === 'Submitted');
-    const video = FijlyMock.produce(req.id);
-    const step = note => {
-      FijlyMock.addVersion(video.id, '', note);
-      FijlyMock.setVideoStatus(video.id, 'Draft Ready');
-      FijlyMock.setVideoStatus(video.id, 'Client Review');
+    const video = await FijlyMock.produce(req.id);
+    const fresh = () => FijlyMock.get('videos', video.id);
+    const step = async note => {
+      await FijlyMock.addVersion(video.id, '', note);
+      await FijlyMock.setVideoStatus(video.id, 'Draft Ready');
+      await FijlyMock.setVideoStatus(video.id, 'Client Review');
     };
-    step('v1');
+    await step('v1');
     for (let round = 1; round <= 3; round++) {
-      FijlyMock.requestRevision(video.id, `Round ${round} feedback text.`, 'Alex Rivera');
-      const open = FijlyMock.activeRevision(video);
-      FijlyMock.setRevisionStatus(open.id, 'In Revision');
-      step(`revised v${round + 1}`);
+      await FijlyMock.requestRevision(video.id, `Round ${round} feedback text.`, 'Alex Rivera');
+      const open = FijlyMock.activeRevision(fresh());
+      await FijlyMock.setRevisionStatus(open.id, 'In Revision');
+      await step(`revised v${round + 1}`);
     }
     const v = FijlyMock.get('videos', video.id);
     return {
@@ -123,13 +125,13 @@ const url = (portal, route) => require('./runtime.cjs').base+`${portal}.html#${r
   await p.locator('#workflow-detail').getByRole('button', { name: 'Close', exact: true }).click();
 
   /* 4 ── invalid transitions are refused by the service ──────────────────── */
-  const guard = await p.evaluate(() => {
+  const guard = await p.evaluate(async () => {
     const out = {};
     const fresh = FijlyMock.state.videos.find(v => v.status === 'In Production' && !v.versions.length);
     out.draftWithoutVersion = fresh ? FijlyMock.videoTransitions(fresh).length === 0 : 'no-candidate';
     const done = FijlyMock.state.videos.find(v => v.status === 'Completed');
     out.completedIsTerminal = done ? FijlyMock.videoTransitions(done).length === 0 : 'no-candidate';
-    try { FijlyMock.setVideoStatus(done ? done.id : fresh.id, 'Client Review'); out.threw = false; }
+    try { await FijlyMock.setVideoStatus(done ? done.id : fresh.id, 'Client Review'); out.threw = false; }
     catch (e) { out.threw = true; out.message = e.message; }
     return out;
   });

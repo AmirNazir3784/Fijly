@@ -1,13 +1,22 @@
-/* Shared operational UI. Every screen reads the same session mock service. */
+/* Shared operational UI for both portals. The Admin portal reads Supabase
+   through FijlyData; the Client portal keeps the session mock until Part 3B.
+   Writes may be async (FijlyData) or sync (FijlyMock); both are awaited. */
 (function () {
   'use strict';
-  var api = window.FijlyMock, state = api.state, admin = document.body.classList.contains('admin-body');
+  var api = window.FijlyData || window.FijlyMock, state = api.state, admin = document.body.classList.contains('admin-body');
   var filters = {}, current = null, clientFilter = 'all', applyDefaults = function () {}, notice = null;
   var closeIcon = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
   var playIcon = '<svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>';
   function el(tag, text, cls) { var node = document.createElement(tag); if (text !== undefined) node.textContent = text; if (cls) node.className = cls; return node; }
   // `style` is true for the primary button, or a class list for another variant.
-  function button(text, fn, style) { var node = el('button', text, 'btn btn--md ' + (style === true ? 'btn-primary' : style || 'btn-outline')); node.type = 'button'; node.onclick = function () { try { fn(); } catch (error) { showError(error); } }; return node; }
+  function button(text, fn, style) { var node = el('button', text, 'btn btn--md ' + (style === true ? 'btn-primary' : style || 'btn-outline')); node.type = 'button'; node.onclick = function () { run(node, fn); }; return node; }
+  // Runs an action that may be async; the control is busy until it settles, so
+  // a slow save cannot be submitted twice.
+  function run(control, fn) {
+    if (control.disabled) return Promise.resolve();
+    control.disabled = true; control.setAttribute('aria-busy', 'true');
+    return Promise.resolve().then(fn).catch(showError).finally(function () { control.disabled = false; control.removeAttribute('aria-busy'); });
+  }
   function badge(text) { return el('span', text, api.statusClass(text)); }
   function client(request) { return api.get('clients', request.client); }
   function date(value) { return api.formatDate(value); }
@@ -33,29 +42,31 @@
   // A confirmation message for the record shown in the detail dialog; it stays
   // through shared-state re-renders until the dialog closes or changes record.
   function flash(text) { if (current) notice = { kind:current.kind, id:current.id, text:text, fresh:true }; }
-  function confirmation(title, message, action) { confirm.title.textContent = title; confirm.body.replaceChildren(el('p',message)); footer(confirm, [button('Confirm',function(){ action(); confirm.node.close(); if (detail.node.open) renderDetail(); },true)]); open(confirm); }
+  function confirmation(title, message, action) { confirm.title.textContent = title; confirm.body.replaceChildren(el('p',message)); footer(confirm, [button('Confirm',async function(){ await action(); confirm.node.close(); if (detail.node.open) renderDetail(); },true)]); open(confirm); }
+  // The database keeps the editor on the video, so it is set once a request is in production.
+  function editorEditable(request) { return !api.capabilities || api.capabilities.requestEditorBeforeProduction !== false || state.videos.some(function (v) { return v.requestId === request.id; }); }
   function factGrid(values) { var grid = el('dl',undefined,'admin-detail-facts'); Object.entries(values).forEach(function(pair){var wrap=el('div');wrap.append(el('dt',pair[0]),el('dd',pair[1] || 'Unassigned'));grid.append(wrap);});return grid; }
   function field(form, name, label, value, type, options) { var wrap=el('div',undefined,'form-group'), l=el('label',label,'field-label'), input=el(options?'select':type==='textarea'?'textarea':'input',undefined,'input'); input.name=name;input.id='wf-'+name;l.htmlFor=input.id;if(options)options.forEach(function(v){var o=el('option',v);o.value=v;input.append(o);});else if(type!=='textarea')input.type=type||'text';input.value=value||'';if(type==='file'){input.multiple=true;input.classList.add('workflow-file');}wrap.append(l,input);form.append(wrap);return input; }
   function formEditor(title, build, save, submitText) {
     editor.title.textContent=title;editor.body.replaceChildren();var form=el('form');form.id='workflow-editor-form';build(form);
     var error=el('p',undefined,'workflow-error');error.setAttribute('role','alert');form.append(error);
     var submit=el('button',submitText||'Save','btn btn-primary btn--md');submit.type='submit';submit.setAttribute('form',form.id);footer(editor,[submit]);
-    form.onsubmit=function(e){e.preventDefault();if(!editor.node.open)return;try{save(form);editor.node.close();if(detail.node.open)renderDetail();}catch(err){error.textContent=err.message;}};
+    form.onsubmit=async function(e){e.preventDefault();if(!editor.node.open||submit.disabled)return;error.textContent='';submit.disabled=true;submit.setAttribute('aria-busy','true');try{await save(form);editor.node.close();if(detail.node.open)renderDetail();}catch(err){error.textContent=err.message;}finally{submit.disabled=false;submit.removeAttribute('aria-busy');}};
     editor.body.append(form);open(editor);
   }
-  function editRequest(request, full) { formEditor(full?'Edit request':'Production details',function(form){ if(full){['title','platform','videoType'].forEach(function(k){field(form,k,{title:'Video title',platform:'Platform',videoType:'Video type'}[k],request[k]).required=true;});field(form,'instructions','Instructions',request.instructions,'textarea').required=true;field(form,'references','Reference links (one per line)',request.references.join('\n'),'textarea');field(form,'attachments','Add attachments (metadata only)','','file');field(form,'priority','Priority',request.priority,null,['Low','Normal','High','Urgent']);}field(form,'assignedEditor','Assigned Editor',request.assignedEditor);field(form,'deadline','Deadline',request.deadline,'date').required=true;},function(form){var input=Object.fromEntries(new FormData(form));delete input.attachments;api.updateRequest(request.id,input,full?files(form.elements.attachments):[]);flash(full?'Request updated.':'Production details saved.');}); }
-  function addVersion(video) { formEditor('Add V'+(video.versions.length+1),function(form){form.append(el('p','Simulated upload: only the file name is stored. No media is uploaded.','admin-muted'));field(form,'file','Video file (optional)','','file').accept='video/*';field(form,'notes','Version notes','','textarea');},function(form){var version=api.addVersion(video.id,form.elements.file.files[0] ? form.elements.file.files[0].name : '',form.elements.notes.value);flash('V'+version.number+' added. Earlier versions are kept.');}); }
+  function editRequest(request, full) { formEditor(full?'Edit request':'Production details',function(form){ if(full){['title','platform','videoType'].forEach(function(k){field(form,k,{title:'Video title',platform:'Platform',videoType:'Video type'}[k],request[k]).required=true;});field(form,'instructions','Instructions',request.instructions,'textarea').required=true;field(form,'references','Reference links (one per line)',request.references.join('\n'),'textarea');field(form,'attachments','Add attachments (metadata only)','','file');field(form,'priority','Priority',request.priority,null,['Low','Normal','High','Urgent']);}if(editorEditable(request))field(form,'assignedEditor','Assigned Editor',request.assignedEditor);field(form,'deadline','Deadline',request.deadline,'date').required=true;},async function(form){var input=Object.fromEntries(new FormData(form));delete input.attachments;await api.updateRequest(request.id,input,full?files(form.elements.attachments):[]);flash(full?'Request updated.':'Production details saved.');}); }
+  function addVersion(video) { formEditor('Add V'+(video.versions.length+1),function(form){form.append(el('p','Simulated upload: only the file name is stored. No media is uploaded.','admin-muted'));field(form,'file','Video file (optional)','','file').accept='video/*';field(form,'notes','Version notes','','textarea');},async function(form){var version=await api.addVersion(video.id,form.elements.file.files[0] ? form.elements.file.files[0].name : '',form.elements.notes.value);flash('V'+version.number+' added. Earlier versions are kept.');}); }
   function feedback(video) {
     var version='V'+api.latest(video).number;
     formEditor(admin?'Record client revision feedback':'Request a revision',function(form){
       var input=field(form,'feedback',admin?'Client feedback':'What should we change?','','textarea'),hint=el('p',(admin?'Attached to ':'Your notes are attached to ')+version+'. Earlier feedback stays in the history.','field-hint');
       input.required=true;input.maxLength=3000;hint.id='wf-feedback-hint';input.setAttribute('aria-describedby',hint.id);input.parentNode.append(hint);
-    },function(form){
-      if(admin){var round=api.requestRevision(video.id,form.elements.feedback.value,client(api.requestFor(video)).contact);flash('Revision round '+round.round+' recorded on '+version+'.');}
-      else{api.client.revise(video.id,form.elements.feedback.value);flash('Feedback sent — the studio will start revisions.');}
+    },async function(form){
+      if(admin){var round=await api.requestRevision(video.id,form.elements.feedback.value,client(api.requestFor(video)).contact);flash('Revision round '+round.round+' recorded on '+version+'.');}
+      else{await api.client.revise(video.id,form.elements.feedback.value);flash('Feedback sent — the studio will start revisions.');}
     },admin?'Record revision':'Send revision request');
   }
-  function changeVideo(video, status) { confirmation(status, status==='Completed'?'Complete this video? Its request will also be marked Completed.':status==='Approved'?'Approve the current version and resolve its open revision?':'Change this video to '+status+'?',function(){if(admin){api.setVideoStatus(video.id,status);flash('Status changed to '+status+'.');}else{api.client.approve(video.id);flash('Thanks — the studio has been notified. Your video will be finalized.');}}); }
+  function changeVideo(video, status) { confirmation(status, status==='Completed'?'Complete this video? Its request will also be marked Completed.':status==='Approved'?'Approve the current version and resolve its open revision?':'Change this video to '+status+'?',async function(){if(admin){await api.setVideoStatus(video.id,status);flash('Status changed to '+status+'.');}else{await api.client.approve(video.id);flash('Thanks — the studio has been notified. Your video will be finalized.');}}); }
   function show(kind,id) { if(!admin)api.client.get(kind,id); if(notice&&(notice.kind!==kind||notice.id!==id))notice=null; current={kind:kind,id:id};renderDetail();open(detail); }
   // No media is stored in this preview, so the player area says so plainly.
   function media(latest) {
@@ -90,11 +101,11 @@
       body.append(badge(item.status),factGrid(facts),el('h3','Instructions'),el('p',request.instructions,'workflow-feedback'),el('h3','Reference links'));
       if(!request.references.length)body.append(el('p','No reference links provided.','admin-muted'));
       request.references.forEach(function(url){var p=el('p'),a=el('a',url);a.href=url;a.target='_blank';a.rel='noopener noreferrer';p.append(a);body.append(p);});
-      body.append(el('h3','Attachments'));body.append(el('p',request.attachments.length?request.attachments.map(function(a){return a.name+' ('+Math.ceil(a.size/1024)+' KB)';}).join('\n'):'No attachments.','workflow-feedback'));body.append(el('p','Attachment metadata only; files are not uploaded in this preview.','admin-muted'));
-      if(admin && request.status!=='Completed'){secondary.push(button('Edit details',function(){editRequest(request,true);}));if(request.status==='Submitted')secondary.push(button('Start review',function(){api.reviewRequest(request.id);flash('Marked as Under Review.');renderDetail();}));}
+      body.append(el('h3','Attachments'));body.append(el('p',request.attachments.length?request.attachments.map(function(a){return a.name+(a.size?' ('+Math.ceil(a.size/1024)+' KB)':'');}).join('\n'):'No attachments.','workflow-feedback'));body.append(el('p','Attachment metadata only; files are not uploaded in this preview.','admin-muted'));
+      if(admin && request.status!=='Completed'){secondary.push(button('Edit details',function(){editRequest(request,true);}));if(request.status==='Submitted')secondary.push(button('Start review',async function(){await api.reviewRequest(request.id);flash('Marked as Under Review.');renderDetail();}));}
       var linked=state.videos.find(function(v){return v.requestId===request.id;});
       if(linked)primary.push(button('Open video',function(){show('videos',linked.id);},true));
-      else if(admin)primary.push(button('Move to production',function(){confirmation('Move to production','Create a linked production workspace for this request?',function(){var video=api.produce(request.id);show('videos',video.id);flash('Moved to production. Add the first version when the draft is ready.');});},true));
+      else if(admin)primary.push(button('Move to production',function(){confirmation('Move to production','Create a linked production workspace for this request?',async function(){var video=await api.produce(request.id);show('videos',video.id);flash('Moved to production. Add the first version when the draft is ready.');});},true));
       footer(detail,secondary.concat(primary));return;
     }
     var video=kind==='videos'?item:api.get('videos',item.videoId),latest=api.latest(video);
@@ -109,7 +120,7 @@
       var revision=api.activeRevision(video);
       if(['In Production','Draft Ready','In Revision'].includes(video.status) && (!revision || revision.status!=='Revision Requested'))secondary.push(button('Add version',function(){addVersion(video);}));
       if(video.status==='Client Review')secondary.push(button('Record client revision',function(){feedback(video);}));
-      if(kind==='revisions')api.revisionTransitions(item).forEach(function(status){primary.push(button(status==='Resolved'?'Resolve & approve':status==='In Revision'?'Start revision':status==='Draft Ready'?'Mark draft ready':'Send to Client Review',function(){confirmation(status,'Change this revision to '+status+(status==='Resolved'?' and approve its video':'')+'?',function(){api.setRevisionStatus(item.id,status);flash('Revision round '+item.round+' is now '+status+'.');});},true));});
+      if(kind==='revisions')api.revisionTransitions(item).forEach(function(status){primary.push(button(status==='Resolved'?'Resolve & approve':status==='In Revision'?'Start revision':status==='Draft Ready'?'Mark draft ready':'Send to Client Review',function(){confirmation(status,'Change this revision to '+status+(status==='Resolved'?' and approve its video':'')+'?',async function(){await api.setRevisionStatus(item.id,status);flash('Revision round '+item.round+' is now '+status+'.');});},true));});
       else api.videoTransitions(video).forEach(function(status){primary.push(button({'Draft Ready':'Mark draft ready','Client Review':'Send to Client Review',Approved:'Mark approved',Completed:'Mark completed'}[status],function(){changeVideo(video,status);},true));});
       if(kind==='videos'&&revision&&revision.status==='Revision Requested')primary.push(button('Open requested revision',function(){show('revisions',revision.id);},true));
     }
@@ -213,7 +224,7 @@
     }
     function clearErrors() { errorFields.forEach(function (name) { var field = requestForm.elements.namedItem(name); field.removeAttribute('aria-invalid'); var error = document.getElementById(field.id + '-error'); error.hidden = true; error.textContent = ''; }); }
     requestForm.addEventListener('reset', clearErrors);
-    requestForm.onsubmit = function (e) {
+    requestForm.onsubmit = async function (e) {
       e.preventDefault(); clearErrors();
       var note = document.querySelector('[data-request-note]'), f = requestForm.elements, invalid = [];
       [['name', 'Please enter a video title.'], ['brief', 'Please describe what you want in your video.'], ['due', 'Please choose a valid deadline.']].forEach(function (pair) {
@@ -225,7 +236,7 @@
         note.className = 'workflow-error'; note.textContent = 'Please check the highlighted fields.'; note.hidden = false; f.namedItem(invalid[0]).focus(); return;
       }
       try {
-        api.client.createRequest({title:f.name.value,videoType:f.type.value,instructions:f.brief.value,platform:f.platform.value,priority:f.priority.value,deadline:f.due.value,length:f.namedItem('length').value,references:f.references.value},files(f.attachments));
+        await api.client.createRequest({title:f.name.value,videoType:f.type.value,instructions:f.brief.value,platform:f.platform.value,priority:f.priority.value,deadline:f.due.value,length:f.namedItem('length').value,references:f.references.value},files(f.attachments));
         requestForm.reset(); note.className = 'workflow-notice'; note.textContent = 'Request submitted. We will review your brief next. You can track its progress in Your requests.';
       } catch (error) { note.className = 'workflow-error'; note.textContent = error.message; if (/reference/i.test(error.message)) { fieldError('references', 'Enter a complete link starting with https:// or http://.'); f.references.focus(); } }
       note.hidden = false;

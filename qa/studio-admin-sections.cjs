@@ -2,7 +2,7 @@
    Covers search/filter/sort, the create/edit/delete mock flow, client
    relationships, analytics derivation from shared records, settings
    persistence, responsive widths and accessibility. */
-const { chromium } = require('./runtime.cjs');
+const { chromium, qaUsers } = require('./runtime.cjs');
 const assert = require('assert/strict');
 const fs = require('fs');
 fs.mkdirSync('qa/screenshots',{recursive:true});
@@ -80,7 +80,10 @@ const url = (portal, route) => require('./runtime.cjs').base+`${portal}.html#${r
   assert.equal(created.category, 'B-roll');
   assert.equal(created.fileType, 'mov', 'file type derived from the name');
   assert.equal(created.size, 2048, 'size recorded from the picked file');
-  assert.equal(created.simulated, true, 'record is marked simulated');
+  // Stored in the database: metadata only, attributed to the signed-in admin.
+  const stored = browser.fijlyDb.assets.find(a => a.id === created.id);
+  assert.ok(stored && stored.file_size === 2048 && stored.file_type === 'mov' && stored.file_url === null, 'database row holds metadata only');
+  assert.equal(stored.uploaded_by, qaUsers.admin.id, 'uploaded_by is the signed-in admin');
   assert.equal(await rows(), total + 1);
 
   /* ── Assets: validation ──────────────────────────────────────────────── */
@@ -133,12 +136,13 @@ const url = (portal, route) => require('./runtime.cjs').base+`${portal}.html#${r
   assert.deepEqual(orphans, [], 'every asset points at a real client');
   checks.push('All assets resolve to an existing client record');
 
-  /* ── Client portal reads the same asset collection ───────────────────── */
+  /* ── Client portal still lists its own (session mock) assets ─────────── */
   await c.goto(url('studio', 'assets'));
   const portalCount = await c.locator('[data-client-assets] .file-row').count();
   const expected = await c.evaluate(() => FijlyMock.assetsFor('northbeam').length);
-  assert.equal(portalCount, expected, 'client portal lists its own shared assets');
-  // add one from Admin and confirm it reaches the portal
+  assert.equal(portalCount, expected, 'client portal lists its own assets');
+  // An asset added in Admin is stored in the database and survives a reload.
+  // Pending Part 3B: the Client portal reading it from the database.
   await p.goto(url('admin', 'assets'));
   await p.locator('[data-add-asset]').click();
   await p.locator('#asset-name').fill('qa-shared-check.pdf');
@@ -146,9 +150,10 @@ const url = (portal, route) => require('./runtime.cjs').base+`${portal}.html#${r
   await p.locator('#asset-form-category').selectOption('Brand Guidelines');
   await p.locator('#asset-form button[type=submit]').click();
   await p.waitForFunction(() => !document.getElementById('asset-editor').open);
-  await c.waitForFunction(n => document.querySelectorAll('[data-client-assets] .file-row').length === n, portalCount + 1);
-  assert.match(await c.locator('[data-client-assets]').innerText(), /qa-shared-check\.pdf/, 'new asset appears in the client portal');
-  checks.push('Admin and Client Brand Assets share one asset collection across tabs');
+  assert.ok(browser.fijlyDb.assets.some(a => a.name === 'qa-shared-check.pdf' && a.client_id === 'northbeam'), 'asset stored in the database');
+  await p.reload();
+  assert.match(await p.locator('#asset-rows').innerText(), /qa-shared-check\.pdf/, 'asset survives a reload');
+  checks.push('Admin assets persist in the database across reloads (Client portal reads them in Part 3B)');
 
   /* ── Analytics derives from the shared records ───────────────────────── */
   await p.goto(url('admin', 'analytics'));
@@ -216,6 +221,13 @@ const url = (portal, route) => require('./runtime.cjs').base+`${portal}.html#${r
   assert.ok(short <= long, `range filter narrows or holds: 7d=${short} all=${long}`);
   checks.push('Analytics KPIs, status breakdown, trend and client table derive from shared records; client and range filters scope them');
 
+  // Saves are async: clear the previous confirmation first, then wait for a new
+  // one with the button released, so an earlier "saved" is never mistaken for this save.
+  const saveSettingsForm = async () => {
+    await p.evaluate(() => { document.getElementById('settings-status').textContent = ''; });
+    await p.locator('#settings-form button[type=submit]').click();
+    await p.waitForFunction(() => document.getElementById('settings-status').textContent.includes('saved') && !document.querySelector('#settings-form button[type=submit]').disabled);
+  };
   /* ── Settings persistence ────────────────────────────────────────────── */
   await p.goto(url('admin', 'settings'));
   await p.locator('#set-admin-name').fill('QA Producer');
@@ -225,19 +237,21 @@ const url = (portal, route) => require('./runtime.cjs').base+`${portal}.html#${r
   await p.locator('label[for="set-notify-approval"]').click();
   assert.equal(await p.locator('#set-notify-approval').isChecked(), true);
   assert.equal(await p.locator('#set-notify-approval').getAttribute('aria-checked'), 'true');
-  await p.locator('#settings-form button[type=submit]').click();
-  await p.waitForFunction(() => document.getElementById('settings-status').textContent.includes('saved'));
+  await saveSettingsForm();
   await p.reload();
   assert.equal(await p.locator('#set-admin-name').inputValue(), 'QA Producer', 'settings survive reload');
   assert.equal(await p.locator('#set-default-lead').inputValue(), '14');
   assert.equal(await p.locator('#set-notify-approval').isChecked(), true);
 
+  // The sign-in email is managed by Supabase Auth, so it is read-only here.
+  assert.equal(await p.locator('#set-admin-email').getAttribute('readonly'), '');
+  assert.equal(await p.locator('#set-admin-email').inputValue(), 'sam@fijly.example');
   // invalid values are refused
-  await p.locator('#set-admin-email').fill('not-an-email');
+  await p.locator('#set-studio-email').fill('not-an-email');
   await p.locator('#settings-form button[type=submit]').click();
-  assert.equal(await p.evaluate(() => FijlyMock.state.settings.adminEmail), 'sam@fijly.example',
-    'invalid email is not saved');
-  await p.locator('#set-admin-email').fill('sam@fijly.example');
+  assert.notEqual(await p.evaluate(() => FijlyMock.state.settings.studioEmail), 'not-an-email',
+    'invalid studio email is not saved');
+  await p.locator('#set-studio-email').fill('hello@fijly.example');
   await p.locator('#set-default-lead').fill('999');
   await p.locator('#settings-form button[type=submit]').click();
   assert.equal(await p.evaluate(() => FijlyMock.state.settings.defaultLeadDays), 14,
@@ -254,28 +268,15 @@ const url = (portal, route) => require('./runtime.cjs').base+`${portal}.html#${r
   await p.locator('#set-default-priority').selectOption('Urgent');
   await p.locator('#set-default-lead').fill('21');
   await p.locator('#set-default-length').selectOption('3 min+');
-  await p.locator('#settings-form button[type=submit]').click();
-  await p.waitForFunction(() => document.getElementById('settings-status').textContent.includes('saved'));
+  await saveSettingsForm();
 
-  await c.goto(url('studio', 'requests'));
-  await c.waitForFunction(() => document.getElementById('req-priority').value === 'Urgent', { timeout: 8000 });
-  const lead = new Date(); lead.setDate(lead.getDate() + 21);
-  assert.equal(await c.locator('#req-due').inputValue(), lead.getFullYear() + '-' + String(lead.getMonth() + 1).padStart(2, '0') + '-' + String(lead.getDate()).padStart(2, '0'), 'deadline seeded from default turnaround, counted from today');
-  // a value the visitor picked is never overwritten by a later default change
-  await c.locator('#req-priority').selectOption('Low');
-  await p.locator('#set-default-priority').selectOption('High');
-  await p.locator('#settings-form button[type=submit]').click();
-  await p.waitForTimeout(500);
-  assert.equal(await c.locator('#req-priority').inputValue(), 'Low', 'typed choice survives a default change');
+  // The defaults are stored on this admin's admin_settings row.
+  const defaults = browser.fijlyDb.admin_settings.find(row => row.admin_id === qaUsers.admin.id);
+  assert.deepEqual([defaults.default_priority, defaults.default_lead_days, defaults.default_length], ['Urgent', 21, '3 min+'], 'defaults saved to admin_settings');
+  // Pending Part 3B: the Supabase Client portal seeding its request form from
+  // these defaults (it reads its session mock until then).
 
-  const lengths = await p.evaluate(() => ({
-    noLength: FijlyMock.createRequest({ title: 'QA default length', platform: 'Website', videoType: 'Explainer', instructions: 'x'.repeat(25), deadline: '2026-10-20', priority: 'Normal', references: [] }, 'northbeam', []).length,
-    explicit: FijlyMock.createRequest({ title: 'QA explicit length', platform: 'Website', videoType: 'Explainer', instructions: 'x'.repeat(25), deadline: '2026-10-20', priority: 'Normal', references: [], length: '30–45 sec' }, 'northbeam', []).length
-  }));
-  assert.equal(lengths.noLength, '3 min+', 'default length applies when none is supplied');
-  assert.equal(lengths.explicit, '30–45 sec', 'an explicit length always wins');
-
-  // an unsaved Settings form must survive a state broadcast from another tab
+  // an unsaved Settings form must survive a data refresh caused by other work
   await p.goto(url('admin', 'settings'));
   await p.locator('#set-admin-name').fill('Unsaved Edit');
   await c.goto(url('admin', 'assets'));
@@ -283,10 +284,10 @@ const url = (portal, route) => require('./runtime.cjs').base+`${portal}.html#${r
   await c.locator('#asset-name').fill('qa-broadcast-trigger.pdf');
   await c.locator('#asset-form button[type=submit]').click();
   await c.waitForFunction(() => !document.getElementById('asset-editor').open);
-  await p.waitForTimeout(600);
+  await p.evaluate(() => FijlyData.load());
   assert.equal(await p.locator('#set-admin-name').inputValue(), 'Unsaved Edit',
-    'a cross-tab change must not wipe unsaved settings edits');
-  checks.push('Workflow defaults seed the request form and the created record; typed values and unsaved edits are never overwritten');
+    'a data refresh must not wipe unsaved settings edits');
+  checks.push('Workflow defaults persist to admin_settings; unsaved edits survive a data refresh');
 
   /* ── Responsive + accessibility ──────────────────────────────────────── */
   for (const width of [1440, 1024, 768, 390, 320]) {

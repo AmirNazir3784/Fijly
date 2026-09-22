@@ -1,7 +1,9 @@
-/* Admin milestone 1: Dashboard and Clients. Uses the shared session mock service. */
+/* Admin Dashboard and Clients. Reads the shared data service: Supabase in the
+   Admin portal (FijlyData), the session mock where FijlyData is absent. */
 (function () {
   'use strict';
-  var data = window.FijlyMock.state;
+  var api = window.FijlyData || window.FijlyMock;
+  var data = api.state;
   var search = document.getElementById('client-search');
   var status = document.getElementById('client-status');
   var sort = document.getElementById('client-sort');
@@ -18,9 +20,10 @@
     if (text !== undefined) element.textContent = text;
     return element;
   }
+  function website(item) { return item.website ? item.website.replace(/^https?:\/\//, '').replace(/\/$/, '') : 'No website on file'; }
   function client(id) { return data.clients.find(function (item) { return item.id === id; }); }
   function projects(id) { return data.projects.filter(function (item) { return item.client === id; }); }
-  function pending(id) { return window.FijlyMock.pendingRequests(id); }
+  function pending(id) { return api.pendingRequests(id); }
   // Open work: every video not yet completed, plus requests still waiting to
   // become a video. A request that has a video is counted once, as the video.
   function openCount(id) { return projects(id).filter(function (item) { return item.status !== 'Completed'; }).length + pending(id).length; }
@@ -28,9 +31,9 @@
   // shared colour map so both portals agree.
   var clientTones = { Active: 'badge-success', Onboarding: 'badge-info', Paused: '', Overdue: 'badge-danger' };
   function badge(value) {
-    return node('span', Object.prototype.hasOwnProperty.call(clientTones, value) ? 'badge ' + clientTones[value] : window.FijlyMock.statusClass(value), value);
+    return node('span', Object.prototype.hasOwnProperty.call(clientTones, value) ? 'badge ' + clientTones[value] : api.statusClass(value), value);
   }
-  function date(value) { return window.FijlyMock.formatDate(value); }
+  function date(value) { return api.formatDate(value); }
   // Deadlines are calendar dates, so compare them with the local calendar date.
   function localDay(value) {
     return value.getFullYear() + '-' + String(value.getMonth() + 1).padStart(2, '0') + '-' + String(value.getDate()).padStart(2, '0');
@@ -48,7 +51,7 @@
     row.append(cell);
   }
   function renderDashboard() {
-    var actions = window.FijlyMock.adminActions();
+    var actions = api.adminActions();
     var queue = document.getElementById('admin-action-queue');
     queue.replaceChildren();
     document.getElementById('admin-action-count').textContent = actions.length + (actions.length === 1 ? ' item' : ' items');
@@ -121,7 +124,7 @@
     });
     var pipeline = document.getElementById('admin-pipeline');
     pipeline.replaceChildren();
-    window.FijlyMock.videoStatuses.forEach(function (stage) {
+    api.videoStatuses.forEach(function (stage) {
       var count = allProjects.filter(function (item) { return item.status === stage; }).length;
       var item = node('li');
       var label = node('div', 'admin-pipeline-label');
@@ -134,7 +137,7 @@
     });
     var activity = document.getElementById('admin-activity');
     activity.replaceChildren();
-    var recent = data.videos.flatMap(function(v){return v.activity.map(function(a){return {client:window.FijlyMock.requestFor(v).client,text:a.text,time:window.FijlyMock.formatDateTime(a.at),at:a.at};});}).sort(function(a,b){return b.at.localeCompare(a.at);});
+    var recent = data.videos.flatMap(function(v){return v.activity.map(function(a){return {client:api.requestFor(v).client,text:a.text,time:api.formatDateTime(a.at),at:a.at};});}).sort(function(a,b){return b.at.localeCompare(a.at);});
     recent.slice(0, 4).forEach(function (item) {
       var entry = node('li');
       var avatar = node('span', 'avatar avatar--sm', client(item.client).name.charAt(0));
@@ -165,7 +168,7 @@
       var company = node('div', 'cell-project');
       var avatar = node('span', 'avatar', item.name.charAt(0));
       avatar.setAttribute('aria-hidden', 'true');
-      var name = node('div'); name.append(clientButton(item), node('span', 'admin-muted admin-block', item.industry || 'Industry not specified'));
+      var name = node('div'); name.append(clientButton(item), node('span', 'admin-muted admin-block', website(item)));
       company.append(avatar, name); appendCell(row, company);
       var contact = node('div'); contact.append(node('span', '', item.contact), node('span', 'admin-muted admin-block', item.email));
       appendCell(row, contact); appendCell(row, badge(item.status));
@@ -184,9 +187,9 @@
     document.getElementById('client-detail-title').textContent = item.name;
     var body = document.getElementById('client-detail-body'); body.replaceChildren();
     var intro = node('div', 'admin-detail-intro');
-    intro.append(badge(item.status), node('span', 'admin-muted', item.industry || 'Industry not specified'));
+    intro.append(badge(item.status), node('span', 'admin-muted', website(item)));
     var facts = node('dl', 'admin-detail-facts');
-    [['Primary contact', item.contact], ['Email', item.email], ['Open projects & requests', String(openCount(id))], ['Brand assets', window.FijlyMock.assetsFor(id).length + ' files']].forEach(function (pair) {
+    [['Primary contact', item.contact], ['Email', item.email], ['Open projects & requests', String(openCount(id))], ['Brand assets', api.assetsFor(id).length + ' files']].forEach(function (pair) {
       var group = node('div'); group.append(node('dt', '', pair[0]), node('dd', '', pair[1])); facts.append(group);
     });
     body.append(intro, facts, node('h3', '', 'Production notes'), node('p', 'admin-detail-notes', item.notes || 'No production notes yet.'), node('h3', '', 'Project history'));
@@ -215,7 +218,7 @@
     if (id) {
       var item = client(id);
       form.elements.company.value = item.name;
-      ['contact', 'email', 'industry', 'status', 'notes'].forEach(function (key) { form.elements[key].value = item[key]; });
+      ['contact', 'email', 'website', 'status', 'notes'].forEach(function (key) { form.elements[key].value = item[key] || ''; });
     }
     editor.showModal();
     form.elements.company.focus();
@@ -244,9 +247,10 @@
     }).observe(dialog, { attributes: true, attributeFilter: ['open'] });
   });
   form.addEventListener('input', function (event) { if (event.target.setCustomValidity) event.target.setCustomValidity(''); });
-  form.addEventListener('submit', function (event) {
+  var saving = false;
+  form.addEventListener('submit', async function (event) {
     event.preventDefault();
-    if(!editor.open)return;
+    if(!editor.open||saving)return;
     ['company', 'contact', 'email'].forEach(function (key) {
       var field = form.elements[key]; field.value = field.value.trim();
       field.setCustomValidity(field.value ? '' : 'Please complete this field.');
@@ -257,10 +261,15 @@
     if (!form.reportValidity()) return;
     var item = editingId ? Object.assign({}, client(editingId)) : {};
     item.name = form.elements.company.value;
-    ['contact', 'email', 'industry', 'status', 'notes'].forEach(function (key) { item[key] = form.elements[key].value.trim(); });
-    if (!editingId) { search.value = ''; status.value = 'all'; }
-    try { window.FijlyMock.saveClient(item); } catch(error) { form.elements.company.setCustomValidity(error.message);form.reportValidity();return; }
-    document.getElementById('admin-save-status').textContent = item.name + ' saved in this mock workspace. Changes are shared in this mock session.';
+    ['contact', 'email', 'website', 'status', 'notes'].forEach(function (key) { item[key] = form.elements[key].value.trim(); });
+    // Hold the dialog open (and the form editable) until the save is confirmed.
+    var submit = form.querySelector('[type="submit"]');
+    saving = true; submit.disabled = true; submit.setAttribute('aria-busy', 'true');
+    try { await api.saveClient(item); }
+    catch (error) { var target = /website/i.test(error.message) ? form.elements.website : form.elements.company; target.setCustomValidity(error.message); form.reportValidity(); return; }
+    finally { saving = false; submit.disabled = false; submit.removeAttribute('aria-busy'); }
+    if (!editingId) { search.value = ''; status.value = 'all'; renderClients(); }
+    document.getElementById('admin-save-status').textContent = item.name + (api.persistent ? ' saved.' : ' saved in this mock workspace. Changes are shared in this mock session.');
     editor.close();
   });
   search.addEventListener('input', renderClients);
@@ -269,6 +278,6 @@
   document.getElementById('clear-client-filters').addEventListener('click', function () {
     search.value = ''; status.value = 'all'; renderClients(); search.focus();
   });
-  window.FijlyMock.subscribe(function (changed) { if(changed.some(function(k){return ['clients','requests','videos','revisions','scripts'].includes(k);})) {renderDashboard();renderClients();}if(detail.open){if(client(selectedId))openDetail(selectedId);else detail.close();} });
+  api.subscribe(function (changed) { if(changed.some(function(k){return ['clients','requests','videos','revisions','scripts'].includes(k);})) {renderDashboard();renderClients();}if(detail.open){if(client(selectedId))openDetail(selectedId);else detail.close();} });
   renderDashboard(); renderClients();
 })();

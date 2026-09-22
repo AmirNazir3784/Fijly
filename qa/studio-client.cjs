@@ -8,7 +8,10 @@ const base = require('./runtime.cjs').base;
   const route = async name => { await c.goto(base+'studio.html#'+name, {waitUntil:'domcontentloaded'}); await c.locator('#client-analytics-kpis h2').first().waitFor({state:'attached'}); };
   const scan = async label => { await c.addScriptTag({path:'qa/axe.min.js'}); const violations = await c.evaluate(async()=> (await axe.run(document,{runOnly:{type:'tag',values:['wcag2a','wcag2aa','wcag21aa','best-practice']}})).violations.map(v=>({id:v.id,targets:v.nodes.map(n=>n.target)}))); scans.push({label,violations}); };
   const close = async () => c.locator('#workflow-detail .admin-dialog-head button').click();
-  await a.goto(base+'admin.html#requests',{waitUntil:'domcontentloaded'}); await route('overview');
+  // Part 3A: the Client portal still runs on the session mock, so the studio's
+  // side of each step is driven through that same mock service from a second
+  // Client-portal tab. The Admin portal (Supabase) is covered by the Admin suites.
+  await a.goto(base+'studio.html#requests',{waitUntil:'domcontentloaded'}); await route('overview');
   const values = await c.locator('#screen-overview .stat-card__value').allTextContents();
   assert.deepEqual(values,['6','1','1','0']); // 3 open videos + 3 pending requests
   assert.doesNotMatch(await c.locator('#screen-overview').innerText(), /vs last month|faster|72%|18 delivered/i);

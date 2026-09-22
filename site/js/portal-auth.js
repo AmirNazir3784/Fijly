@@ -1,7 +1,9 @@
 /* Portal auth guard. Loaded after supabase-client.js and before the portal
    scripts. The #auth-loading overlay covers the (inert) portal until the
-   session and profile are confirmed; a failed check redirects before it lifts.
-   Data is still the session mock; Supabase queries replace it in Part 3. */
+   session and profile are confirmed, and, where the page reads Supabase
+   (FijlyData, the Admin portal), until its data has loaded. A failed check
+   redirects before it lifts. The Client portal keeps the session mock until
+   Part 3B. */
 (function () {
   'use strict';
   var admin = document.body.classList.contains('admin-body');
@@ -39,6 +41,7 @@
   // The mock profile (Settings name/email, client contact) becomes the signed-in
   // account once per tab session, so later mock edits in this tab still stick.
   function seedIdentity(profile) {
+    if (window.FijlyData) return; // Identity already comes from the database.
     var api = window.FijlyMock, key = 'fijly-auth-seeded-' + (admin ? 'admin' : 'client');
     if (!api) return;
     try { if (sessionStorage.getItem(key) === profile.id) return; } catch (_) {}
@@ -93,7 +96,11 @@
     };
     onAuthStateChange();
 
-    await domReady(); // Portal scripts and the mock store have initialised.
+    await domReady(); // Portal scripts and the data store have initialised.
+    if (window.FijlyData) {
+      try { await withTimeout(window.FijlyData.load()); }
+      catch (_) { fail('We couldn’t load your studio data. Check your connection and try again.'); return null; }
+    }
     seedIdentity(profile);
     wireSignOut();
     if (layout) layout.inert = false;

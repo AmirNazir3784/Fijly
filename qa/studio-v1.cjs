@@ -15,9 +15,12 @@ const { pathToFileURL } = require('url');
   page.on('request', r => {
     // axe fetches stylesheets for its CSS audit; those are not application APIs.
     if (runningAxe && r.method() === 'GET' && (/\.css(?:$|\?)/.test(r.url()) || r.url().startsWith('https://fonts.googleapis.com/css2?'))) return;
-    // Auth is the only backend traffic: the session check and the caller's own
-    // profile row. Any other request means portal data left the session mock.
-    if (/^https:\/\/eaddovqkarognynnybeh\.supabase\.co\/(auth\/v1\/|rest\/v1\/profiles\?select=\*&id=eq\.)/.test(r.url())) return;
+    // Backend traffic is Supabase only. The Admin portal reads and writes its
+    // REST API (Part 3A); the Client portal may only check the session and its
+    // own profile, since its data is still the session mock until Part 3B.
+    const supabase = /^https:\/\/eaddovqkarognynnybeh\.supabase\.co\/(auth\/v1\/|rest\/v1\/)/.test(r.url());
+    const clientData = /\/rest\/v1\//.test(r.url()) && !/\/rest\/v1\/profiles\?select=\*&id=eq\./.test(r.url()) && /studio\.html/.test(r.frame().url());
+    if (supabase && !clientData) return;
     if (['fetch', 'xhr'].includes(r.resourceType()) || r.method() !== 'GET') requests.push(r.url());
   });
   const routes = { studio: ['overview', 'projects', 'requests', 'assets', 'scripts', 'analytics', 'settings'], admin: ['dashboard', 'clients', 'requests', 'videos', 'revisions', 'assets', 'scripts', 'analytics', 'settings'] };
@@ -169,7 +172,7 @@ const { pathToFileURL } = require('url');
   await page.getByRole('button', { name: 'Save client' }).click();
   assert.match(await page.locator('#client-name').evaluate(e => e.validationMessage), /already exists/);
   await page.locator('#client-name').fill('Nimbus');
-  await page.locator('#client-industry').fill('Customer analytics');
+  await page.locator('#client-website').fill('https://nimbus.example');
   await page.locator('#client-notes').fill('<b>Keep narration concise.</b>');
   await page.getByRole('button', { name: 'Save client' }).click();
   await page.waitForFunction(() => !document.getElementById('client-editor').open);
@@ -205,15 +208,15 @@ const { pathToFileURL } = require('url');
   await page.waitForFunction(() => document.getElementById('client-detail').open);
   await page.keyboard.press('Escape');
   await page.reload();
-  // Phase 2 persists the mock in sessionStorage, so the client added above is
-  // still present after reload and the Active-clients metric reflects it.
+  // The client added above is stored in the database, so it is still present
+  // after reload and the Active-clients metric reflects it.
   const activeClients = await page.evaluate(
     () => FijlyMock.state.clients.filter(c => c.status === 'Active').length);
   assert.equal(await page.locator('#admin-stats .stat-card__value').first().textContent(),
     String(activeClients).padStart(2, '0'));
   assert.equal(await page.locator('#client-rows tr').count(), 7,
     'the added client should survive reload');
-  checks.push('Admin search/status/sort/empty state, validation and duplicate prevention, safe text rendering, add/edit/cancel, metric updates, profiles, dialogs, and session persistence');
+  checks.push('Admin search/status/sort/empty state, validation and duplicate prevention, safe text rendering, add/edit/cancel, metric updates, profiles, dialogs, and database persistence');
   assert.deepEqual(errors, []);
   assert.deepEqual(requests, []);
   const report = { checks, scans, errors, apiRequests: requests };

@@ -10,7 +10,7 @@ Production website and client/admin portals for FIJLY, a premium video productio
   - `studio.html` — Client portal (7 screens)
   - `admin.html` — Admin portal (9 screens)
   - `css/` — Stylesheets (design tokens, components, layouts)
-  - `js/` — Application logic (portals, workflow, mock data)
+  - `js/` — Application logic (portals, workflow, Supabase data service, Client-portal mock data)
   - `assets/` — Images, fonts, icons
 - `qa/` — QA test scripts and results
 
@@ -19,7 +19,9 @@ Production website and client/admin portals for FIJLY, a premium video productio
 Plain HTML + CSS + JavaScript. No build step, no framework, no dependencies.
 Fonts are self-hosted. The landing page makes no external calls; the portals and
 sign-in page load the pinned Supabase JS SDK from jsDelivr (with subresource integrity)
-and authenticate against Supabase. Portal data is still mock data until Part 3.
+and authenticate against Supabase. The Admin portal reads and writes the Supabase
+database (`js/supabase-data.js`); the Client portal still uses session mock data
+until Part 3B. Starter data: `supabase/seed-data.sql` (run in the Supabase SQL Editor).
 
 ## Local Development
 
