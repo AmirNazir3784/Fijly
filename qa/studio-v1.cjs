@@ -62,11 +62,11 @@ const { pathToFileURL } = require('url');
       assert.equal(await page.locator('.studio-main').evaluate(e => e.inert), false);
     }
     await page.locator('[data-sidebar-open]').click();
-    await page.locator('.sidebar-link--site').focus();
+    await page.locator('.sidebar-user').focus();
     await page.keyboard.press('Tab');
-    assert.equal(await page.locator('.sidebar-close').evaluate(e => e === document.activeElement), true);
+    assert.equal(await page.locator('.sidebar-home').evaluate(e => e === document.activeElement), true);
     await page.keyboard.press('Shift+Tab');
-    assert.equal(await page.locator('.sidebar-link--site').evaluate(e => e === document.activeElement), true);
+    assert.equal(await page.locator('.sidebar-user').evaluate(e => e === document.activeElement), true);
     await page.keyboard.press('Escape');
     assert.equal(await page.locator('[data-sidebar-open]').getAttribute('aria-expanded'), 'false');
     await page.locator('[data-sidebar-open]').click();

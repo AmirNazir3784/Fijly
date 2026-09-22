@@ -23,14 +23,7 @@
     td.append(typeof child === 'string' ? document.createTextNode(child) : child);
     row.append(td);
   }
-  function bytes(value) {
-    if (!value) return '—';
-    var units = ['B', 'KB', 'MB', 'GB'];
-    var index = 0;
-    var size = value;
-    while (size >= 1024 && index < units.length - 1) { size /= 1024; index += 1; }
-    return (size >= 10 || index === 0 ? Math.round(size) : size.toFixed(1)) + ' ' + units[index];
-  }
+  function bytes(value) { return api.formatBytes(value); }
   function day(value) { return api.formatDate(value, '—'); }
   function fillOptions(select, values, labelFor) {
     var keep = select.querySelector('option[value="all"]');
@@ -328,6 +321,7 @@
 
   // Unsaved scene edits per script: they survive closing the dialog and
   // re-renders from other tabs until saved, sent, or the script leaves Draft.
+  window.FijlyAdminScripts = { open: openScriptDetail };
   var sceneDrafts = {}, scriptNotice = null, renderedScript = '';
   var scriptSave = document.getElementById('script-save');
   function editedScenes() { return Array.from(document.querySelectorAll('#script-detail-body .admin-script-editor')).map(function (input) { return input.value; }); }
@@ -469,11 +463,12 @@
     if (analyticsRange.value === 'all') return null;
     var end = analyticsEnd();
     var start = new Date(end);
-    start.setUTCDate(start.getUTCDate() - Number(analyticsRange.value));
+    start.setDate(start.getDate() - Number(analyticsRange.value) + 1);
+    start.setHours(0, 0, 0, 0);
     return start.toISOString();
   }
-  function inRange(iso, start) { return !start || (iso && iso >= start); }
-  function analyticsEnd() { var dates=[state.snapshot];state.requests.forEach(function(r){if(r.requestedAt)dates.push(r.requestedAt.slice(0,10));});state.videos.forEach(function(v){v.activity.forEach(function(a){dates.push(a.at.slice(0,10));});});return new Date(dates.sort().slice(-1)[0]+'T23:59:59.999Z'); }
+  function inRange(iso, start) { var at = Date.parse(iso); return Number.isFinite(at) && (!start || at >= Date.parse(start)) && at <= analyticsEnd().getTime(); }
+  function analyticsEnd() { return new Date(); }
   function mine(request) { return analyticsClient.value === 'all' || request.client === analyticsClient.value; }
 
   function scoped() {
@@ -514,21 +509,21 @@
       ? state.clients.filter(function (item) { return item.status === 'Active'; }).length
       : state.clients.filter(function(c){return c.id===analyticsClient.value&&c.status==='Active';}).length;
     var completed = data.videos.filter(function (video) { return video.status === 'Completed'; });
-    var production = data.videos.filter(function (video) { return ['In Production', 'Draft Ready', 'In Revision'].includes(video.status); });
+    var production = data.videos.filter(function (video) { return video.status === 'In Production'; });
     var review = data.videos.filter(function (video) { return video.status === 'Client Review'; });
     var average = averageProductionDays(data.videos);
 
     document.getElementById('analytics-scope').textContent =
       (analyticsClient.value === 'all' ? 'All clients' : clientName(analyticsClient.value)) + ' · ' +
       (analyticsRange.value === 'all' ? 'All time' : 'Last ' + analyticsRange.value + ' days') + ' · ' +
-      data.videos.length + ' videos, ' + data.requests.length + ' requests in scope';
+      data.videos.length + (data.videos.length === 1 ? ' video, ' : ' videos, ') + data.requests.length + (data.requests.length === 1 ? ' request' : ' requests') + ' in scope through ' + api.formatDate(analyticsEnd());
 
     var kpis = document.getElementById('analytics-kpis');
     kpis.replaceChildren();
     [
       ['Active clients', clientsInScope, analyticsClient.value === 'all' ? state.clients.length + ' in the studio' : 'Filtered to one client'],
       ['New requests', data.requests.length, 'Submitted in range'],
-      ['In production', production.length, 'Being created or revised'],
+      ['In production', production.length, 'Status: In Production'],
       ['Awaiting review', review.length, 'With the client now'],
       ['Completed', completed.length, 'Delivered in range'],
       ['Revision rounds', data.revisions.length, 'Opened in range'],
@@ -574,7 +569,7 @@
       return {
         name: item.name,
         requests: data.requests.filter(function (request) { return request.client === item.id; }).length,
-        production: videos.filter(function (video) { return ['In Production', 'Draft Ready', 'In Revision'].includes(video.status); }).length,
+        production: videos.filter(function (video) { return video.status === 'In Production'; }).length,
         completed: videos.filter(function (video) { return video.status === 'Completed'; }).length,
         revisions: data.revisions.filter(function (revision) {
           var video = state.videos.find(function (record) { return record.id === revision.videoId; });
@@ -626,12 +621,13 @@
     for (var index = weeks - 1; index >= 0; index -= 1) {
       var to = new Date(end);
       to.setUTCDate(to.getUTCDate() - index * 7);
+      if (index > 0) to.setUTCHours(23, 59, 59, 999);
       var from = new Date(to);
       from.setUTCDate(from.getUTCDate() - 6);from.setUTCHours(0,0,0,0);
       buckets.push({
         // Short axis label; the text summary uses the full date format.
         label: from.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' }),
-        full: api.formatDate(from.toISOString().slice(0, 10)),
+        full: api.formatDate(from.toISOString().slice(0, 10)) + ' to ' + api.formatDate(to.toISOString().slice(0, 10)),
         from: from.toISOString(),
         to: to.toISOString(),
         completed: 0,
@@ -673,7 +669,7 @@
     // The bars are decorative; the same numbers are available as text.
     chart.setAttribute('aria-hidden', 'true');
     var summary = node('p', 'admin-muted', buckets.map(function (bucket) {
-      return 'Week of ' + bucket.full + ': ' + bucket.completed + ' completed, ' + bucket.revisions + ' revision rounds';
+      return bucket.full + ': ' + bucket.completed + ' completed, ' + bucket.revisions + ' revision rounds';
     }).join(' · '));
     host.append(chart, legend, summary);
   }
@@ -698,7 +694,6 @@
     var values = state.settings || {}, name = values.adminName || 'Studio admin';
     document.getElementById('admin-name').textContent = name;
     document.getElementById('admin-role').textContent = values.adminRole || 'FIJLY Studio';
-    document.getElementById('admin-avatar').textContent = name.charAt(0).toUpperCase();
   }
 
   function loadSettings() {

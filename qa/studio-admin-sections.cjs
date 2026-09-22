@@ -5,6 +5,7 @@
 const { chromium } = require('./runtime.cjs');
 const assert = require('assert/strict');
 const fs = require('fs');
+fs.mkdirSync('qa/screenshots',{recursive:true});
 
 const url = (portal, route) => require('./runtime.cjs').base+`${portal}.html#${route}`;
 

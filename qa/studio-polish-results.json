@@ -1,0 +1,411 @@
+{
+  "checks": [
+    "Admin name/phone/photo save, remove, cancel, validation, reload, shared references, concurrent fields and unsaved Settings edits",
+    "Client contact/phone/photo sync across portals and Settings, preserved email/role/preferences, client isolation, cancelled edits and unchanged production records",
+    "All 16 routes at 1440/1024/768/390/320px; one main title, shared spacing/type, logo keyboard navigation, persistent short-screen footer and modal/sidebar focus traps",
+    "Baseline hash guard: workflow implementation, status logic, fixture data, dashboard renderer, public pages and assets unchanged"
+  ],
+  "scans": [
+    {
+      "label": "admin/dashboard/1440",
+      "violations": []
+    },
+    {
+      "label": "admin/clients/1440",
+      "violations": []
+    },
+    {
+      "label": "admin/requests/1440",
+      "violations": []
+    },
+    {
+      "label": "admin/videos/1440",
+      "violations": []
+    },
+    {
+      "label": "admin/revisions/1440",
+      "violations": []
+    },
+    {
+      "label": "admin/assets/1440",
+      "violations": []
+    },
+    {
+      "label": "admin/scripts/1440",
+      "violations": []
+    },
+    {
+      "label": "admin/analytics/1440",
+      "violations": []
+    },
+    {
+      "label": "admin/settings/1440",
+      "violations": []
+    },
+    {
+      "label": "admin/sidebar/1440",
+      "violations": []
+    },
+    {
+      "label": "admin/profile/1440",
+      "violations": []
+    },
+    {
+      "label": "studio/overview/1440",
+      "violations": []
+    },
+    {
+      "label": "studio/projects/1440",
+      "violations": []
+    },
+    {
+      "label": "studio/requests/1440",
+      "violations": []
+    },
+    {
+      "label": "studio/assets/1440",
+      "violations": []
+    },
+    {
+      "label": "studio/scripts/1440",
+      "violations": []
+    },
+    {
+      "label": "studio/analytics/1440",
+      "violations": []
+    },
+    {
+      "label": "studio/settings/1440",
+      "violations": []
+    },
+    {
+      "label": "studio/sidebar/1440",
+      "violations": []
+    },
+    {
+      "label": "studio/profile/1440",
+      "violations": []
+    },
+    {
+      "label": "admin/dashboard/1024",
+      "violations": []
+    },
+    {
+      "label": "admin/clients/1024",
+      "violations": []
+    },
+    {
+      "label": "admin/requests/1024",
+      "violations": []
+    },
+    {
+      "label": "admin/videos/1024",
+      "violations": []
+    },
+    {
+      "label": "admin/revisions/1024",
+      "violations": []
+    },
+    {
+      "label": "admin/assets/1024",
+      "violations": []
+    },
+    {
+      "label": "admin/scripts/1024",
+      "violations": []
+    },
+    {
+      "label": "admin/analytics/1024",
+      "violations": []
+    },
+    {
+      "label": "admin/settings/1024",
+      "violations": []
+    },
+    {
+      "label": "admin/sidebar/1024",
+      "violations": []
+    },
+    {
+      "label": "admin/profile/1024",
+      "violations": []
+    },
+    {
+      "label": "studio/overview/1024",
+      "violations": []
+    },
+    {
+      "label": "studio/projects/1024",
+      "violations": []
+    },
+    {
+      "label": "studio/requests/1024",
+      "violations": []
+    },
+    {
+      "label": "studio/assets/1024",
+      "violations": []
+    },
+    {
+      "label": "studio/scripts/1024",
+      "violations": []
+    },
+    {
+      "label": "studio/analytics/1024",
+      "violations": []
+    },
+    {
+      "label": "studio/settings/1024",
+      "violations": []
+    },
+    {
+      "label": "studio/sidebar/1024",
+      "violations": []
+    },
+    {
+      "label": "studio/profile/1024",
+      "violations": []
+    },
+    {
+      "label": "admin/dashboard/768",
+      "violations": []
+    },
+    {
+      "label": "admin/clients/768",
+      "violations": []
+    },
+    {
+      "label": "admin/requests/768",
+      "violations": []
+    },
+    {
+      "label": "admin/videos/768",
+      "violations": []
+    },
+    {
+      "label": "admin/revisions/768",
+      "violations": []
+    },
+    {
+      "label": "admin/assets/768",
+      "violations": []
+    },
+    {
+      "label": "admin/scripts/768",
+      "violations": []
+    },
+    {
+      "label": "admin/analytics/768",
+      "violations": []
+    },
+    {
+      "label": "admin/settings/768",
+      "violations": []
+    },
+    {
+      "label": "admin/sidebar/768",
+      "violations": []
+    },
+    {
+      "label": "admin/profile/768",
+      "violations": []
+    },
+    {
+      "label": "studio/overview/768",
+      "violations": []
+    },
+    {
+      "label": "studio/projects/768",
+      "violations": []
+    },
+    {
+      "label": "studio/requests/768",
+      "violations": []
+    },
+    {
+      "label": "studio/assets/768",
+      "violations": []
+    },
+    {
+      "label": "studio/scripts/768",
+      "violations": []
+    },
+    {
+      "label": "studio/analytics/768",
+      "violations": []
+    },
+    {
+      "label": "studio/settings/768",
+      "violations": []
+    },
+    {
+      "label": "studio/sidebar/768",
+      "violations": []
+    },
+    {
+      "label": "studio/profile/768",
+      "violations": []
+    },
+    {
+      "label": "admin/dashboard/390",
+      "violations": []
+    },
+    {
+      "label": "admin/clients/390",
+      "violations": []
+    },
+    {
+      "label": "admin/requests/390",
+      "violations": []
+    },
+    {
+      "label": "admin/videos/390",
+      "violations": []
+    },
+    {
+      "label": "admin/revisions/390",
+      "violations": []
+    },
+    {
+      "label": "admin/assets/390",
+      "violations": []
+    },
+    {
+      "label": "admin/scripts/390",
+      "violations": []
+    },
+    {
+      "label": "admin/analytics/390",
+      "violations": []
+    },
+    {
+      "label": "admin/settings/390",
+      "violations": []
+    },
+    {
+      "label": "admin/sidebar/390",
+      "violations": []
+    },
+    {
+      "label": "admin/profile/390",
+      "violations": []
+    },
+    {
+      "label": "studio/overview/390",
+      "violations": []
+    },
+    {
+      "label": "studio/projects/390",
+      "violations": []
+    },
+    {
+      "label": "studio/requests/390",
+      "violations": []
+    },
+    {
+      "label": "studio/assets/390",
+      "violations": []
+    },
+    {
+      "label": "studio/scripts/390",
+      "violations": []
+    },
+    {
+      "label": "studio/analytics/390",
+      "violations": []
+    },
+    {
+      "label": "studio/settings/390",
+      "violations": []
+    },
+    {
+      "label": "studio/sidebar/390",
+      "violations": []
+    },
+    {
+      "label": "studio/profile/390",
+      "violations": []
+    },
+    {
+      "label": "admin/dashboard/320",
+      "violations": []
+    },
+    {
+      "label": "admin/clients/320",
+      "violations": []
+    },
+    {
+      "label": "admin/requests/320",
+      "violations": []
+    },
+    {
+      "label": "admin/videos/320",
+      "violations": []
+    },
+    {
+      "label": "admin/revisions/320",
+      "violations": []
+    },
+    {
+      "label": "admin/assets/320",
+      "violations": []
+    },
+    {
+      "label": "admin/scripts/320",
+      "violations": []
+    },
+    {
+      "label": "admin/analytics/320",
+      "violations": []
+    },
+    {
+      "label": "admin/settings/320",
+      "violations": []
+    },
+    {
+      "label": "admin/sidebar/320",
+      "violations": []
+    },
+    {
+      "label": "admin/profile/320",
+      "violations": []
+    },
+    {
+      "label": "studio/overview/320",
+      "violations": []
+    },
+    {
+      "label": "studio/projects/320",
+      "violations": []
+    },
+    {
+      "label": "studio/requests/320",
+      "violations": []
+    },
+    {
+      "label": "studio/assets/320",
+      "violations": []
+    },
+    {
+      "label": "studio/scripts/320",
+      "violations": []
+    },
+    {
+      "label": "studio/analytics/320",
+      "violations": []
+    },
+    {
+      "label": "studio/settings/320",
+      "violations": []
+    },
+    {
+      "label": "studio/sidebar/320",
+      "violations": []
+    },
+    {
+      "label": "studio/profile/320",
+      "violations": []
+    }
+  ],
+  "errors": []
+}

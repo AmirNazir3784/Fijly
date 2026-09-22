@@ -1,4 +1,5 @@
 const {chromium}=require('./runtime.cjs');const fs=require('fs');const assert=require('assert/strict');
+fs.mkdirSync('qa/screenshots',{recursive:true});
 (async()=>{const b=await chromium.launch();const p=await b.newPage();const results=[];const errors=[];p.on('pageerror',e=>errors.push(String(e)));
 for(const width of [1440,375])for(const screen of ['marketing','overview','projects','requests','assets','scripts','analytics','settings','privacy','terms','404']){
  await p.setViewportSize({width,height:900});await p.goto(require('./runtime.cjs').base+(screen==='marketing'?'index.html':['privacy','terms','404'].includes(screen)?screen+'.html':'studio.html#'+screen),{waitUntil:'domcontentloaded'});await p.reload({waitUntil:'domcontentloaded'});await p.addScriptTag({path:'qa/axe.min.js'});

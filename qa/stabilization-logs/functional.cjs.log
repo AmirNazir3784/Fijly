@@ -11,7 +11,7 @@
     'Both settings switches: labels, mouse, Space, role and ARIA state',
     'Preview play/pause mouse and keyboard, synchronized names, fullscreen',
     'Request validation and mock submission',
-    'Projects table keyboard horizontal scroll',
+    'Projects mobile cards: no horizontal scrolling; keyboard opens the record',
     '1440px marketing: anchors, menus where applicable, FAQ mouse/keyboard, overflow',
     '1024px marketing: anchors, menus where applicable, FAQ mouse/keyboard, overflow',
     '768px marketing: anchors, menus where applicable, FAQ mouse/keyboard, overflow',

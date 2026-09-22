@@ -35,7 +35,7 @@
     "missing-fields: all 15 routes render; invalid relationships excluded, valid work preserved",
     "orphaned-records: all 15 routes render; invalid relationships excluded, valid work preserved",
     "Integrity checks pass; inactive-client analytics and seeded completion dates are accurate",
-    "Asset and analytics tables retain readable columns at all widths, inside horizontal scroll containers"
+    "Assets use cards on mobile and tables on desktop; analytics retain readable columns"
   ],
   "scans": [
     {

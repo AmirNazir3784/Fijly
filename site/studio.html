@@ -20,6 +20,7 @@
 <link href="css/dashboard.css" rel="stylesheet"/>
 <link href="css/admin.css" rel="stylesheet"/>
 <link href="css/workflow.css" rel="stylesheet"/><link href="css/client-portal.css" rel="stylesheet"/>
+<link rel="stylesheet" href="css/studio-polish.css">
 </head>
 <body class="studio-body">
 <a class="skip-link" href="#studio-content">Skip to content</a>
@@ -27,11 +28,13 @@
 <!-- SIDEBAR -->
 <aside aria-label="Studio navigation" class="sidebar" id="sidebar">
 <div class="sidebar-header">
+<a class="sidebar-home" href="index.html" aria-label="FIJLY home">
 <span class="sidebar-logo__mark"><svg aria-hidden="true" fill="none" height="17" viewbox="0 0 24 24" width="17"><path d="M8 5v14l11-7z" fill="#fff"></path></svg></span>
 <span class="sidebar-logo__text">
 <span class="sidebar-logo__word">FIJLY</span>
 <span class="sidebar-logo__sub">STUDIO</span>
 </span>
+</a>
 <button aria-label="Close menu" class="sidebar-close" data-sidebar-close="" type="button">
 <svg aria-hidden="true" fill="none" height="16" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24" width="16"><path d="M6 6l12 12M18 6L6 18"></path></svg>
 </button>
@@ -81,42 +84,29 @@
 </ul>
 </nav>
 <div class="sidebar-footer">
-<div class="sidebar-user">
+<p class="sidebar-profile-label">PROFILE</p>
+<button class="sidebar-user" type="button" data-profile-open aria-haspopup="dialog" aria-controls="profile-dialog">
 <span aria-hidden="true" class="avatar">A</span>
-<div class="sidebar-user__meta">
-<div class="sidebar-user__name">Alex Rivera</div>
-<div class="sidebar-user__email">alex@northbeam.io</div>
-</div>
-</div>
-<a class="sidebar-link sidebar-link--site" href="index.html">
-<svg aria-hidden="true" fill="none" height="14" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24" width="14"><circle cx="12" cy="12" r="9"></circle><path d="M3 12h18M12 3c2.5 2.5 2.5 15 0 18M12 3c-2.5 2.5-2.5 15 0 18"></path></svg>
-<span>View website</span>
-</a>
+<span class="sidebar-user__meta">
+<span class="sidebar-user__name">Alex Rivera</span>
+<span class="sidebar-user__email">alex@northbeam.io</span>
+</span>
+</button>
+
 </div>
 </aside>
 <div class="sidebar-backdrop" data-sidebar-close=""></div>
 <!-- MAIN -->
 <main class="studio-main">
-<p class="studio-demo-note" id="studio-demo-note">Northbeam workspace · Mock data. Changes stay in this mock session. <a href="admin.html#requests">Admin preview ↗</a></p>
+<p class="studio-demo-note visually-hidden" id="studio-demo-note">Northbeam workspace · Mock data. Changes stay in this mock session.</p>
 <header class="studio-topbar">
 <button aria-controls="sidebar" aria-expanded="false" aria-label="Open menu" class="icon-btn studio-topbar__menu" data-sidebar-open="" type="button">
 <svg aria-hidden="true" fill="none" height="18" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24" width="18"><path d="M4 7h16M4 12h16M4 17h16"></path></svg>
 </button>
 <p class="studio-topbar__title" id="topbar-title">Overview</p>
-<label class="search">
-<svg aria-hidden="true" fill="none" height="15" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24" width="15"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
-<span class="visually-hidden">Search</span>
-<input aria-describedby="studio-demo-note" aria-disabled="true" placeholder="Search projects, scripts, assets…" readonly="" type="search"/>
-<span aria-hidden="true" class="search__shortcut">⌘K</span>
-</label>
-<a class="btn btn-outline btn--xs btn--semibold studio-topbar__site" href="index.html">
-<svg aria-hidden="true" fill="none" height="14" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24" width="14"><circle cx="12" cy="12" r="9"></circle><path d="M3 12h18M12 3c2.5 2.5 2.5 15 0 18M12 3c-2.5 2.5-2.5 15 0 18"></path></svg>
-        View site
-      </a>
-<button aria-describedby="studio-demo-note" aria-disabled="true" aria-label="Notifications (unread)" class="icon-btn" title="Not available in this frontend version" type="button">
-<svg aria-hidden="true" fill="none" height="17" stroke="currentColor" stroke-width="1.8" viewbox="0 0 24 24" width="17"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 0 1-3.4 0"></path></svg>
-<span class="icon-btn__dot"></span>
-</button>
+
+<a class="btn btn-outline btn--xs admin-portal-switch" href="admin.html">Admin portal <span aria-hidden="true">&nearr;</span></a>
+
 <a aria-label="New request" class="btn btn-primary btn--xs" data-screen-link="requests" href="#requests">
 <svg aria-hidden="true" fill="none" height="15" stroke="currentColor" stroke-width="2.2" viewbox="0 0 24 24" width="15"><path d="M12 5v14M5 12h14"></path></svg>
 <span class="btn__label">New request</span>
@@ -138,7 +128,7 @@
 <h1 id="h-overview">Good morning, Alex</h1>
 <p>Here's what's happening with your video projects.</p>
 </div>
-<button aria-describedby="studio-demo-note" aria-disabled="true" class="btn btn-outline btn--xs btn--semibold" title="Not available in this frontend version" type="button"><svg aria-hidden="true" fill="none" height="15" stroke="currentColor" stroke-width="1.8" viewbox="0 0 24 24" width="15"><rect height="17" rx="2" width="18" x="3" y="4"></rect><path d="M3 9h18M8 2v4M16 2v4"></path></svg>This month</button>
+
 </div>
 <!-- STATS -->
 <div class="stats-grid">
@@ -194,7 +184,7 @@
 <li class="scene"><span class="scene__thumb bg-grad-green">04</span><div class="scene__body"><div class="scene__title">Benefits</div><div class="scene__dur">0:44 – 0:56</div></div><span class="badge badge-info">Draft</span></li>
 <li class="scene"><span class="scene__thumb bg-grad-amber">05</span><div class="scene__body"><div class="scene__title">CTA</div><div class="scene__dur">0:56 – 1:04</div></div><span class="badge badge-info">Draft</span></li>
 </ol>
-<button aria-describedby="studio-demo-note" aria-disabled="true" class="btn-dashed" title="Not available in this frontend version" type="button">Open full storyboard editor</button>
+
 </section>
 </div>
 <!-- PROJECTS -->
@@ -332,7 +322,7 @@
 </div>
 <div class="form-group"><label class="field-label" for="req-references">Reference links (one per line)</label><textarea class="input" id="req-references" name="references" placeholder="https://example.com/reference" rows="2"></textarea></div>
 <div class="form-group"><label class="field-label" for="req-attachments">Attachments (file names only in this mock)</label><input class="input workflow-file" id="req-attachments" multiple="" name="attachments" type="file"/></div>
-<p class="request-form__note" id="request-demo">Requests are shared with the Admin preview in this mock session. No files or data are uploaded.</p>
+<p class="request-form__note" id="request-demo">Preview only: requests stay in this workspace. Files are not uploaded.</p>
 <button class="btn btn-primary btn--md btn--block" type="submit">Submit request</button>
 <p class="request-form__note" data-request-note="" hidden="" role="status">Request added to this mock workspace. Nothing was sent externally.</p>
 </form>
@@ -344,13 +334,6 @@
 <!-- ================= BRAND ASSETS ================= -->
 <section aria-labelledby="h-assets" class="screen" data-screen="assets" data-title="Brand Assets" hidden="" id="screen-assets">
 <div class="page-head"><h1 id="h-assets">Brand Assets</h1><p>Everything we use to keep your videos on-brand.</p></div>
-<div class="assets-grid">
-<section aria-labelledby="h-logo" class="panel"><h2 class="panel__label" id="h-logo">LOGO</h2><div data-asset-group="Logo"></div></section>
-<section aria-labelledby="h-colors" class="panel"><h2 class="panel__label" id="h-colors">BRAND GUIDELINES</h2><div data-asset-group="Brand Guidelines"></div></section>
-<section aria-labelledby="h-type" class="panel"><h2 class="panel__label" id="h-type">FONTS</h2><div data-asset-group="Fonts"></div></section>
-</div>
-<div class="assets-grid assets-grid--2">
-<section aria-labelledby="h-shots" class="panel"><h2 class="panel__label" id="h-shots">PRODUCT MEDIA</h2><div data-asset-group="media"></div></section>
 <section aria-labelledby="h-files" class="panel">
 <h2 class="panel__label" id="h-files">FILES ON RECORD</h2><div class="client-toolbar"><label class="field-label" for="client-asset-search">Search assets<input class="input" id="client-asset-search" type="search"/></label><label class="field-label" for="client-asset-category">Category<select class="input" id="client-asset-category"><option value="all">All categories</option></select></label><button class="btn btn-outline btn--md" id="client-add-asset" type="button">Add asset</button></div>
 <p class="panel__sub">Supplied to the studio and kept with your client record.</p>
@@ -358,8 +341,8 @@
 <li class="file-row"><span class="file-row__icon"><svg aria-hidden="true" fill="none" height="17" stroke="currentColor" stroke-width="1.8" viewbox="0 0 24 24" width="17"><rect height="12" rx="2" width="18" x="3" y="6"></rect><path d="M3 10h18"></path></svg></span><span class="file-row__body"><span class="file-row__title">Component library</span><span class="file-row__sub">48 buttons, forms, cards</span></span><span class="file-row__ext">.fig</span></li>
 <li class="file-row"><span class="file-row__icon file-row__icon--success"><svg aria-hidden="true" fill="none" height="17" stroke="currentColor" stroke-width="1.8" viewbox="0 0 24 24" width="17"><rect height="14" rx="2.5" width="14" x="3" y="5"></rect><path d="M17 10l4-2v8l-4-2"></path></svg></span><span class="file-row__body"><span class="file-row__title">Product recordings</span><span class="file-row__sub">12 clips · 4K ProRes</span></span><span class="file-row__ext">2.4GB</span></li>
 </ul>
+<p id="client-asset-success" class="workflow-notice" role="status" hidden></p>
 </section>
-</div>
 </section>
 <!-- ================= SCRIPTS ================= -->
 <section aria-labelledby="h-scripts" class="screen" data-screen="scripts" data-title="Scripts" hidden="" id="screen-scripts">
@@ -416,5 +399,7 @@
 <script src="js/mock-service.js"></script>
 <script src="js/studio.js"></script>
 <script src="js/workflow.js"></script>
-<script src="js/client-portal.js"></script></body>
+<script src="js/client-portal.js"></script><dialog id="profile-dialog" class="admin-dialog profile-dialog"></dialog>
+<script src="js/profile.js"></script>
+</body>
 </html>

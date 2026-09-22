@@ -1,5 +1,6 @@
 const {chromium}=require('./runtime.cjs');
 const assert=require('assert/strict');const fs=require('fs');
+fs.mkdirSync('qa/screenshots',{recursive:true});
 (async()=>{
  const b=await chromium.launch();const p=await b.newPage();const errors=[];const checks=[];
  const goto=p.goto.bind(p),reload=p.reload.bind(p);
@@ -13,7 +14,7 @@ const assert=require('assert/strict');const fs=require('fs');
   for(const id of ['overview','projects','requests','assets','scripts','analytics','settings']){
    await p.goto(base+'studio.html#'+id);await p.reload();await screen(id);
    assert.equal(await p.locator('.sidebar-link[aria-current]').getAttribute('data-screen'),id);
-   assert.equal(await p.locator('#topbar-title').textContent(),await p.locator('.screen:visible').getAttribute('data-title'));
+   assert.equal(await p.locator('#topbar-title').textContent(),'FIJLY STUDIO');
    assert.equal(await p.locator('h1:visible').count(),1);
    assert.equal(await p.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
   }
@@ -31,8 +32,8 @@ const assert=require('assert/strict');const fs=require('fs');
  for(const close of ['escape','button','backdrop']){
   await open.click();assert.equal(await p.evaluate(()=>document.querySelector('#sidebar').contains(document.activeElement)),true);
   assert.equal(await p.locator('.studio-main').evaluate(e=>e.inert),true);
-  await p.locator('.sidebar-link--site').focus();await p.keyboard.press('Tab');assert.equal(await p.evaluate(()=>document.activeElement.className),'sidebar-close');
-  await p.keyboard.press('Shift+Tab');assert.equal(await p.evaluate(()=>document.activeElement.classList.contains('sidebar-link--site')),true);
+  await p.locator('.sidebar-user').focus();await p.keyboard.press('Tab');assert.equal(await p.evaluate(()=>document.activeElement.className),'sidebar-home');
+  await p.keyboard.press('Shift+Tab');assert.equal(await p.evaluate(()=>document.activeElement.classList.contains('sidebar-user')),true);
   if(close==='escape')await p.keyboard.press('Escape');
   if(close==='button')await p.locator('.sidebar-close').click();
   if(close==='backdrop')await p.locator('.sidebar-backdrop').click({position:{x:340,y:400}});
@@ -60,7 +61,7 @@ const assert=require('assert/strict');const fs=require('fs');
  checks.push('Preview play/pause mouse and keyboard, synchronized names, fullscreen');
  await p.locator('[data-screen="requests"].sidebar-link').click();const before=await p.locator('[data-request-list] .list-card').count();await p.locator('[data-request-form] [type="submit"]').click();assert.equal(await p.locator('[data-request-list] .list-card').count(),before);
  await p.locator('#req-name').fill('Functional regression');await p.locator('#req-brief').fill('Show the core workflow.');await p.locator('[data-request-form] [type="submit"]').click();assert.equal(await p.locator('[data-request-list] .list-card').count(),before+1);checks.push('Request validation and mock submission');
- await p.setViewportSize({width:375,height:800});await p.goto(base+'studio.html#projects');await p.reload();const table=p.locator('#screen-projects .table-scroll');await table.focus();await p.keyboard.press('ArrowRight');await p.waitForTimeout(200);assert.equal(await table.evaluate(e=>e.scrollLeft>0),true);checks.push('Projects table keyboard horizontal scroll');
+ await p.setViewportSize({width:375,height:800});await p.goto(base+'studio.html#projects');await p.reload();const table=p.locator('#screen-projects .projects-table');assert.equal(await table.evaluate(e=>getComputedStyle(e).display),'block');assert.equal(await table.evaluate(e=>e.scrollWidth>e.clientWidth+1),false);await table.locator('button').first().focus();await p.keyboard.press('Enter');assert.equal(await p.locator('#workflow-detail').evaluate(e=>e.open),true);await p.keyboard.press('Escape');checks.push('Projects mobile cards: no horizontal scrolling; keyboard opens the record');
  for(const width of [1440,1024,768,375,390]){
   await p.setViewportSize({width,height:900});await p.goto(base+'index.html');
   assert.equal(await p.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
@@ -76,7 +77,7 @@ const assert=require('assert/strict');const fs=require('fs');
   checks.push(`${width}px marketing: anchors, menus where applicable, FAQ mouse/keyboard, overflow`);
  }
  await p.emulateMedia({reducedMotion:'reduce'});await p.reload();assert.equal(await p.locator('[data-hero-play]').getAttribute('aria-label'),'Play motion study');
- await p.setViewportSize({width:1440,height:900});await p.locator('.nav__actions a[href="studio.html"]').click();assert.match(p.url(),/studio.html/);await p.locator('.sidebar-link--site').click();assert.match(p.url(),/index.html/);await p.locator('.footer a[href="studio.html"]').click();assert.match(p.url(),/studio.html/);
+ await p.setViewportSize({width:1440,height:900});await p.locator('.nav__actions a[href="studio.html"]').click();assert.match(p.url(),/studio.html/);await p.locator('.sidebar-home').click();assert.match(p.url(),/index.html/);await p.locator('.footer a[href="studio.html"]').click();assert.match(p.url(),/studio.html/);
  checks.push('Motion study reduced-motion preference, Sign in and footer Studio links, return to website');
  // Render an OG image directly from the existing page, preserving the design.
  await p.setViewportSize({width:1200,height:900});await p.goto(base+'index.html');await p.evaluate(()=>document.fonts.ready);await p.screenshot({path:'qa/screenshots/marketing-og-check.png',clip:{x:0,y:0,width:1200,height:630}});

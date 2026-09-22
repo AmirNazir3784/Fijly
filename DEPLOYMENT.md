@@ -2,7 +2,7 @@
 
 Upload **the contents of `site/`**, including the hidden `.htaccess` file, into the domain's `public_html/` directory. `index.html` must be directly inside `public_html`, with `css/`, `js/`, and `assets/` alongside it. No installation, build, npm, or server application is required.
 
-Keep the root reference files, `qa/`, and this document outside the web root. A before-work backup and SHA-256 reference checks are retained in `qa/`.
+Only the contents of `site/` are deployed. Keep `qa/`, the root `README.md`, `serve.bat`, `serve.sh`, and this document outside the web root.
 
 ## Owner checks before public launch
 
@@ -22,12 +22,12 @@ The conservative `.htaccess` config supplies a custom 404, optional compression/
 ## Verification evidence
 
 - `qa/render-results.json`: marketing and all eight Studio screens at 1440, 1024, 768, 375 and 390 pixels.
-- `qa/content-comparison.json`: 336 rendered prototype text occurrences checked across the eight screens; none missing.
+- `qa/content-comparison.json`: retained component layout and headings for all seven Client Portal screens.
 - `qa/functional-results.json`: navigation, keyboard, focus, filters, switches, preview, FAQ, table scrolling, link and direct-file checks.
 - `qa/accessibility-results.json`: automated desktop accessibility checks plus practical keyboard checks in the interaction suite.
 - `qa/final-browser-results.json`: final desktop/mobile accessibility scans for all pages, including the open sidebar, and additional public navigation checks.
-- `qa/static-results.json`: HTML parsing, IDs, ARIA references, local assets/links, forbidden runtime/template syntax, and unchanged original reference hashes.
-- `qa/screenshots/`: rendered pages and prototype comparisons.
+- `qa/static-results.json`: HTML parsing, IDs, ARIA references, local assets/links, and forbidden runtime/template syntax.
+- Screenshots are regenerated into `qa/screenshots/` and `qa/refinement-after/` on each QA run; they are not kept in the repository.
 
 Browser tests use locally available Playwright tooling solely for QA; it is not a website dependency.
 
@@ -37,4 +37,4 @@ Browser tests use locally available Playwright tooling solely for QA; it is not 
 
 To enable direct submission, provide an HTTPS endpoint accepting `multipart/form-data` with `name`, `email`, `company`, `project_type`, `message`, and `plan`. It must return a successful HTTP status only after accepting the enquiry. JSON responses containing `success: false`, `error`, or `errors` are treated as failures. Failures preserve the brief and offer email fallback; requests time out after 15 seconds. The endpoint must handle server validation, spam protection, CORS when needed, and delivery. Never put private credentials in the public config. Update the Privacy notice to match the chosen provider before enabling it.
 
-Current visual and interaction evidence: `qa/refinement-after/`, `qa/refinement-check-results.json`, and `qa/functional-results.json`. The refinement covers 1440, 1280, 1024, 768, 390, and 375 pixel layouts. Files in `qa/` are not deployment files.
+Current interaction evidence: `qa/refinement-check-results.json` and `qa/functional-results.json`. The refinement covers 1440, 1280, 1024, 768, 390, and 375 pixel layouts. Files in `qa/` are not deployment files.

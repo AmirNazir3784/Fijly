@@ -48,6 +48,30 @@
     row.append(cell);
   }
   function renderDashboard() {
+    var actions = window.FijlyMock.adminActions();
+    var queue = document.getElementById('admin-action-queue');
+    queue.replaceChildren();
+    document.getElementById('admin-action-count').textContent = actions.length + (actions.length === 1 ? ' item' : ' items');
+    actions.forEach(function (item) {
+      var row = node('li'), link = node('button', 'btn-link', item.title);
+      link.type = 'button';
+      link.dataset.actionSection = item.section; link.dataset.actionId = item.id;
+      link.addEventListener('click', function () {
+        if (item.section === 'scripts') window.FijlyAdminScripts.open(item.id);
+        else window.FijlyWorkflow.open(item.section, item.id);
+      });
+      var identity = node('div'); identity.append(link, node('span', 'admin-muted admin-block', client(item.client).name));
+      row.append(identity, node('span', 'admin-action-label', item.label)); queue.append(row);
+    });
+    if (!actions.length) queue.append(node('li', 'admin-muted', 'All caught up. New requests and review outcomes will appear here.'));
+    ['requests', 'revisions', 'scripts', 'videos'].forEach(function (section) {
+      var link = document.querySelector('.sidebar-link[data-screen="' + section + '"]');
+      var count = actions.filter(function (item) { return item.section === section; }).length;
+      var counter = link.querySelector('[data-action-badge]');
+      if (!counter) { counter = node('span', 'sidebar-count'); counter.dataset.actionBadge = section; link.append(counter); }
+      counter.textContent = count; counter.hidden = !count;
+      counter.setAttribute('aria-label', count + (count === 1 ? ' action needed' : ' actions needed'));
+    });
     var allProjects = data.projects;
     var active = data.clients.filter(function (item) { return item.status === 'Active'; }).length;
     var review = allProjects.filter(function (item) { return item.status === 'Client Review'; }).length;
@@ -79,11 +103,13 @@
     });
     var priorities = document.getElementById('admin-priorities');
     priorities.replaceChildren();
-    document.getElementById('due-count').textContent = due.length + ' projects';
+    document.getElementById('due-count').textContent = due.length + (due.length === 1 ? ' project' : ' projects');
     due.forEach(function (project) {
       var row = node('tr');
       var identity = node('div', 'admin-project-identity');
-      identity.append(node('strong', '', project.title), clientButton(client(project.client)));
+      var title = node('button', 'btn-link', project.title); title.type = 'button';
+      title.addEventListener('click', function () { window.FijlyWorkflow.open('videos', project.id); });
+      identity.append(title, clientButton(client(project.client)));
       appendCell(row, identity);
       appendCell(row, badge(project.status));
       var when = node('div', 'admin-due');
@@ -167,12 +193,14 @@
     var list = node('ul', 'admin-project-list');
     projects(id).forEach(function (project) {
       var row = node('li'); var text = node('div');
-      text.append(node('strong', '', project.title), node('span', 'admin-muted admin-block', project.format + ' / ' + date(project.due)));
+      var title = node('button', 'btn-link', project.title); title.type = 'button'; title.onclick = function () { detail.close(); window.FijlyWorkflow.open('videos', project.id); };
+      text.append(title, node('span', 'admin-muted admin-block', project.format + ' / ' + date(project.due)));
       row.append(text, badge(project.status)); list.append(row);
     });
     pending(id).forEach(function (request) {
       var row = node('li'); var text = node('div');
-      text.append(node('strong', '', request.title), node('span', 'admin-muted admin-block', request.videoType + ' / ' + date(request.deadline)));
+      var title = node('button', 'btn-link', request.title); title.type = 'button'; title.onclick = function () { detail.close(); window.FijlyWorkflow.open('requests', request.id); };
+      text.append(title, node('span', 'admin-muted admin-block', request.videoType + ' / ' + date(request.deadline)));
       row.append(text, badge(request.status)); list.append(row);
     });
     if (!list.children.length) list.append(node('li', 'admin-muted', 'No projects yet. This client is ready for a first brief.'));
@@ -241,6 +269,6 @@
   document.getElementById('clear-client-filters').addEventListener('click', function () {
     search.value = ''; status.value = 'all'; renderClients(); search.focus();
   });
-  window.FijlyMock.subscribe(function (changed) { if(changed.some(function(k){return ['clients','requests','videos'].includes(k);})) {renderDashboard();renderClients();}if(detail.open){if(client(selectedId))openDetail(selectedId);else detail.close();} });
+  window.FijlyMock.subscribe(function (changed) { if(changed.some(function(k){return ['clients','requests','videos','revisions','scripts'].includes(k);})) {renderDashboard();renderClients();}if(detail.open){if(client(selectedId))openDetail(selectedId);else detail.close();} });
   renderDashboard(); renderClients();
 })();

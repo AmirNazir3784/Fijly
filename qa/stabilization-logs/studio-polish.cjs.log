@@ -1,0 +1,10 @@
+{
+  "checks": [
+    "Admin name/phone/photo save, remove, cancel, validation, reload, shared references, concurrent fields and unsaved Settings edits",
+    "Client contact/phone/photo sync across portals and Settings, preserved email/role/preferences, client isolation, cancelled edits and unchanged production records",
+    "All 16 routes at 1440/1024/768/390/320px; one main title, shared spacing/type, logo keyboard navigation, persistent short-screen footer and modal/sidebar focus traps",
+    "Baseline hash guard: workflow implementation, status logic, fixture data, dashboard renderer, public pages and assets unchanged"
+  ],
+  "scans": 100,
+  "errors": []
+}

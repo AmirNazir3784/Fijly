@@ -27,6 +27,7 @@ const url = (portal, route) => require('./runtime.cjs').base+`${portal}.html#${r
   for (const kind of ['requests', 'videos', 'revisions']) {
     await p.goto(url('admin', kind));
     const screen = `#screen-${kind}`;
+    await p.locator(`${screen} [data-filter=status]`).selectOption('all');
     const base = await p.locator(`${screen} tbody tr`).count();
     ok(`${kind}: list renders rows`, base > 0, `rows=${base}`);
 

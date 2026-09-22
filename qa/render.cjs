@@ -1,5 +1,6 @@
 const {chromium} = require('./runtime.cjs');
 const fs = require('fs');
+fs.mkdirSync('qa/screenshots',{recursive:true});
 const screens = ['overview','projects','requests','assets','scripts','analytics','settings'];
 (async()=>{
  const browser=await chromium.launch({headless:true});
