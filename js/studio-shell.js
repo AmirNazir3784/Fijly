@@ -60,7 +60,7 @@
     });
 
     var label = target.dataset.title || name;
-    if (topbarTitle) topbarTitle.textContent = label;
+    if (topbarTitle) topbarTitle.textContent = document.body.classList.contains('admin-body') ? 'FIJLY ADMIN' : 'FIJLY STUDIO';
     document.title = name === defaultScreen ? baseTitle : label + ' — ' + portalTitle;
 
     if (updateHash && location.hash !== '#' + name) history.pushState(null, '', '#' + name);
@@ -126,6 +126,9 @@
 
     document.addEventListener('keydown', function (e) {
       if (!layout.classList.contains('sidebar-open')) return;
+      // A profile dialog can sit above the sidebar. Its native focus trap and
+      // Escape handling take precedence over the underlying navigation.
+      if (document.querySelector('dialog[open]')) return;
 
       if (e.key === 'Escape') {
         closeSidebar(true);

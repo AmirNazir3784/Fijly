@@ -221,6 +221,28 @@
   var service = {
     state: state, videoStatuses: videoStatuses, revisionStatuses: revisionStatuses, requestStatuses: requestStatuses, scriptStatuses: scriptStatuses, assetCategories: assetCategories,
     formatDate: formatDate, formatDateTime: formatDateTime,
+    formatBytes: function (value) {
+      if (!value) return '0 KB';
+      var size = value / 1024, unit = 'KB';
+      if (size >= 1024) { size /= 1024; unit = 'MB'; }
+      return (size >= 10 ? Math.round(size) : Math.max(0.1, size).toFixed(1)) + ' ' + unit;
+    },
+    // A derived queue, never stored. Dashboard, badges and triage consume this
+    // same definition. Client Review itself is waiting on the client; an
+    // approval or requested revision is actionable by the studio.
+    adminActions: function () {
+      var actions = [];
+      function add(section, record, request, label, at) {
+        actions.push({ section: section, id: record.id, title: request.title, client: request.client, label: label, at: at || '' });
+      }
+      service.pendingRequests().forEach(function (r) { add('requests', r, r, r.status === 'Submitted' ? 'Review new request' : 'Finish request review', r.requestedAt); });
+      state.revisions.filter(function (r) { return ['Revision Requested', 'In Revision', 'Draft Ready'].includes(r.status); }).forEach(function (r) {
+        add('revisions', r, requestFor(get('videos', r.videoId)), r.status === 'Revision Requested' ? 'Start video revision' : r.status === 'Draft Ready' ? 'Send revised draft' : 'Continue video revision', r.requestedAt);
+      });
+      state.scripts.filter(function (s) { return ['Draft', 'Revision Requested'].includes(s.status); }).forEach(function (s) { add('scripts', s, s, s.status === 'Draft' ? 'Prepare script for review' : 'Revise script', s.updatedAt); });
+      state.videos.filter(function (v) { return v.status === 'Approved' || (v.status === 'Draft Ready' && !activeRevision(v)); }).forEach(function (v) { add('videos', v, requestFor(v), v.status === 'Approved' ? 'Finalize approved video' : 'Send draft for review', (v.activity.slice(-1)[0] || {}).at); });
+      return actions.sort(function (a, b) { return a.at.localeCompare(b.at); });
+    },
     statusClass: function (status) { return 'badge ' + (statusTones[status] || ''); },
     // Submitted or Under Review requests that have not yet become a video.
     pendingRequests: function (clientId) { return state.requests.filter(function (r) { return ['Submitted', 'Under Review'].includes(r.status) && (!clientId || r.client === clientId) && !state.videos.some(function (v) { return v.requestId === r.id; }); }); },
@@ -413,6 +435,9 @@
       if (!['15–30 sec', '30–45 sec', '60–90 sec', '90–120 sec', '2–3 min', '3 min+'].includes(values.defaultLength)) throw new Error('Choose a valid default length.');
       if (!['Website', 'YouTube', 'LinkedIn', 'Instagram', 'Paid ads'].includes(values.platform)) throw new Error('Choose a valid platform.');
       Object.assign(service.client.current(), { name: name, contact: contact, email: email, website: String(values.website || '').trim() });
+      // Optional personal fields belong to this existing client record. The
+      // workspace Settings form can omit them without clearing the profile.
+      ['phone', 'profileImage'].forEach(function (field) { if (Object.prototype.hasOwnProperty.call(values, field)) service.client.current()[field] = String(values[field] || '').trim(); });
       state.clientSettings[selectedClient] = { autoshare: !!values.autoshare, digest: !!values.digest, review: !!values.review, defaultLength: values.defaultLength, platform: values.platform };
       commit();
     },

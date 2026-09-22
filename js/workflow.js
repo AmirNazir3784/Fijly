@@ -91,7 +91,7 @@
       if(!request.references.length)body.append(el('p','No reference links provided.','admin-muted'));
       request.references.forEach(function(url){var p=el('p'),a=el('a',url);a.href=url;a.target='_blank';a.rel='noopener noreferrer';p.append(a);body.append(p);});
       body.append(el('h3','Attachments'));body.append(el('p',request.attachments.length?request.attachments.map(function(a){return a.name+' ('+Math.ceil(a.size/1024)+' KB)';}).join('\n'):'No attachments.','workflow-feedback'));body.append(el('p','Attachment metadata only; files are not uploaded in this preview.','admin-muted'));
-      if(admin && request.status!=='Completed'){secondary.push(button('Edit details',function(){editRequest(request,true);}));if(request.status==='Submitted')secondary.push(button('Review request',function(){api.reviewRequest(request.id);flash('Marked as Under Review.');renderDetail();}));}
+      if(admin && request.status!=='Completed'){secondary.push(button('Edit details',function(){editRequest(request,true);}));if(request.status==='Submitted')secondary.push(button('Start review',function(){api.reviewRequest(request.id);flash('Marked as Under Review.');renderDetail();}));}
       var linked=state.videos.find(function(v){return v.requestId===request.id;});
       if(linked)primary.push(button('Open video',function(){show('videos',linked.id);},true));
       else if(admin)primary.push(button('Move to production',function(){confirmation('Move to production','Create a linked production workspace for this request?',function(){var video=api.produce(request.id);show('videos',video.id);flash('Moved to production. Add the first version when the draft is ready.');});},true));
@@ -116,14 +116,14 @@
     footer(detail,secondary.concat(primary));history(body,video);
   }
   function setupList(kind,container) {
-    var toolbar=el('div',undefined,'workflow-toolbar');filters[kind]={search:'',status:'all',client:'all',priority:'all',sort:'newest'};
-    [['search','Search',null],['status','Status',(kind==='requests'?api.requestStatuses:kind==='videos'?api.videoStatuses:api.revisionStatuses)],['client','Client',state.clients.map(function(c){return c.id;})],['priority','Priority',['Low','Normal','High','Urgent']],['sort','Sort',['newest','oldest','deadline','priority','title']]].forEach(function(spec){var label=el('label',spec[1]),input=el(spec[2]?'select':'input',undefined,'input');input.setAttribute('aria-label',spec[1]);input.dataset.filter=spec[0];if(spec[2]){if(spec[0]!=='sort'){var all=el('option',{status:'All statuses',client:'All clients',priority:'All priorities'}[spec[0]]);all.value='all';input.append(all);}spec[2].forEach(function(value){var o=el('option',spec[0]==='client'?api.get('clients',value).name:value);o.value=value;input.append(o);});}else{input.type='search';input.placeholder='Title, client or editor';}input.addEventListener(spec[2]?'change':'input',function(){filters[kind][spec[0]]=input.value;renderList(kind);});label.append(input);toolbar.append(label);});
+    var toolbar=el('div',undefined,'workflow-toolbar');filters[kind]={search:'',status:kind==='requests'?'action':'all',client:'all',priority:'all',sort:'newest'};
+    [['search','Search',null],['status','Status',(kind==='requests'?api.requestStatuses:kind==='videos'?api.videoStatuses:api.revisionStatuses)],['client','Client',state.clients.map(function(c){return c.id;})],['priority','Priority',['Low','Normal','High','Urgent']],['sort','Sort',['newest','oldest','deadline','priority','title']]].forEach(function(spec){var label=el('label',spec[1]),input=el(spec[2]?'select':'input',undefined,'input');input.setAttribute('aria-label',spec[1]);input.dataset.filter=spec[0];if(spec[2]){if(spec[0]!=='sort'){var all=el('option',{status:'All statuses',client:'All clients',priority:'All priorities'}[spec[0]]);all.value='all';input.append(all);if(kind==='requests'&&spec[0]==='status'){var needed=el('option','Needs review');needed.value='action';input.append(needed);}}spec[2].forEach(function(value){var o=el('option',spec[0]==='client'?api.get('clients',value).name:value);o.value=value;input.append(o);});}else{input.type='search';input.placeholder='Title, client or editor';}if(spec[0]==='status')input.value=filters[kind].status;input.addEventListener(spec[2]?'change':'input',function(){filters[kind][spec[0]]=input.value;renderList(kind);});label.append(input);toolbar.append(label);});
     container.append(toolbar,el('div',undefined,'workflow-results'));renderList(kind);
   }
   function renderList(kind) {
-    var container=document.querySelector('[data-workflow-list="'+kind+'"]');if(!container)return;var f=filters[kind],target=container.querySelector('.workflow-results');var records=state[kind].filter(function(item){var r=requestFor(kind,item);return(f.status==='all'||f.status===item.status)&&(f.client==='all'||f.client===r.client)&&(f.priority==='all'||f.priority===r.priority)&&[r.title,client(r).name,r.assignedEditor].join(' ').toLowerCase().includes(f.search.toLowerCase());});
+    var container=document.querySelector('[data-workflow-list="'+kind+'"]');if(!container)return;var f=filters[kind],target=container.querySelector('.workflow-results');var actionIds=api.adminActions().filter(function(a){return a.section===kind;}).map(function(a){return a.id;});var records=state[kind].filter(function(item){var r=requestFor(kind,item);return(f.status==='all'||f.status===item.status||(f.status==='action'&&actionIds.includes(item.id)))&&(f.client==='all'||f.client===r.client)&&(f.priority==='all'||f.priority===r.priority)&&[r.title,client(r).name,r.assignedEditor].join(' ').toLowerCase().includes(f.search.toLowerCase());});
     records.sort(function(a,b){var x=requestFor(kind,a),y=requestFor(kind,b);if(f.sort==='priority')return ['Urgent','High','Normal','Low'].indexOf(x.priority)-['Urgent','High','Normal','Low'].indexOf(y.priority);if(f.sort==='title')return x.title.localeCompare(y.title);if(f.sort==='deadline')return x.deadline.localeCompare(y.deadline);return (f.sort==='oldest'?1:-1)*(a.requestedAt||x.requestedAt).localeCompare(b.requestedAt||y.requestedAt);});
-    target.replaceChildren(el('p',records.length+' '+kind,'admin-result-count'));
+    target.replaceChildren(el('p',records.length+' '+(records.length===1?{requests:'request',videos:'video',revisions:'revision'}[kind]:kind),'admin-result-count'));
     if(!records.length){var empty=el('div',undefined,'admin-empty');empty.append(el('strong','No matching '+kind),el('p','Try another search or clear your filters.'),button('Clear filters',function(){container.querySelectorAll('[data-filter]').forEach(function(input){input.value=input.dataset.filter==='search'?'':input.dataset.filter==='sort'?'newest':'all';filters[kind][input.dataset.filter]=input.value;});renderList(kind);}));target.append(empty);return;}
     var wrap=el('div',undefined,'workflow-table-wrap');wrap.tabIndex=0;wrap.setAttribute('role','region');wrap.setAttribute('aria-label',kind+' table, scroll horizontally');var table=el('table',undefined,'table workflow-table'),head=el('thead'),tr=el('tr');['Video / Client',kind==='revisions'?'Round / Requested':'Type / Platform','Status','Priority','Assigned Editor','Deadline'].forEach(function(t){var th=el('th',t);th.scope='col';tr.append(th);});head.append(tr);var tbody=el('tbody');records.forEach(function(item){var r=requestFor(kind,item),row=el('tr'),identity=el('td');var b=button(r.title,function(){show(kind,item.id);});b.className='btn-link';identity.append(b,el('span',client(r).name,'admin-muted admin-block'));row.append(identity);var type=el('td',kind==='revisions'?'Round '+item.round+' / '+date(item.requestedAt):r.videoType+' / '+r.platform);var status=el('td');status.append(badge(item.status));row.append(type,status,el('td',r.priority),el('td',r.assignedEditor||'Unassigned'),el('td',date(r.deadline),'admin-date'));tbody.append(row);});table.append(head,tbody);wrap.append(table);target.append(el('p','Scroll horizontally to see all details.','table-hint'),wrap);
   }
@@ -146,6 +146,28 @@
     else if(!shown.length)tableMessage(tbody,'No videos match this filter',button('Clear filters',function(){clearClientFilters();renderClient();}));
   }
   window.FijlyWorkflow = { open: show };
+  // Keep one table/record DOM. On narrow screens each row becomes a labelled
+  // card, while native table semantics and desktop columns remain intact.
+  var mobile = window.matchMedia('(max-width: 600px)');
+  function prepareCards() {
+    document.querySelectorAll('.projects-table, .workflow-table, .admin-assets-table, #script-rows, #admin-priorities').forEach(function (target) {
+      var table = target.closest('table'); if (!table) return;
+      table.classList.add('mobile-records'); table.setAttribute('role', 'table');
+      var headings = Array.from(table.querySelectorAll('thead th')).map(function (th) { th.setAttribute('role', 'columnheader'); return th.textContent.trim(); });
+      table.querySelectorAll('thead, tbody').forEach(function (group) { group.setAttribute('role', 'rowgroup'); });
+      table.querySelectorAll('tr').forEach(function (row) { row.setAttribute('role', 'row'); });
+      table.querySelectorAll('tbody tr').forEach(function (row) { Array.from(row.cells).forEach(function (cell, index) { cell.setAttribute('role', 'cell'); cell.dataset.label = cell.colSpan > 1 ? '' : headings[index] || ''; }); });
+      var wrap = table.parentElement; wrap.classList.add('mobile-records-wrap');
+      if (wrap.hasAttribute('tabindex') || wrap.dataset.tableRegion) {
+        wrap.dataset.tableRegion = 'true';
+        if (mobile.matches) wrap.removeAttribute('tabindex'); else wrap.tabIndex = 0;
+        wrap.setAttribute('aria-label', 'Records');
+      }
+    });
+  }
+  new MutationObserver(prepareCards).observe(document.getElementById('studio-content'), { childList: true, subtree: true });
+  mobile.addEventListener('change', prepareCards);
+  prepareCards();
   if(admin)document.querySelectorAll('[data-workflow-list]').forEach(function(container){setupList(container.dataset.workflowList,container);});
   else {
     document.querySelectorAll('.filter-chip[data-filter]').forEach(function(chip){chip.onclick=function(){clientFilter=chip.dataset.filter;document.querySelectorAll('.filter-chip').forEach(function(c){c.setAttribute('aria-pressed',String(c===chip));});renderClient();};});
@@ -176,7 +198,38 @@
     });
     applyDefaults=applyRequestDefaults;
     applyRequestDefaults();
-    requestForm.onsubmit=function(e){e.preventDefault();var note=document.querySelector('[data-request-note]');try{var f=requestForm.elements;api.client.createRequest({title:f.name.value,videoType:f.type.value,instructions:f.brief.value,platform:f.platform.value,priority:f.priority.value,deadline:f.due.value,length:f.namedItem('length').value,references:f.references.value},files(f.attachments));requestForm.reset();note.textContent='Request submitted. It is now available in Admin Video Requests.';}catch(error){note.textContent=error.message;}note.hidden=false;};renderClient();
+    // Keep errors with their fields and announce a single submission summary.
+    requestForm.noValidate = true;
+    var errorFields = ['name', 'brief', 'due', 'references'];
+    errorFields.forEach(function (name) {
+      var field = requestForm.elements.namedItem(name), error = el('p', '', 'workflow-error field-error');
+      error.id = field.id + '-error'; error.hidden = true;
+      field.setAttribute('aria-describedby', error.id); field.insertAdjacentElement('afterend', error);
+      field.addEventListener('input', function () { field.removeAttribute('aria-invalid'); error.hidden = true; error.textContent = ''; });
+    });
+    function fieldError(name, message) {
+      var field = requestForm.elements.namedItem(name), error = document.getElementById(field.id + '-error');
+      field.setAttribute('aria-invalid', 'true'); error.textContent = message; error.hidden = false;
+    }
+    function clearErrors() { errorFields.forEach(function (name) { var field = requestForm.elements.namedItem(name); field.removeAttribute('aria-invalid'); var error = document.getElementById(field.id + '-error'); error.hidden = true; error.textContent = ''; }); }
+    requestForm.addEventListener('reset', clearErrors);
+    requestForm.onsubmit = function (e) {
+      e.preventDefault(); clearErrors();
+      var note = document.querySelector('[data-request-note]'), f = requestForm.elements, invalid = [];
+      [['name', 'Please enter a video title.'], ['brief', 'Please describe what you want in your video.'], ['due', 'Please choose a valid deadline.']].forEach(function (pair) {
+        var field = f.namedItem(pair[0]); if (!field.value.trim() || !field.validity.valid) { fieldError(pair[0], pair[1]); invalid.push(pair[0]); }
+      });
+      var badReference = f.references.value.split(/\n/).map(function (v) { return v.trim(); }).filter(Boolean).some(function (value) { try { return !['http:', 'https:'].includes(new URL(value).protocol); } catch (_) { return true; } });
+      if (badReference) { fieldError('references', 'Enter a complete link starting with https:// or http://, one per line.'); invalid.push('references'); }
+      if (invalid.length) {
+        note.className = 'workflow-error'; note.textContent = 'Please check the highlighted fields.'; note.hidden = false; f.namedItem(invalid[0]).focus(); return;
+      }
+      try {
+        api.client.createRequest({title:f.name.value,videoType:f.type.value,instructions:f.brief.value,platform:f.platform.value,priority:f.priority.value,deadline:f.due.value,length:f.namedItem('length').value,references:f.references.value},files(f.attachments));
+        requestForm.reset(); note.className = 'workflow-notice'; note.textContent = 'Request submitted. We will review your brief next. You can track its progress in Your requests.';
+      } catch (error) { note.className = 'workflow-error'; note.textContent = error.message; if (/reference/i.test(error.message)) { fieldError('references', 'Enter a complete link starting with https:// or http://.'); f.references.focus(); } }
+      note.hidden = false;
+    };renderClient();
   }
   if(!admin){document.querySelector('#client-project-search').addEventListener('input',renderClient);window.addEventListener('fijly:clientchange',function(){current=null;[detail,editor,confirm].forEach(function(d){d.node.close();});clearClientFilters();requestForm.reset();document.querySelector('[data-request-note]').hidden=true;});}
   api.subscribe(function(changed){

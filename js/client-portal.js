@@ -16,8 +16,6 @@
     var profile = client.current(), videos = client.records('videos');
     $('#h-overview').textContent = 'Welcome, ' + profile.contact.split(' ')[0];
     $('.page-head__date').textContent = profile.name + ' / WORKSPACE';
-    $('.page-head--overview > button').textContent = 'All recorded activity';
-    $('.sidebar-user__name').textContent = profile.contact; $('.sidebar-user__email').textContent = profile.email; $('.sidebar-user .avatar').textContent = profile.contact[0];
     $('#studio-demo-note').firstChild.textContent = profile.name + ' workspace · Mock data. Changes stay in this mock session. ';
     var cards = document.querySelectorAll('#screen-overview .stat-card');
     // Waiting requests count as active work; a request that became a video counts once.
@@ -62,15 +60,14 @@
   closeX.type = 'button'; closeX.setAttribute('aria-label', 'Close dialog'); closeX.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>'; closeX.onclick = function () { modal.close(); };
   dismiss.className = 'btn btn-ghost btn--md dialog-dismiss'; head.append(title, closeX); foot.append(dismiss); modal.append(head, body, foot); document.body.append(modal);
   var shownAsset = null;
-  function assetDetail(id) { var a = client.get('assets', id); shownAsset = id; title.textContent = a.name; dismiss.textContent = 'Close'; foot.replaceChildren(dismiss); body.replaceChildren(node('span', a.category, 'badge'), node('p', a.fileType.toUpperCase() + ' · ' + Math.ceil(a.size / 1024) + ' KB · Added ' + date(a.uploadedAt)), node('p', a.notes || 'No additional notes.'), node('p', 'Simulated asset metadata. No file has been uploaded or stored.', 'admin-muted')); if (!modal.open) modal.showModal(); }
+  function assetDetail(id) { var a = client.get('assets', id); shownAsset = id; title.textContent = a.name; dismiss.textContent = 'Close'; foot.replaceChildren(dismiss); body.replaceChildren(node('span', a.category, 'badge'), node('p', a.fileType.toUpperCase() + ' · ' + api.formatBytes(a.size) + ' · Added ' + date(a.uploadedAt)), node('p', a.notes || 'No additional notes.'), node('p', 'Simulated asset metadata. No file has been uploaded or stored.', 'admin-muted')); if (!modal.open) modal.showModal(); }
   function assetRows(target, records) {
     target.replaceChildren(); if (!records.length) { target.append(node(target.tagName === 'UL' ? 'li' : 'p', 'No matching assets.', 'admin-muted')); return; }
-    records.forEach(function (a) { var row = node(target.tagName === 'UL' ? 'li' : 'div', undefined, 'file-row'), info = node('span', undefined, 'file-row__body'); var b = action(a.name, function () { assetDetail(a.id); }); b.className = 'btn-link file-row__title'; info.append(b, node('span', a.category + ' · ' + Math.ceil(a.size / 1024) + ' KB', 'file-row__sub')); row.append(info, node('span', a.fileType.toUpperCase(), 'file-row__ext')); target.append(row); });
+    records.forEach(function (a) { var row = node(target.tagName === 'UL' ? 'li' : 'div', undefined, 'file-row'), info = node('span', undefined, 'file-row__body'); var b = action(a.name, function () { assetDetail(a.id); }); b.className = 'btn-link file-row__title'; info.append(b, node('span', a.category + ' · ' + api.formatBytes(a.size), 'file-row__sub')); row.append(info, node('span', a.fileType.toUpperCase(), 'file-row__ext')); target.append(row); });
   }
   function assets() {
     var records = client.records('assets').sort(function (a, b) { return b.uploadedAt.localeCompare(a.uploadedAt); });
-    document.querySelectorAll('[data-asset-group]').forEach(function (target) { assetRows(target, records.filter(function (a) { return target.dataset.assetGroup === 'media' ? ['Product Images', 'B-roll'].includes(a.category) : a.category === target.dataset.assetGroup; })); });
-    var search = $('#client-asset-search').value.toLowerCase(), category = $('#client-asset-category').value;
+    var search = $('#client-asset-search').value.trim().toLowerCase(), category = $('#client-asset-category').value;
     assetRows($('[data-client-assets]'), records.filter(function (a) { return (category === 'all' || a.category === category) && [a.name, a.category, a.notes].join(' ').toLowerCase().includes(search); }));
     if (modal.open && shownAsset) { if (records.some(function (a) { return a.id === shownAsset; })) assetDetail(shownAsset); else modal.close(); }
   }
@@ -80,17 +77,18 @@
     shownAsset = null; title.textContent = 'Add simulated asset'; body.innerHTML = '<form id="client-asset-form"><p class="admin-muted">Only file metadata is saved in this mock session.</p><div class="form-group"><label class="field-label" for="client-asset-file">Choose file</label><input class="input workflow-file" id="client-asset-file" type="file" required></div><div class="form-group"><label class="field-label" for="client-asset-kind">Category</label><select class="input" id="client-asset-kind"></select></div><div class="form-group"><label class="field-label" for="client-asset-notes">Notes</label><textarea class="input" id="client-asset-notes" maxlength="2000"></textarea></div><p role="alert" class="workflow-error" id="client-asset-error"></p></form>';
     var save = node('button', 'Save asset', 'btn btn-primary btn--md'); save.type = 'submit'; save.setAttribute('form', 'client-asset-form'); dismiss.textContent = 'Cancel'; foot.replaceChildren(dismiss, save);
     api.assetCategories.forEach(function (c) { $('#client-asset-kind').append(node('option', c)); });
-    $('#client-asset-form').onsubmit = function (event) { event.preventDefault(); try { var file = $('#client-asset-file').files[0]; client.addAsset({ name: file.name, size: file.size, fileType: file.name.split('.').pop(), category: $('#client-asset-kind').value, notes: $('#client-asset-notes').value }); modal.close(); } catch (e) { $('#client-asset-error').textContent = e.message; } }; modal.showModal();
+    $('#client-asset-form').onsubmit = function (event) { event.preventDefault(); try { var file = $('#client-asset-file').files[0]; client.addAsset({ name: file.name, size: file.size, fileType: file.name.split('.').pop(), category: $('#client-asset-kind').value, notes: $('#client-asset-notes').value }); modal.close(); $('#client-asset-search').value = ''; $('#client-asset-category').value = 'all'; assets(); var note = $('#client-asset-success'); note.textContent = file.name + ' added to your assets. File details saved in this preview.'; note.hidden = false; } catch (e) { $('#client-asset-error').textContent = e.message; } }; modal.showModal();
   };
 
   function scripts() {
-    var records = client.records('scripts'), select = $('#client-script-select');
+    var records = client.records('scripts').filter(function (s) { return s.status !== 'Draft'; }).sort(function (a, b) { return (a.status === 'Client Review' ? 0 : 1) - (b.status === 'Client Review' ? 0 : 1); }), select = $('#client-script-select');
     if (!records.some(function (s) { return s.id === selectedScript; })) selectedScript = records.length ? records[0].id : null;
     var signature = JSON.stringify([client.current().id, selectedScript, records]); if (signature === scriptSignature) return; scriptSignature = signature;
-    select.replaceChildren(); records.forEach(function (s) { var option = node('option', s.title); option.value = s.id; select.append(option); }); select.value = selectedScript || ''; select.disabled = !records.length;
+    select.replaceChildren(); records.forEach(function (s) { var option = node('option', s.title + ' — ' + (s.status === 'Client Review' ? 'Needs your review' : s.status)); option.value = s.id; select.append(option); }); select.value = selectedScript || ''; select.disabled = !records.length;
     var script = selectedScript && client.get('scripts', selectedScript), scenes = $('#client-script-scenes'), actions = $('#client-script-actions'), feedback = $('#client-script-feedback'); scenes.replaceChildren(); actions.replaceChildren(); feedback.replaceChildren();
-    $('#h-script-doc').textContent = script ? script.title : 'No scripts yet'; $('#client-script-status').textContent = script ? script.status : 'Awaiting production'; $('#client-script-status').className = script ? api.statusClass(script.status) : 'badge'; $('.doc__meta').textContent = script ? 'V' + script.version + ' · Updated ' + date(script.updatedAt) : 'Scripts will appear here when prepared by the studio.';
-    $('#client-script-video').hidden = !script; if (!script) return;
+    $('#h-script-doc').textContent = script ? script.title : 'No scripts ready for review'; $('#client-script-status').textContent = script ? script.status : 'Awaiting production'; $('#client-script-status').className = script ? api.statusClass(script.status) : 'badge'; $('.doc__meta').textContent = script ? 'V' + script.version + ' · Updated ' + date(script.updatedAt) : 'Your scripts will appear here when the studio shares them. You can track production in Projects.';
+    $('#client-script-video').hidden = !script; if (!script) { feedback.append(node('p', 'Nothing to review yet. We will share your script here when it is ready.', 'admin-muted')); return; }
+    actions.append(node('p', script.status === 'Approved' ? 'Approved — script review is complete.' : script.status === 'Client Review' ? 'Needs your review — approve this script or request changes below.' : 'Your changes are with the studio. A revised script will appear here when ready.', script.status === 'Approved' ? 'workflow-notice' : 'field-hint'));
     $('#client-script-video').onclick = function () { openVideo(script.videoId); };
     script.scenes.forEach(function (s, i) { var li = node('li', undefined, 'script-scene'), content = node('div', undefined, 'script-scene__content'); content.append(node('div', s.label, 'script-scene__label'), node('p', s.text, 'script-scene__text')); li.append(node('span', String(i + 1).padStart(2, '0'), 'script-scene__no'), content); scenes.append(li); });
     if (!script.feedback.length) feedback.append(node('p', 'No script feedback yet.', 'admin-muted'));
@@ -106,7 +104,7 @@
   function analytics() {
     var videos = client.records('videos'), rounds = client.records('revisions'), completed = videos.filter(function (v) { return v.status === 'Completed'; });
     var kpis = $('#client-analytics-kpis'); kpis.replaceChildren();
-    [['Videos Completed', completed.length], ['In Progress', videos.length - completed.length], ['Awaiting Review', videos.filter(function (v) { return v.status === 'Client Review'; }).length], ['Revision Rounds', rounds.length], ['Approved', videos.filter(function (v) { return v.status === 'Approved'; }).length]].forEach(function (m) { var card = node('article', undefined, 'stat-card stat-card--compact'); card.append(node('h2', m[0], 'stat-card__label'), node('div', m[1], 'stat-card__value'), node('p', 'All recorded activity', 'stat-card__delta')); kpis.append(card); });
+    [['Videos Completed', completed.length], ['In Progress', videos.length - completed.length], ['Awaiting Review', videos.filter(function (v) { return v.status === 'Client Review'; }).length], ['Revision Rounds', rounds.length], ['Approved · awaiting delivery', videos.filter(function (v) { return v.status === 'Approved'; }).length]].forEach(function (m) { var card = node('article', undefined, 'stat-card stat-card--compact'); card.append(node('h2', m[0], 'stat-card__label'), node('div', m[1], 'stat-card__value')); kpis.append(card); });
     var stages = $('#client-stages'); stages.replaceChildren(); api.videoStatuses.forEach(function (s) { var row = node('li'); row.append(node('span', s, 'funnel__label'), node('span', videos.filter(function (v) { return v.status === s; }).length, 'funnel__value')); stages.append(row); });
     var months = {}; completed.forEach(function (v) { var key = completedAt(v) ? completedAt(v).slice(0, 7) : 'Date not recorded'; months[key] = (months[key] || 0) + 1; });
     var monthLabel = function (key) { return /^\d{4}-\d{2}$/.test(key) ? new Date(+key.slice(0, 4), +key.slice(5) - 1, 1).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : key; };
@@ -169,7 +167,7 @@
   switcher.addEventListener('focusout', function (event) { if (event.relatedTarget && !switcher.contains(event.relatedTarget)) setSwitcher(false); });
   document.addEventListener('click', function (event) { if (!switchList.hidden && !switcher.contains(event.target)) setSwitcher(false); });
 
-  window.addEventListener('fijly:clientchange', function () { settingsDirty = false; selectedScript = null; modal.close(); shownAsset = null; $('#client-settings-note').textContent = ''; $('#client-asset-search').value = ''; $('#client-asset-category').value = 'all'; });
+  window.addEventListener('fijly:clientchange', function () { settingsDirty = false; selectedScript = null; modal.close(); shownAsset = null; $('#client-asset-success').textContent = ''; $('#client-asset-success').hidden = true; $('#client-settings-note').textContent = ''; $('#client-asset-search').value = ''; $('#client-asset-category').value = 'all'; });
   function render(changed) {
     var available=!!client.current();
     document.body.classList.toggle('client-no-workspace',!available);

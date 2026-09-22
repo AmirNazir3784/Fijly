@@ -37,3 +37,33 @@
 .field-hint { margin-top:6px; color:var(--text-muted); font-size:12px; line-height:1.5; }
 .workflow-body .admin-detail-facts { margin-top:18px; }
 @media(max-width:600px) { .media-placeholder { aspect-ratio:auto; min-height:190px; } .review-bar { padding:16px; } }
+
+/* Round B: compact cards use the existing table rows, with no duplicate data. */
+.btn-danger { background:#b42318; border-color:#b42318; color:#fff; }
+.btn-danger:hover { background:#912018; border-color:#912018; color:#fff; }
+.admin-action-panel { margin:0 0 20px; }
+.admin-action-queue { list-style:none; padding:0; margin:0; max-height:360px; overflow-y:auto; }
+.admin-action-queue li { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:14px 0; border-bottom:1px solid var(--border-light); }
+.admin-action-queue li:last-child { border-bottom:0; }
+.admin-action-queue .btn-link { white-space:normal; text-align:left; }
+.admin-action-label { color:var(--text-muted); font-size:12px; flex-shrink:0; }
+.sidebar-count { margin-left:auto; min-width:22px; padding:2px 6px; border-radius:12px; background:var(--primary-tint); color:var(--primary); text-align:center; font-size:11px; }
+.field-error { margin:6px 0 0; }
+.input[aria-invalid="true"] { border-color:#b42318; }
+@media(max-width:600px) {
+  .mobile-records-wrap { overflow:visible; }
+  .table.mobile-records { display:block; min-width:0; width:100%; table-layout:auto; }
+  .mobile-records thead { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }
+  .mobile-records tbody { display:block; width:100%; }
+  .mobile-records tbody tr { display:block; margin:12px; padding:14px; border:1px solid var(--border-default); border-radius:12px; background:var(--surface-white); }
+  .table.mobile-records tbody td { display:block; width:auto; min-width:0; max-width:none; padding:7px 0; border:0; white-space:normal; text-align:left; }
+  .mobile-records td::before { content:attr(data-label); display:block; margin-bottom:4px; font-size:10px; font-weight:600; color:var(--text-muted); }
+  .mobile-records td:first-child::before, .mobile-records .table-empty-cell::before { display:none; }
+  .mobile-records td:first-child .btn { padding-left:0; text-align:left; }
+  .mobile-records button { min-height:32px; }
+  #screen-projects .table-hint, [data-workflow-list] .table-hint,
+  #screen-assets .table-hint, #screen-scripts .table-hint,
+  #screen-dashboard .table-hint { display:none; }
+  .admin-action-queue li { align-items:flex-start; flex-direction:column; gap:6px; }
+  .admin-action-label { flex-shrink:1; }
+}
