@@ -2,7 +2,9 @@
    records; form edits and the photo preview are temporary until Save. */
 (function () {
   'use strict';
-  var api = window.FijlyMock, admin = document.body.classList.contains('admin-body');
+  var api = window.FijlyData || window.FijlyMock, admin = document.body.classList.contains('admin-body');
+  // The Admin profile lives in Supabase `profiles`, which has no phone column.
+  var phoneSupported = !(admin && api.capabilities && api.capabilities.adminPhone === false);
   var trigger = document.querySelector('.sidebar-user');
   var modal = document.getElementById('profile-dialog');
   modal.id = 'profile-dialog'; modal.className = 'admin-dialog profile-dialog';
@@ -16,12 +18,15 @@
     '<p class="workflow-notice" id="profile-status" role="status" hidden></p><p class="workflow-error" id="profile-error" role="alert"></p></div>' +
     '<div class="admin-dialog-foot"><button class="btn btn-ghost btn--md dialog-dismiss" type="button" data-profile-close>Close</button><button class="btn btn-primary btn--md" type="submit" id="profile-save">Save changes</button></div></form>';
   document.body.append(modal);
+  if (!phoneSupported) document.getElementById('profile-phone').closest('.form-group').hidden = true;
   var form = modal.querySelector('form'), nameField = document.getElementById('profile-name'), phoneField = document.getElementById('profile-phone');
   var photoInput = document.getElementById('profile-photo-file'), save = document.getElementById('profile-save');
   var status = document.getElementById('profile-status'), error = document.getElementById('profile-error'), photoError = document.getElementById('profile-photo-error');
   var dirty = new Set(), draftPhoto = '', imageTask = 0, photoLoading = false, openedId = null;
   var settingsForm = document.getElementById(admin ? 'settings-form' : 'client-settings-form');
   var settingsFields = admin ? { name:'set-admin-name', email:'set-admin-email', role:'set-admin-role' } : { name:'client-contact', email:'client-email' };
+  // Only mirror fields this page has (the Supabase Admin Settings has no Role field).
+  Object.keys(settingsFields).forEach(function (key) { if (!document.getElementById(settingsFields[key])) delete settingsFields[key]; });
   var settingsEdits = new Set();
   Object.keys(settingsFields).forEach(function (key) { document.getElementById(settingsFields[key]).addEventListener('input', function () { settingsEdits.add(key); }); });
   // Refresh untouched profile references even if an unrelated Settings field
@@ -61,7 +66,7 @@
     avatar(trigger.querySelector('.avatar'), profile.name, profile.photo);
     avatar(reference.querySelector('[data-profile-avatar]'), profile.name, profile.photo);
     reference.querySelector('[data-profile-name]').textContent = profile.name;
-    reference.querySelector('[data-profile-phone]').textContent = profile.phone || 'Add a phone number or profile photo';
+    reference.querySelector('[data-profile-phone]').textContent = profile.phone || (phoneSupported ? 'Add a phone number or profile photo' : 'Add a profile photo');
     Object.keys(settingsFields).forEach(function (key) { if (!settingsEdits.has(key)) document.getElementById(settingsFields[key]).value = profile[key] || ''; });
     if (!modal.open) return;
     if (openedId !== profile.id) { modal.close(); return; }
@@ -111,29 +116,31 @@
     } catch (_) { if (task === imageTask) photoError.textContent = 'This image could not be opened. Please choose another photo.'; }
     finally { if (task === imageTask) { photoLoading = false; save.disabled = false; render(); } }
   });
-  form.addEventListener('submit', function (event) {
-    event.preventDefault(); if (photoLoading || !modal.open) return;
+  form.addEventListener('submit', async function (event) {
+    event.preventDefault(); if (photoLoading || !modal.open || save.getAttribute('aria-busy') === 'true') return;
     var profile = current(); if (!profile || openedId !== profile.id) { modal.close(); return; }
     nameField.setCustomValidity(nameField.value.trim() ? '' : 'Please enter your full name.');
     if (!form.reportValidity()) return;
     error.textContent = '';
+    save.disabled = true; save.setAttribute('aria-busy', 'true');
     try {
       if (admin) {
         var patch = {};
         if (dirty.has('name')) patch.adminName = nameField.value.trim();
         if (dirty.has('phone')) patch.adminPhone = phoneField.value.trim();
         if (dirty.has('photo')) patch.adminPhoto = draftPhoto;
-        api.saveSettings(patch);
+        await api.saveSettings(patch);
       } else if (dirty.size) {
         var record = api.client.current();
         var values = Object.assign({}, record, api.client.preferences());
         if (dirty.has('name')) values.contact = nameField.value.trim();
         if (dirty.has('phone')) values.phone = phoneField.value.trim();
         if (dirty.has('photo')) values.profileImage = draftPhoto;
-        api.client.saveProfile(values);
+        await api.client.saveProfile(values);
       }
       dirty.clear(); render(); status.textContent = 'Profile updated.'; status.hidden = false;
     } catch (err) { error.textContent = err.message; }
+    finally { save.disabled = photoLoading; save.removeAttribute('aria-busy'); }
   });
   window.addEventListener('fijly:clientchange', function () { settingsEdits.clear(); if (modal.open) modal.close(); });
   api.subscribe(function (changed) { if (changed.some(function (key) { return key === 'clients' || key === 'settings'; })) render(); });

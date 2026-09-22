@@ -1,10 +1,10 @@
 /* Admin Assets, Scripts, Analytics and Settings.
-   Reads and writes the same session mock service as every other screen; no
-   separate fixtures. Assets are metadata records only — a picked file
-   contributes its name, type and size and nothing is uploaded or stored. */
+   Reads and writes the shared data service (Supabase via FijlyData in the
+   Admin portal). Assets are metadata records only — a picked file contributes
+   its name, type and size and nothing is uploaded or stored. */
 (function () {
   'use strict';
-  var api = window.FijlyMock;
+  var api = window.FijlyData || window.FijlyMock;
   var state = api.state;
   if (!document.getElementById('screen-assets')) return;
 
@@ -24,6 +24,11 @@
     row.append(td);
   }
   function bytes(value) { return api.formatBytes(value); }
+  // Script versions are not stored in the database, so they are not shown there.
+  var showVersions = !api.capabilities || api.capabilities.scriptVersion !== false;
+  function ver(item) { return showVersions ? ' V' + item.version : ''; }
+  // Marks a control busy while an async save runs; returns a release function.
+  function busy(control) { control.disabled = true; control.setAttribute('aria-busy', 'true'); return function () { control.disabled = false; control.removeAttribute('aria-busy'); }; }
   function day(value) { return api.formatDate(value, '—'); }
   function fillOptions(select, values, labelFor) {
     var keep = select.querySelector('option[value="all"]');
@@ -162,9 +167,10 @@
     if (event.target.setCustomValidity) event.target.setCustomValidity('');
   });
 
-  assetForm.addEventListener('submit', function (event) {
+  assetForm.addEventListener('submit', async function (event) {
     event.preventDefault();
-    if(!assetEditor.open)return;
+    var submit = assetForm.querySelector('[type="submit"]');
+    if(!assetEditor.open||submit.disabled)return;
     var name = assetForm.elements.name;
     name.value = name.value.trim();
     name.setCustomValidity(name.value ? '' : 'Please give the file a name.');
@@ -180,14 +186,15 @@
       payload.size = pickedFile.size;
       payload.fileType = (pickedFile.name.split('.').pop() || 'file');
     }
+    var release = busy(submit);
     try {
-      var saved = api.saveAsset(payload);
+      var saved = await api.saveAsset(payload);
       assetStatus.textContent = saved.name + (editingAsset ? ' updated' : ' added') + ' for ' + clientName(saved.client) + '. Metadata only; no file was uploaded.';
       assetEditor.close();
     } catch (error) {
       name.setCustomValidity(error.message);
       assetForm.reportValidity();
-    }
+    } finally { release(); }
   });
 
   document.getElementById('edit-asset').addEventListener('click', function () {
@@ -200,7 +207,7 @@
     var item = state.assets.find(function (record) { return record.id === selectedAsset; });
     if (!item) return;
     document.getElementById('asset-confirm-text').textContent =
-      'Remove "' + item.name + '" from ' + clientName(item.client) + '? This cannot be undone in this mock session.';
+      'Remove "' + item.name + '" from ' + clientName(item.client) + '? This cannot be undone' + (api.persistent ? '.' : ' in this mock session.');
     assetDetail.close();
     assetConfirm.showModal();
   });
@@ -212,14 +219,17 @@
     });
   });
 
-  document.getElementById('asset-confirm-ok').addEventListener('click', function () {
+  document.getElementById('asset-confirm-ok').addEventListener('click', async function (event) {
+    var control = event.currentTarget;
+    if (control.disabled) return;
+    var release = busy(control);
     try {
-      var removed = api.deleteAsset(selectedAsset);
+      var removed = await api.deleteAsset(selectedAsset);
       assetStatus.textContent = removed.name + ' removed from ' + clientName(removed.client) + '.';
       selectedAsset = null;
     } catch (error) {
       assetStatus.textContent = error.message;
-    }
+    } finally { release(); }
     assetConfirm.close();
   });
 
@@ -301,7 +311,8 @@
       name.dataset.script = item.id;
       name.setAttribute('aria-label', 'View ' + item.title);
       var identity = node('div');
-      identity.append(name, node('span', 'admin-muted admin-block', 'V' + item.version));
+      identity.append(name);
+      if (showVersions) identity.append(node('span', 'admin-muted admin-block', 'V' + item.version));
       cell(row, identity);
       cell(row, scriptVideo(item).title);
       cell(row, clientName(item.client));
@@ -359,7 +370,7 @@
     videoLink.disabled = !linked.video;
     videoLink.addEventListener('click', function () { scriptDetail.close(); window.FijlyWorkflow.open('videos', linked.video.id); });
     var facts = node('dl', 'admin-detail-facts');
-    [['Client', clientName(item.client)], ['Related video', videoLink], ['Version', 'V' + item.version], ['Last updated', day(item.updatedAt)]].forEach(function (pair) {
+    [['Client', clientName(item.client)], ['Related video', videoLink]].concat(showVersions ? [['Version', 'V' + item.version]] : [], [['Last updated', day(item.updatedAt)]]).forEach(function (pair) {
       var group = node('div');
       var value = node('dd');
       value.append(typeof pair[1] === 'string' ? document.createTextNode(pair[1]) : pair[1]);
@@ -369,8 +380,8 @@
     var status = node('p', 'admin-script-state');
     if (item.status === 'Approved') { status.classList.add('admin-script-state--approved'); status.textContent = 'Approved by the client. No further action needed.'; }
     else if (item.status === 'Client Review') status.textContent = 'With the client for review. They can approve it or request a revision.';
-    else if (editable) status.textContent = 'Draft V' + item.version + ' — write or refine each scene, then send it to the client.';
-    else status.textContent = 'The client asked for changes to V' + item.version + '. Start the revision to edit the scenes for a new draft.';
+    else if (editable) status.textContent = 'Draft' + ver(item) + ' — write or refine each scene, then send it to the client.';
+    else status.textContent = 'The client asked for changes to' + (showVersions ? ' V' + item.version : ' this script') + '. Start the revision to edit the scenes for a new draft.';
     var scenes = node('ol', 'doc__body admin-script-scenes'), draft = sceneDrafts[item.id];
     item.scenes.forEach(function (scene, index) {
       var li = node('li', 'script-scene');
@@ -404,29 +415,36 @@
   }
 
   function scriptActionDone(item, text) { scriptError.textContent = ''; scriptNotice = { id: item.id, status: item.status, text: text }; scriptSaveStatus.textContent = text; openScriptDetail(item.id); }
-  function saveScenes(item) { if (!sceneDrafts[item.id]) return false; api.updateScriptScenes(item.id, editedScenes()); delete sceneDrafts[item.id]; return true; }
-  scriptSave.addEventListener('click', function () {
-    var item = state.scripts.find(function (record) { return record.id === selectedScript; });
-    if (!item) return;
-    try { sceneDrafts[item.id] = editedScenes(); saveScenes(item); scriptActionDone(item, item.title + ' V' + item.version + ' draft saved.'); }
+  // A draft is cleared only after its save succeeds, so a failed save keeps it.
+  async function saveScenes(item) { if (!sceneDrafts[item.id]) return false; await api.updateScriptScenes(item.id, sceneDrafts[item.id]); delete sceneDrafts[item.id]; return true; }
+  function currentScript() { return state.scripts.find(function (record) { return record.id === selectedScript; }); }
+  scriptSave.addEventListener('click', async function () {
+    var item = currentScript();
+    if (!item || scriptSave.disabled) return;
+    var release = busy(scriptSave);
+    try { sceneDrafts[item.id] = editedScenes(); await saveScenes(item); item = currentScript() || item; scriptActionDone(item, item.title + ver(item) + ' draft saved.'); }
     catch (error) { scriptError.textContent = error.message; }
+    finally { release(); }
   });
-  scriptAction.addEventListener('click', function () {
-    var item = state.scripts.find(function (record) { return record.id === selectedScript; });
-    if (!item) return;
+  scriptAction.addEventListener('click', async function () {
+    var item = currentScript();
+    if (!item || scriptAction.disabled) return;
+    var release = busy(scriptAction);
     try {
       if (item.status === 'Revision Requested') {
-        api.adminReviewScript(item.id);
-        scriptActionDone(item, 'Revision started — edit the scenes, then send V' + item.version + ' to the client.');
+        await api.adminReviewScript(item.id);
+        item = currentScript() || item;
+        scriptActionDone(item, 'Revision started — edit the scenes, then send' + (showVersions ? ' V' + item.version : ' it') + ' to the client.');
       } else if (item.status === 'Draft') {
         // Unsaved edits go out with the script rather than being dropped.
-        saveScenes(item);
-        api.adminSendScriptForReview(item.id);
-        scriptActionDone(item, item.title + ' V' + item.version + ' sent to the client for review.');
+        await saveScenes(item);
+        await api.adminSendScriptForReview(item.id);
+        item = currentScript() || item;
+        scriptActionDone(item, item.title + ver(item) + ' sent to the client for review.');
       }
     } catch (error) {
       scriptError.textContent = error.message;
-    }
+    } finally { release(); }
     // Move focus off the action button when it is hidden for a read-only status.
     if (scriptAction.hidden) scriptDetail.querySelector('[data-close-script-detail]').focus();
   });
@@ -724,8 +742,10 @@
   });
   settingsForm.addEventListener('change', function () { settingsDirty = true; });
 
-  settingsForm.addEventListener('submit', function (event) {
+  settingsForm.addEventListener('submit', async function (event) {
     event.preventDefault();
+    var submit = settingsForm.querySelector('[type="submit"]');
+    if (submit.disabled) return;
     var values = {};
     TEXT_KEYS.forEach(function (key) {
       if (settingsForm.elements[key]) values[key] = settingsForm.elements[key].value.trim();
@@ -735,15 +755,17 @@
       if (settingsForm.elements[key]) values[key] = settingsForm.elements[key].checked;
     });
     if (!settingsForm.reportValidity()) return;
+    var release = busy(submit);
     try {
-      api.saveSettings(values);
+      await api.saveSettings(values);
       settingsDirty = false;
-      settingsStatus.textContent = 'Settings saved for this mock session.';
+      loadSettings();
+      settingsStatus.textContent = api.persistent ? 'Settings saved.' : 'Settings saved for this mock session.';
     } catch (error) {
       settingsStatus.textContent = error.message;
       var field = /studio email/i.test(error.message) ? settingsForm.elements.studioEmail : settingsForm.elements.adminEmail;
       if (/email/i.test(error.message) && field) { field.setCustomValidity(error.message); field.reportValidity(); }
-    }
+    } finally { release(); }
   });
 
   document.getElementById('settings-reset').addEventListener('click', function () {
