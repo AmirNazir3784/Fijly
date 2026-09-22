@@ -1,9 +1,9 @@
-/* Shared operational UI for both portals. The Admin portal reads Supabase
-   through FijlyData; the Client portal keeps the session mock until Part 3B.
-   Writes may be async (FijlyData) or sync (FijlyMock); both are awaited. */
+/* Shared operational UI for both portals. Both read and write Supabase through
+   FijlyData (the Client portal through its workspace view, FijlyData.client).
+   Writes are async and awaited; controls stay busy until they settle. */
 (function () {
   'use strict';
-  var api = window.FijlyData || window.FijlyMock, state = api.state, admin = document.body.classList.contains('admin-body');
+  var api = window.FijlyData, state = api.state, admin = document.body.classList.contains('admin-body');
   var filters = {}, current = null, clientFilter = 'all', applyDefaults = function () {}, notice = null;
   var closeIcon = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
   var playIcon = '<svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>';
@@ -224,8 +224,9 @@
     }
     function clearErrors() { errorFields.forEach(function (name) { var field = requestForm.elements.namedItem(name); field.removeAttribute('aria-invalid'); var error = document.getElementById(field.id + '-error'); error.hidden = true; error.textContent = ''; }); }
     requestForm.addEventListener('reset', clearErrors);
+    var submitting = false;
     requestForm.onsubmit = async function (e) {
-      e.preventDefault(); clearErrors();
+      e.preventDefault(); if (submitting) return; clearErrors();
       var note = document.querySelector('[data-request-note]'), f = requestForm.elements, invalid = [];
       [['name', 'Please enter a video title.'], ['brief', 'Please describe what you want in your video.'], ['due', 'Please choose a valid deadline.']].forEach(function (pair) {
         var field = f.namedItem(pair[0]); if (!field.value.trim() || !field.validity.valid) { fieldError(pair[0], pair[1]); invalid.push(pair[0]); }
@@ -235,14 +236,17 @@
       if (invalid.length) {
         note.className = 'workflow-error'; note.textContent = 'Please check the highlighted fields.'; note.hidden = false; f.namedItem(invalid[0]).focus(); return;
       }
+      // One submission at a time: a double click must not create two requests.
+      var submitButton = requestForm.querySelector('[type="submit"]'); submitting = true; submitButton.disabled = true; submitButton.setAttribute('aria-busy', 'true');
       try {
         await api.client.createRequest({title:f.name.value,videoType:f.type.value,instructions:f.brief.value,platform:f.platform.value,priority:f.priority.value,deadline:f.due.value,length:f.namedItem('length').value,references:f.references.value},files(f.attachments));
         requestForm.reset(); note.className = 'workflow-notice'; note.textContent = 'Request submitted. We will review your brief next. You can track its progress in Your requests.';
       } catch (error) { note.className = 'workflow-error'; note.textContent = error.message; if (/reference/i.test(error.message)) { fieldError('references', 'Enter a complete link starting with https:// or http://.'); f.references.focus(); } }
+      finally { submitting = false; submitButton.disabled = false; submitButton.removeAttribute('aria-busy'); }
       note.hidden = false;
     };renderClient();
   }
-  if(!admin){document.querySelector('#client-project-search').addEventListener('input',renderClient);window.addEventListener('fijly:clientchange',function(){current=null;[detail,editor,confirm].forEach(function(d){d.node.close();});clearClientFilters();requestForm.reset();document.querySelector('[data-request-note]').hidden=true;});}
+  if(!admin)document.querySelector('#client-project-search').addEventListener('input',renderClient);
   api.subscribe(function(changed){
     if(admin && changed.includes('clients'))document.querySelectorAll('[data-workflow-list] [data-filter="client"]').forEach(function(select){var value=select.value;select.replaceChildren();var all=el('option','All clients');all.value='all';select.append(all);state.clients.forEach(function(c){var option=el('option',c.name);option.value=c.id;select.append(option);});select.value=state.clients.some(function(c){return c.id===value;})?value:'all';filters[select.closest('[data-workflow-list]').dataset.workflowList].client=select.value;});
     if(changed.some(function(k){return ['clients','requests','videos','revisions'].includes(k);})) {if(admin)Object.keys(filters).forEach(renderList);else renderClient();if(detail.node.open){try{renderDetail();}catch(error){detail.node.close();current=null;}}}

@@ -1,9 +1,8 @@
 /* Portal auth guard. Loaded after supabase-client.js and before the portal
    scripts. The #auth-loading overlay covers the (inert) portal until the
-   session and profile are confirmed, and, where the page reads Supabase
-   (FijlyData, the Admin portal), until its data has loaded. A failed check
-   redirects before it lifts. The Client portal keeps the session mock until
-   Part 3B. */
+   session and profile are confirmed and the portal's data has loaded from
+   Supabase (FijlyData). A failed check redirects before it lifts. The Client
+   portal needs a workspace linked to the account (profiles.client_id). */
 (function () {
   'use strict';
   var admin = document.body.classList.contains('admin-body');
@@ -38,27 +37,34 @@
     retry.focus();
   }
 
-  // The mock profile (Settings name/email, client contact) becomes the signed-in
-  // account once per tab session, so later mock edits in this tab still stick.
-  function seedIdentity(profile) {
-    if (window.FijlyData) return; // Identity already comes from the database.
-    var api = window.FijlyMock, key = 'fijly-auth-seeded-' + (admin ? 'admin' : 'client');
-    if (!api) return;
-    try { if (sessionStorage.getItem(key) === profile.id) return; } catch (_) {}
-    try {
-      if (admin) {
-        var patch = {};
-        if (profile.full_name) patch.adminName = profile.full_name;
-        if (profile.email) patch.adminEmail = profile.email;
-        api.saveSettings(patch);
-      } else if (profile.role === 'client' && api.client.current()) {
-        var record = api.client.current();
-        api.client.saveProfile(Object.assign({}, record, api.client.preferences(), {
-          contact: profile.full_name || record.contact, email: profile.email || record.email
-        }));
-      }
-      try { sessionStorage.setItem(key, profile.id); } catch (_) {}
-    } catch (_) { /* Mock validation must never block the portal. */ }
+  // A Client-portal account with no linked workspace (or an admin opening the
+  // Client portal) sees a short explanation instead of an empty portal.
+  function noWorkspace(role) {
+    if (!overlay) return;
+    var inner = overlay.querySelector('.auth-loading__inner');
+    var box = document.createElement('div'); box.className = 'no-workspace-message';
+    var heading = document.createElement('h2'); heading.className = 'auth-loading__title';
+    var text = document.createElement('p'); text.className = 'auth-loading__text';
+    var actions = document.createElement('div'); actions.className = 'auth-loading__actions';
+    var out = document.createElement('button'); out.type = 'button'; out.className = 'btn btn-outline btn--md'; out.dataset.signOut = ''; out.innerHTML = '<span class="sidebar-signout__label">Sign out</span>';
+    if (role === 'admin') {
+      heading.textContent = 'This is the Client portal';
+      text.textContent = 'You are signed in as a studio admin. Clients see their workspace here when they sign in; manage every client from the Admin portal.';
+      var adminLink = document.createElement('a'); adminLink.className = 'btn btn-primary btn--md'; adminLink.href = 'admin.html'; adminLink.textContent = 'Open the Admin portal';
+      actions.append(adminLink, out);
+    } else {
+      heading.textContent = 'Welcome to FIJLY Studio';
+      text.textContent = 'Your workspace is being set up. Contact the FIJLY team if you need access.';
+      actions.append(out);
+    }
+    var back = document.createElement('a'); back.className = 'auth-loading__back'; back.href = 'index.html'; back.textContent = '← Back to fijly.com';
+    box.append(heading, text, actions, back);
+    overlay.setAttribute('role', 'region'); overlay.setAttribute('aria-label', heading.textContent);
+    // The portal stays closed, so its skip link would lead nowhere.
+    var skip = document.querySelector('.skip-link'); if (skip) skip.hidden = true;
+    inner.replaceChildren(box);
+    wireSignOut();
+    heading.tabIndex = -1; heading.focus();
   }
 
   function wireSignOut() {
@@ -97,11 +103,9 @@
     onAuthStateChange();
 
     await domReady(); // Portal scripts and the data store have initialised.
-    if (window.FijlyData) {
-      try { await withTimeout(window.FijlyData.load()); }
-      catch (_) { fail('We couldn’t load your studio data. Check your connection and try again.'); return null; }
-    }
-    seedIdentity(profile);
+    if (!admin && !window.FIJLY_AUTH.clientId) { noWorkspace(profile.role); return null; }
+    try { await withTimeout(window.FijlyData.load()); }
+    catch (_) { fail('We couldn’t load your studio data. Check your connection and try again.'); return null; }
     wireSignOut();
     if (layout) layout.inert = false;
     if (overlay) overlay.remove();

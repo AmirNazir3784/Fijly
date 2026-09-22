@@ -28,6 +28,12 @@
   .auth-loading__spinner { width: 40px; height: 40px; border: 3px solid var(--border-default); border-top-color: var(--primary); border-radius: 50%; animation: auth-spin .6s linear infinite; }
   .auth-loading__text { color: var(--text-muted); font-size: var(--text-body); line-height: var(--leading-normal); }
   .auth-loading__actions { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--space-sm); }
+  /* No linked workspace: a short explanation in place of the portal. */
+  .no-workspace-message { display: flex; flex-direction: column; align-items: center; gap: var(--space-md); }
+  .auth-loading__title { font-size: var(--text-section-heading); font-weight: var(--weight-bold); line-height: var(--leading-tight); color: var(--text-primary); }
+  .auth-loading__title:focus { outline: none; }
+  .auth-loading__back { font-size: var(--text-meta); font-weight: var(--weight-semibold); color: var(--text-muted); }
+  .auth-loading__back:hover { color: var(--primary); }
   @keyframes auth-spin { to { transform: rotate(360deg); } }
 </style>
 <noscript><style>.auth-loading { display: none; }</style></noscript>
@@ -54,16 +60,6 @@
 <button aria-label="Close menu" class="sidebar-close" data-sidebar-close="" type="button">
 <svg aria-hidden="true" fill="none" height="16" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24" width="16"><path d="M6 6l12 12M18 6L6 18"></path></svg>
 </button>
-</div>
-<div class="client-switcher" data-client-switcher="">
-<button aria-controls="client-switcher-list" aria-expanded="false" class="client-switcher__button" id="client-switcher-button" type="button">
-<span aria-hidden="true" class="client-switcher__avatar">N</span>
-<span class="client-switcher__meta"><span class="client-switcher__label">CLIENT</span><span class="client-switcher__name">Northbeam</span></span>
-<span class="visually-hidden">Switch client workspace</span>
-<svg aria-hidden="true" class="client-switcher__chevron" fill="none" height="14" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24" width="14"><path d="M6 9l6 6 6-6"></path></svg>
-</button>
-<ul aria-label="Client workspaces" class="client-switcher__list" hidden="" id="client-switcher-list"></ul>
-<span class="visually-hidden" id="client-switch-status" role="status"></span>
 </div>
 <div class="sidebar-label" id="sidebar-label">CLIENT WORKSPACE</div>
 <nav aria-labelledby="sidebar-label" class="sidebar-nav">
@@ -118,7 +114,7 @@
 <div class="sidebar-backdrop" data-sidebar-close=""></div>
 <!-- MAIN -->
 <main class="studio-main">
-<p class="studio-demo-note visually-hidden" id="studio-demo-note">Northbeam workspace · Mock data. Changes stay in this mock session.</p>
+<p class="studio-demo-note visually-hidden" id="studio-demo-note">Client workspace · Live data. Changes are saved to the FIJLY database.</p>
 <header class="studio-topbar">
 <button aria-controls="sidebar" aria-expanded="false" aria-label="Open menu" class="icon-btn studio-topbar__menu" data-sidebar-open="" type="button">
 <svg aria-hidden="true" fill="none" height="18" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24" width="18"><path d="M4 7h16M4 12h16M4 17h16"></path></svg>
@@ -341,10 +337,10 @@
 <div class="form-group"><label class="field-label" for="req-priority">Priority</label><select class="input" id="req-priority" name="priority"><option>Normal</option><option>Low</option><option>High</option><option>Urgent</option></select></div>
 </div>
 <div class="form-group"><label class="field-label" for="req-references">Reference links (one per line)</label><textarea class="input" id="req-references" name="references" placeholder="https://example.com/reference" rows="2"></textarea></div>
-<div class="form-group"><label class="field-label" for="req-attachments">Attachments (file names only in this mock)</label><input class="input workflow-file" id="req-attachments" multiple="" name="attachments" type="file"/></div>
+<div class="form-group"><label class="field-label" for="req-attachments">Attachments (file names only; files are not uploaded)</label><input class="input workflow-file" id="req-attachments" multiple="" name="attachments" type="file"/></div>
 <p class="request-form__note" id="request-demo">Preview only: requests stay in this workspace. Files are not uploaded.</p>
 <button class="btn btn-primary btn--md btn--block" type="submit">Submit request</button>
-<p class="request-form__note" data-request-note="" hidden="" role="status">Request added to this mock workspace. Nothing was sent externally.</p>
+<p class="request-form__note" data-request-note="" hidden="" role="status">Request sent to the FIJLY studio. We will review your brief next.</p>
 </form>
 <section aria-labelledby="h-open-requests" class="stack" data-request-list="">
 <h2 class="list-title" id="h-open-requests">Your requests</h2>
@@ -386,15 +382,7 @@
 <span aria-hidden="true" class="workspace-logo">N</span>
 <div><div class="workspace-row__name">Northbeam</div><div class="workspace-row__sub">northbeam.io · Client workspace</div></div>
 
-</div><div class="form-row"><div class="form-group"><label class="field-label" for="client-company">Company name</label><input class="input" id="client-company" maxlength="120" name="name" required=""/></div><div class="form-group"><label class="field-label" for="client-website">Company website</label><input class="input" id="client-website" maxlength="200" name="website" placeholder="example.com"/></div></div><div class="form-row"><div class="form-group"><label class="field-label" for="client-contact">Contact name</label><input class="input" id="client-contact" maxlength="120" name="contact" required=""/></div><div class="form-group"><label class="field-label" for="client-email">Contact email</label><input class="input" id="client-email" name="email" required="" type="email"/></div></div>
-<label class="setting-row" for="set-autoshare">
-<span><span class="setting-row__title">Delivery notifications</span><span class="setting-row__sub">Notify me when a video is delivered</span></span>
-<span class="toggle-switch"><input checked="" id="set-autoshare" name="autoshare" type="checkbox"/><span class="toggle-switch__track"></span></span>
-</label>
-<label class="setting-row" for="set-digest">
-<span><span class="setting-row__title">Weekly analytics digest</span><span class="setting-row__sub">Weekly activity summary preference</span></span>
-<span class="toggle-switch"><input id="set-digest" name="digest" type="checkbox"/><span class="toggle-switch__track"></span></span>
-</label>
+</div><div class="form-row"><div class="form-group"><label class="field-label" for="client-company">Company name</label><input class="input" id="client-company" maxlength="120" name="name" required=""/></div><div class="form-group"><label class="field-label" for="client-website">Company website</label><input class="input" id="client-website" maxlength="200" name="website" type="url" placeholder="https://example.com" autocomplete="url"/></div></div><div class="form-row"><div class="form-group"><label class="field-label" for="client-contact">Contact name</label><input class="input" id="client-contact" maxlength="120" name="contact" required=""/></div><div class="form-group"><label class="field-label" for="client-email">Contact email</label><input class="input" id="client-email" name="email" required="" type="email"/></div></div>
 </section>
 <section aria-labelledby="h-brand-defaults" class="panel">
 <h2 id="h-brand-defaults">Studio preferences</h2>
@@ -409,7 +397,7 @@
 </div>
 </div>
 </section>
-<div class="panel"><label class="setting-row" for="client-notify-review"><span class="setting-row__title">Notify me when a draft is ready for review</span><span class="toggle-switch"><input id="client-notify-review" name="review" type="checkbox"/><span class="toggle-switch__track"></span></span></label><p class="panel__sub">Preferences are saved for this mock session; no emails are sent.</p><div class="workflow-actions"><button class="btn btn-primary btn--md" type="submit">Save settings</button><button class="btn btn-outline btn--md" id="client-discard-settings" type="button">Discard changes</button></div><p id="client-settings-note" role="status"></p></div></form>
+<div class="panel"><p class="panel__sub">Workspace details and defaults are saved to your FIJLY workspace. Email notifications are not sent yet.</p><div class="workflow-actions"><button class="btn btn-primary btn--md" type="submit">Save settings</button><button class="btn btn-outline btn--md" id="client-discard-settings" type="button">Discard changes</button></div><p id="client-settings-note" role="status"></p></div></form>
 </section>
 </div>
 </main>
@@ -417,10 +405,9 @@
 <!-- Auth: pinned SDK with subresource integrity, then the guard, before any portal JS -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.116.0/dist/umd/supabase.js" integrity="sha384-iLddHTLokph6Omwoyid4XKxHaWa6w41BnoEj0q5oOrzmYPpHIKt1wyjReA7s//pP" crossorigin="anonymous"></script>
 <script src="js/supabase-client.js"></script>
+<script src="js/supabase-data.js"></script>
 <script src="js/portal-auth.js"></script>
 <script src="js/studio-shell.js"></script>
-<script src="js/admin-data.js"></script>
-<script src="js/mock-service.js"></script>
 <script src="js/studio.js"></script>
 <script src="js/workflow.js"></script>
 <script src="js/client-portal.js"></script><dialog id="profile-dialog" class="admin-dialog profile-dialog"></dialog>

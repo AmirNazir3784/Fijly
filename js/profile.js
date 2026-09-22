@@ -1,17 +1,18 @@
-/* Workspace profile UI. Values live only on the existing Settings/client
-   records; form edits and the photo preview are temporary until Save. */
+/* The signed-in person's profile UI. Name and photo are saved to their
+   Supabase `profiles` row (the Admin's through Settings); form edits and the
+   photo preview are temporary until Save. */
 (function () {
   'use strict';
-  var api = window.FijlyData || window.FijlyMock, admin = document.body.classList.contains('admin-body');
-  // The Admin profile lives in Supabase `profiles`, which has no phone column.
-  var phoneSupported = !(admin && api.capabilities && api.capabilities.adminPhone === false);
+  var api = window.FijlyData, admin = document.body.classList.contains('admin-body');
+  // `profiles` has no phone column, so neither portal offers a phone field.
+  var phoneSupported = false;
   var trigger = document.querySelector('.sidebar-user');
   var modal = document.getElementById('profile-dialog');
   modal.id = 'profile-dialog'; modal.className = 'admin-dialog profile-dialog';
   modal.setAttribute('aria-labelledby', 'profile-title');
   modal.innerHTML = '<div class="admin-dialog-head"><h2 id="profile-title">Your profile</h2><button class="icon-btn" type="button" data-profile-close aria-label="Close profile"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>' +
     '<form id="profile-form"><div class="admin-dialog-fields profile-fields"><div class="profile-intro"><span class="avatar profile-avatar" id="profile-avatar" aria-hidden="true"></span><div><p id="profile-display-name"></p><p class="admin-muted" id="profile-display-role"></p></div></div>' +
-    '<div class="profile-photo"><h3>Profile photo</h3><div class="profile-photo-actions"><button class="btn btn-outline btn--md" type="button" id="profile-change-photo">Change photo</button><button class="btn btn-ghost btn--md" type="button" id="profile-remove-photo">Remove photo</button></div><input id="profile-photo-file" type="file" accept="image/png,image/jpeg,image/webp" hidden><p class="field-hint">PNG, JPG or WebP, up to 5 MB. Your photo stays in this mock workspace.</p><p class="workflow-error" role="alert" id="profile-photo-error"></p></div>' +
+    '<div class="profile-photo"><h3>Profile photo</h3><div class="profile-photo-actions"><button class="btn btn-outline btn--md" type="button" id="profile-change-photo">Change photo</button><button class="btn btn-ghost btn--md" type="button" id="profile-remove-photo">Remove photo</button></div><input id="profile-photo-file" type="file" accept="image/png,image/jpeg,image/webp" hidden><p class="field-hint">PNG, JPG or WebP, up to 5 MB. Your photo is saved to your profile.</p><p class="workflow-error" role="alert" id="profile-photo-error"></p></div>' +
     '<div class="form-group"><label class="field-label" for="profile-name">Full name</label><input class="input" id="profile-name" name="fullName" autocomplete="name" maxlength="80" required></div>' +
     '<div class="form-group"><label class="field-label" for="profile-phone">Phone number <span class="admin-muted">(optional)</span></label><input class="input" id="profile-phone" name="phone" type="tel" autocomplete="tel" maxlength="40" placeholder="+1 555 123 4567"></div>' +
     '<div class="profile-readonly"><div class="form-group"><label class="field-label" for="profile-email">Email</label><input class="input" id="profile-email" type="email" autocomplete="email" readonly></div><div class="form-group"><label class="field-label" for="profile-role">Role</label><input class="input" id="profile-role" readonly></div></div>' +
@@ -24,7 +25,10 @@
   var status = document.getElementById('profile-status'), error = document.getElementById('profile-error'), photoError = document.getElementById('profile-photo-error');
   var dirty = new Set(), draftPhoto = '', imageTask = 0, photoLoading = false, openedId = null;
   var settingsForm = document.getElementById(admin ? 'settings-form' : 'client-settings-form');
-  var settingsFields = admin ? { name:'set-admin-name', email:'set-admin-email', role:'set-admin-role' } : { name:'client-contact', email:'client-email' };
+  // Admin Settings shows the admin's own name and email. The Client Settings
+  // contact is the company's contact, not necessarily this person, so it is
+  // not mirrored.
+  var settingsFields = admin ? { name:'set-admin-name', email:'set-admin-email', role:'set-admin-role' } : {};
   // Only mirror fields this page has (the Supabase Admin Settings has no Role field).
   Object.keys(settingsFields).forEach(function (key) { if (!document.getElementById(settingsFields[key])) delete settingsFields[key]; });
   var settingsEdits = new Set();
@@ -38,11 +42,14 @@
   }); });
   document.getElementById(admin ? 'settings-reset' : 'client-discard-settings').addEventListener('click', function () { settingsEdits.clear(); render(); });
   function current() {
-    var record = admin ? api.state.settings : api.client.current();
-    if (!record) return null;
-    return { id: admin ? 'admin' : record.id, name: admin ? record.adminName : record.contact,
-      email: admin ? record.adminEmail : record.email, role: admin ? record.adminRole : 'Client',
-      phone: (admin ? record.adminPhone : record.phone) || '', photo: (admin ? record.adminPhoto : record.profileImage) || '' };
+    if (admin) {
+      var record = api.state.settings;
+      return { id: 'admin', name: record.adminName, email: record.adminEmail, role: record.adminRole, phone: '', photo: record.adminPhoto || '' };
+    }
+    // A client sees their own profile, with their workspace beneath their name.
+    var me = api.me || {}, workspace = api.client.current();
+    if (!workspace || !me.id) return null;
+    return { id: me.id, name: me.full_name || me.email || 'Client', email: me.email || '', role: 'Client', subtitle: workspace.name, phone: '', photo: me.avatar_url || '' };
   }
   function avatar(target, name, photo) {
     if (target.dataset.photo === photo && target.dataset.name === name) return;
@@ -59,9 +66,9 @@
   function render() {
     var profile = current(); trigger.disabled = !profile;
     reference.hidden = !profile;
-    if (!profile) { trigger.querySelector('.sidebar-user__name').textContent = 'No client selected'; trigger.querySelector('.sidebar-user__email').textContent = ''; avatar(trigger.querySelector('.avatar'), '?', ''); if (modal.open) modal.close(); return; }
+    if (!profile) { trigger.querySelector('.sidebar-user__name').textContent = 'No workspace'; trigger.querySelector('.sidebar-user__email').textContent = ''; avatar(trigger.querySelector('.avatar'), '?', ''); if (modal.open) modal.close(); return; }
     trigger.querySelector('.sidebar-user__name').textContent = profile.name;
-    trigger.querySelector('.sidebar-user__email').textContent = profile.role;
+    trigger.querySelector('.sidebar-user__email').textContent = profile.subtitle || profile.role;
     trigger.setAttribute('aria-label', 'Open profile for ' + profile.name);
     avatar(trigger.querySelector('.avatar'), profile.name, profile.photo);
     avatar(reference.querySelector('[data-profile-avatar]'), profile.name, profile.photo);
@@ -131,18 +138,15 @@
         if (dirty.has('photo')) patch.adminPhoto = draftPhoto;
         await api.saveSettings(patch);
       } else if (dirty.size) {
-        var record = api.client.current();
-        var values = Object.assign({}, record, api.client.preferences());
-        if (dirty.has('name')) values.contact = nameField.value.trim();
-        if (dirty.has('phone')) values.phone = phoneField.value.trim();
-        if (dirty.has('photo')) values.profileImage = draftPhoto;
-        await api.client.saveProfile(values);
+        var values = {};
+        if (dirty.has('name')) values.fullName = nameField.value.trim();
+        if (dirty.has('photo')) values.photo = draftPhoto;
+        await api.saveMyProfile(values);
       }
       dirty.clear(); render(); status.textContent = 'Profile updated.'; status.hidden = false;
     } catch (err) { error.textContent = err.message; }
     finally { save.disabled = photoLoading; save.removeAttribute('aria-busy'); }
   });
-  window.addEventListener('fijly:clientchange', function () { settingsEdits.clear(); if (modal.open) modal.close(); });
   api.subscribe(function (changed) { if (changed.some(function (key) { return key === 'clients' || key === 'settings'; })) render(); });
   render();
 })();

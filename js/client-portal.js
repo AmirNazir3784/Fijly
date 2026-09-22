@@ -1,7 +1,9 @@
-/* Client composition over the existing FIJLY components and scoped mock facade. */
+/* Client portal screens over the existing FIJLY components. Data comes from
+   FijlyData.client: the signed-in client's workspace in Supabase. Writes are
+   async; each control stays busy until its save is confirmed. */
 (function () {
   'use strict';
-  var api = FijlyMock, client = api.client, selectedScript = null, settingsDirty = false, scriptSignature = '';
+  var api = window.FijlyData, client = api.client, selectedScript = null, settingsDirty = false, scriptSignature = '';
   var $ = function (selector) { return document.querySelector(selector); };
   var cardArtwork = {};
   document.querySelectorAll('.project-card').forEach(function (card) { cardArtwork[card.querySelector('.project-card__name').textContent] = card.querySelector('.project-card__media').cloneNode(true); });
@@ -11,12 +13,16 @@
   function date(value) { return api.formatDate(value, 'Not recorded'); }
   function openVideo(id) { FijlyWorkflow.open('videos', id); }
   function completedAt(v) { return api.completedAt(v); }
+  // Marks a control busy while an async save runs; returns a release function.
+  function busy(control) { control.disabled = true; control.setAttribute('aria-busy', 'true'); return function () { control.disabled = false; control.removeAttribute('aria-busy'); }; }
   function metric(card, label, value, note) { card.querySelector('.stat-card__label').textContent = label; card.querySelector('.stat-card__value').textContent = value; card.querySelector('.stat-card__delta').textContent = note; }
   function overview() {
     var profile = client.current(), videos = client.records('videos');
-    $('#h-overview').textContent = 'Welcome, ' + profile.contact.split(' ')[0];
+    // Greet the signed-in person; the company contact may be someone else.
+    var person = (api.me && api.me.full_name) || profile.contact || '';
+    $('#h-overview').textContent = person ? 'Welcome, ' + person.split(' ')[0] : 'Welcome';
     $('.page-head__date').textContent = profile.name + ' / WORKSPACE';
-    $('#studio-demo-note').firstChild.textContent = profile.name + ' workspace · Mock data. Changes stay in this mock session. ';
+    $('#studio-demo-note').firstChild.textContent = profile.name + ' workspace · Live data. Changes are saved to the FIJLY database. ';
     var cards = document.querySelectorAll('#screen-overview .stat-card');
     // Waiting requests count as active work; a request that became a video counts once.
     var activeVideos = videos.filter(function (v) { return v.status !== 'Completed'; }).length, waiting = api.pendingRequests(profile.id).length;
@@ -34,7 +40,7 @@
       card.querySelector('.progress-row__label').textContent = 'Latest version';
       card.querySelector('.progress-row__value').textContent = api.latest(v) ? 'V' + api.latest(v).number : 'Awaiting draft';
       var progress = card.querySelector('.progress-bar'); if (progress) progress.remove();
-      var media = card.querySelector('.project-card__media'), artwork = client.current().id === 'northbeam' && cardArtwork[r.title.split(' / ')[0]]; if (artwork) media.replaceChildren.apply(media, Array.from(artwork.cloneNode(true).childNodes)); else media.replaceChildren(node('span', r.videoType, 'client-media-label'));
+      var media = card.querySelector('.project-card__media'), artwork = cardArtwork[r.title.split(' / ')[0]]; if (artwork) media.replaceChildren.apply(media, Array.from(artwork.cloneNode(true).childNodes)); else media.replaceChildren(node('span', r.videoType, 'client-media-label'));
       var link = card.querySelector('.project-card__foot a'); link.removeAttribute('data-screen-link'); link.textContent = 'View video'; link.onclick = function (event) { event.preventDefault(); event.stopImmediatePropagation(); openVideo(v.id); };
     });
     // Feature the draft awaiting this client's review; otherwise the most
@@ -60,7 +66,7 @@
   closeX.type = 'button'; closeX.setAttribute('aria-label', 'Close dialog'); closeX.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>'; closeX.onclick = function () { modal.close(); };
   dismiss.className = 'btn btn-ghost btn--md dialog-dismiss'; head.append(title, closeX); foot.append(dismiss); modal.append(head, body, foot); document.body.append(modal);
   var shownAsset = null;
-  function assetDetail(id) { var a = client.get('assets', id); shownAsset = id; title.textContent = a.name; dismiss.textContent = 'Close'; foot.replaceChildren(dismiss); body.replaceChildren(node('span', a.category, 'badge'), node('p', a.fileType.toUpperCase() + ' · ' + api.formatBytes(a.size) + ' · Added ' + date(a.uploadedAt)), node('p', a.notes || 'No additional notes.'), node('p', 'Simulated asset metadata. No file has been uploaded or stored.', 'admin-muted')); if (!modal.open) modal.showModal(); }
+  function assetDetail(id) { var a = client.get('assets', id); shownAsset = id; title.textContent = a.name; dismiss.textContent = 'Close'; foot.replaceChildren(dismiss); body.replaceChildren(node('span', a.category, 'badge'), node('p', a.fileType.toUpperCase() + ' · ' + api.formatBytes(a.size) + ' · Added ' + date(a.uploadedAt)), node('p', a.notes || 'No additional notes.'), node('p', 'File details only. The file itself is not uploaded or stored.', 'admin-muted')); if (!modal.open) modal.showModal(); }
   function assetRows(target, records) {
     target.replaceChildren(); if (!records.length) { target.append(node(target.tagName === 'UL' ? 'li' : 'p', 'No matching assets.', 'admin-muted')); return; }
     records.forEach(function (a) { var row = node(target.tagName === 'UL' ? 'li' : 'div', undefined, 'file-row'), info = node('span', undefined, 'file-row__body'); var b = action(a.name, function () { assetDetail(a.id); }); b.className = 'btn-link file-row__title'; info.append(b, node('span', a.category + ' · ' + api.formatBytes(a.size), 'file-row__sub')); row.append(info, node('span', a.fileType.toUpperCase(), 'file-row__ext')); target.append(row); });
@@ -74,10 +80,18 @@
   api.assetCategories.forEach(function (category) { $('#client-asset-category').append(node('option', category)); });
   $('#client-asset-search').oninput = assets; $('#client-asset-category').onchange = assets;
   $('#client-add-asset').onclick = function () {
-    shownAsset = null; title.textContent = 'Add simulated asset'; body.innerHTML = '<form id="client-asset-form"><p class="admin-muted">Only file metadata is saved in this mock session.</p><div class="form-group"><label class="field-label" for="client-asset-file">Choose file</label><input class="input workflow-file" id="client-asset-file" type="file" required></div><div class="form-group"><label class="field-label" for="client-asset-kind">Category</label><select class="input" id="client-asset-kind"></select></div><div class="form-group"><label class="field-label" for="client-asset-notes">Notes</label><textarea class="input" id="client-asset-notes" maxlength="2000"></textarea></div><p role="alert" class="workflow-error" id="client-asset-error"></p></form>';
+    shownAsset = null; title.textContent = 'Add asset'; body.innerHTML = '<form id="client-asset-form"><p class="admin-muted">The file name, type and size are saved to your workspace. The file itself is not uploaded.</p><div class="form-group"><label class="field-label" for="client-asset-file">Choose file</label><input class="input workflow-file" id="client-asset-file" type="file" required></div><div class="form-group"><label class="field-label" for="client-asset-kind">Category</label><select class="input" id="client-asset-kind"></select></div><div class="form-group"><label class="field-label" for="client-asset-notes">Notes</label><textarea class="input" id="client-asset-notes" maxlength="2000"></textarea></div><p role="alert" class="workflow-error" id="client-asset-error"></p></form>';
     var save = node('button', 'Save asset', 'btn btn-primary btn--md'); save.type = 'submit'; save.setAttribute('form', 'client-asset-form'); dismiss.textContent = 'Cancel'; foot.replaceChildren(dismiss, save);
     api.assetCategories.forEach(function (c) { $('#client-asset-kind').append(node('option', c)); });
-    $('#client-asset-form').onsubmit = function (event) { event.preventDefault(); try { var file = $('#client-asset-file').files[0]; client.addAsset({ name: file.name, size: file.size, fileType: file.name.split('.').pop(), category: $('#client-asset-kind').value, notes: $('#client-asset-notes').value }); modal.close(); $('#client-asset-search').value = ''; $('#client-asset-category').value = 'all'; assets(); var note = $('#client-asset-success'); note.textContent = file.name + ' added to your assets. File details saved in this preview.'; note.hidden = false; } catch (e) { $('#client-asset-error').textContent = e.message; } }; modal.showModal();
+    $('#client-asset-form').onsubmit = async function (event) {
+      event.preventDefault(); if (save.disabled) return;
+      var file = $('#client-asset-file').files[0], release = busy(save); $('#client-asset-error').textContent = '';
+      try {
+        await client.addAsset({ name: file.name, size: file.size, fileType: file.name.split('.').pop(), category: $('#client-asset-kind').value, notes: $('#client-asset-notes').value });
+        modal.close(); $('#client-asset-search').value = ''; $('#client-asset-category').value = 'all'; assets();
+        var note = $('#client-asset-success'); note.textContent = file.name + ' added to your assets. File details saved.'; note.hidden = false;
+      } catch (e) { $('#client-asset-error').textContent = e.message; } finally { release(); }
+    }; modal.showModal();
   };
 
   function scripts() {
@@ -96,8 +110,10 @@
     if (script.status === 'Client Review') {
       var form = node('form'), label = node('label', 'Revision feedback', 'field-label'), input = node('textarea', undefined, 'input'); input.id = 'client-script-revision'; input.required = true; input.maxLength = 3000; label.htmlFor = input.id;
       var submit = node('button', 'Request script revision', 'btn btn-outline btn--md'); submit.type = 'submit'; var error = node('p', undefined, 'workflow-error'); error.setAttribute('role', 'alert');
-      form.append(label, input, submit, error); form.onsubmit = function (e) { e.preventDefault(); try { client.reviewScript(script.id, 'Revision Requested', input.value); } catch (err) { error.textContent = err.message; } };
-      actions.append(action('Approve script', function () { try { client.reviewScript(script.id, 'Approved'); } catch (err) { error.textContent = err.message; } }), form);
+      var review = async function (control, status, text) { if (control.disabled) return; var release = busy(control); error.textContent = ''; try { await client.reviewScript(script.id, status, text); } catch (err) { error.textContent = err.message; } finally { release(); } };
+      form.append(label, input, submit, error); form.onsubmit = function (e) { e.preventDefault(); review(submit, 'Revision Requested', input.value); };
+      var approve = action('Approve script', function () { review(approve, 'Approved'); });
+      actions.append(approve, form);
     }
   }
   $('#client-script-select').onchange = function () { selectedScript = this.value; scripts(); };
@@ -119,61 +135,25 @@
     if (settingsDirty) return; var p = client.current(), preferences = client.preferences();
     ['name', 'contact', 'email', 'website'].forEach(function (key) { settings.elements.namedItem(key).value = p[key] || ''; });
     ['defaultLength', 'platform'].forEach(function (key) { settings.elements.namedItem(key).value = preferences[key]; });
-    ['autoshare', 'digest', 'review'].forEach(function (key) { var input = settings.elements.namedItem(key); input.checked = preferences[key]; input.setAttribute('aria-checked', String(input.checked)); });
+    // Only switches the page still has are filled (notification switches have no columns).
+    ['autoshare', 'digest', 'review'].forEach(function (key) { var input = settings.elements.namedItem(key); if (!input) return; input.checked = preferences[key]; input.setAttribute('aria-checked', String(input.checked)); });
     $('.workspace-row__name').textContent = p.name; $('.workspace-row__sub').textContent = p.email + ' · Client workspace'; $('.workspace-logo').textContent = p.name[0];
   }
   settings.addEventListener('input', function () { settingsDirty = true; $('#client-settings-note').textContent = 'Unsaved changes'; });
-  settings.onsubmit = function (e) { e.preventDefault(); try { var values = Object.fromEntries(new FormData(settings)); ['autoshare', 'digest', 'review'].forEach(function (key) { values[key] = settings.elements.namedItem(key).checked; }); client.saveProfile(values); settingsDirty = false; loadSettings(); $('#client-settings-note').textContent = 'Settings saved for this workspace.'; } catch (err) { $('#client-settings-note').textContent = err.message; } };
+  settings.onsubmit = async function (e) {
+    e.preventDefault(); var submit = settings.querySelector('[type="submit"]'); if (submit.disabled) return;
+    var release = busy(submit), values = Object.fromEntries(new FormData(settings));
+    try { await client.saveProfile(values); settingsDirty = false; loadSettings(); $('#client-settings-note').textContent = 'Settings saved for this workspace.'; }
+    catch (err) { $('#client-settings-note').textContent = err.message; } finally { release(); }
+  };
   $('#client-discard-settings').onclick = function () { settingsDirty = false; loadSettings(); $('#client-settings-note').textContent = 'Changes discarded.'; };
-  /* Client switcher. Choosing a workspace is a preview convenience, not sign-in;
-     the current screen stays open and every screen re-renders for the client. */
-  var switcher = $('[data-client-switcher]'), switchButton = $('#client-switcher-button'), switchList = $('#client-switcher-list');
-  function switchOptions() { return Array.from(switchList.querySelectorAll('button')); }
-  function setSwitcher(open) {
-    switchList.hidden = !open; switchButton.setAttribute('aria-expanded', String(open));
-    if (open) { var current = switchList.querySelector('[aria-current="true"]') || switchOptions()[0]; if (current) current.focus(); }
-  }
-  function renderSwitcher() {
-    var current = client.current(); switcher.hidden = !current;
-    if (!current) { setSwitcher(false); return; }
-    var focused = switchList.contains(document.activeElement) ? document.activeElement.dataset.clientId : null;
-    $('.client-switcher__name').textContent = current.name; $('.client-switcher__avatar').textContent = current.name[0];
-    switchList.replaceChildren();
-    api.state.clients.forEach(function (c) {
-      var item = node('li'), option = node('button', undefined, 'client-switcher__option'); option.type = 'button'; option.dataset.clientId = c.id;
-      if (c.id === current.id) option.setAttribute('aria-current', 'true');
-      option.append(node('span', c.name, 'client-switcher__option-name'), node('span', c.status, 'client-switcher__status client-switcher__status--' + c.status.toLowerCase()));
-      item.append(option); switchList.append(item);
-    });
-    if (focused) { var again = switchList.querySelector('[data-client-id="' + focused + '"]'); if (again) again.focus(); }
-  }
-  switchButton.addEventListener('click', function () { setSwitcher(switchList.hidden); });
-  switchList.addEventListener('click', function (event) {
-    var option = event.target.closest('[data-client-id]'); if (!option) return;
-    setSwitcher(false); switchButton.focus();
-    if (option.dataset.clientId === client.current().id) return;
-    client.select(option.dataset.clientId);
-    $('#client-switch-status').textContent = 'Now viewing the ' + client.current().name + ' workspace.';
-  });
-  switcher.addEventListener('keydown', function (event) {
-    if (switchList.hidden) return;
-    // Handled here so Escape closes only the list, not the mobile sidebar.
-    if (event.key === 'Escape') { event.stopPropagation(); setSwitcher(false); switchButton.focus(); return; }
-    if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return;
-    event.preventDefault();
-    var options = switchOptions(), index = options.indexOf(document.activeElement);
-    options[(index + (event.key === 'ArrowDown' ? 1 : -1) + options.length) % options.length].focus();
-  });
-  switcher.addEventListener('focusout', function (event) { if (event.relatedTarget && !switcher.contains(event.relatedTarget)) setSwitcher(false); });
-  document.addEventListener('click', function (event) { if (!switchList.hidden && !switcher.contains(event.target)) setSwitcher(false); });
-
-  window.addEventListener('fijly:clientchange', function () { settingsDirty = false; selectedScript = null; modal.close(); shownAsset = null; $('#client-asset-success').textContent = ''; $('#client-asset-success').hidden = true; $('#client-settings-note').textContent = ''; $('#client-asset-search').value = ''; $('#client-asset-category').value = 'all'; });
   function render(changed) {
     var available=!!client.current();
     document.body.classList.toggle('client-no-workspace',!available);
-    document.querySelectorAll('.screen').forEach(function(screen){var note=screen.querySelector('.client-workspace-empty');if(!note){note=node('p','No client workspace is available. Add a client in the Admin preview to continue.','panel client-workspace-empty');screen.append(note);}note.hidden=available;});
-    if(!changed || changed.includes('clients'))renderSwitcher();
-    if(!available){$('.sidebar-user__name').textContent='No client selected';$('.sidebar-user__email').textContent='';$('#studio-demo-note').firstChild.textContent='No client workspace · Mock session. ';return;}
+    // The auth guard stops before the portal when no workspace is linked; this
+    // covers a workspace that disappears while the page is open.
+    document.querySelectorAll('.screen').forEach(function(screen){var note=screen.querySelector('.client-workspace-empty');if(!note){note=node('p','Your workspace is not available right now. Refresh the page or contact the FIJLY team.','panel client-workspace-empty');screen.append(note);}note.hidden=available;});
+    if(!available){$('#studio-demo-note').firstChild.textContent='No client workspace. ';return;}
     if(!changed || changed.some(function(k){return ['clients','requests','videos','revisions'].includes(k);}))overview();
     if(!changed || changed.includes('assets'))assets();
     if(!changed || changed.some(function(k){return ['scripts','clients'].includes(k);}))scripts();
