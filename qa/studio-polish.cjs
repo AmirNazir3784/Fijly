@@ -39,7 +39,7 @@ const assert=require('assert/strict'),fs=require('fs'),crypto=require('crypto');
     await p.setViewportSize({width,height:900});
     for(const route of routes[portal]){
       await go(p,portal,route);assert.equal(await p.locator('.screen:visible h1').count(),1);assert.equal(await p.locator('#topbar-title').innerText(),portal==='admin'?'FIJLY ADMIN':'FIJLY STUDIO');assert.equal(await p.locator('.sidebar-link--site,.studio-topbar a[href="index.html"],.admin-portal-label').count(),0);
-      const metrics=await p.locator('.screen:visible .page-head').evaluate(e=>({size:getComputedStyle(e.querySelector('h1')).fontSize,weight:getComputedStyle(e.querySelector('h1')).fontWeight,description:getComputedStyle(e.querySelector('p')).fontSize,gap:getComputedStyle(e).marginBottom}));assert.equal(metrics.size,'32px');assert.equal(metrics.weight,'750');assert.equal(metrics.description,'15.5px');assert.equal(metrics.gap,'28px');
+      const metrics=await p.locator('.screen:visible .page-head').evaluate(e=>({size:getComputedStyle(e.querySelector('h1')).fontSize,weight:getComputedStyle(e.querySelector('h1')).fontWeight,description:getComputedStyle(e.querySelector('p')).fontSize,gap:getComputedStyle(e).marginBottom}));assert.equal(metrics.size,width<768?'24px':'32px');assert.equal(metrics.weight,'700');assert.equal(metrics.description,'15px');assert.equal(metrics.gap,'28px');
       assert.equal(await p.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false,portal+'/'+route+'/'+width);await scan(p,portal+'/'+route+'/'+width);
       if(['settings',portal==='admin'?'clients':'overview'].includes(route))await p.screenshot({path:`qa/screenshots/polish-${portal}-${route}-${width}.png`,fullPage:true});
     }
@@ -55,8 +55,11 @@ const assert=require('assert/strict'),fs=require('fs'),crypto=require('crypto');
   // Scope guard: unchanged workflow files, fixtures, public website and all
   // assets. Only shell markup/styles, UI composition and optional profile
   // fields in the existing facade are allowed to differ from this pass baseline.
+  // The typography pass adds portal-scoped CSS layers and tokens (add-only in
+  // variables.css); marketing.css, base.css, components.css and all JS stay guarded.
   const baseline=JSON.parse(fs.readFileSync('qa/polish-baseline-hashes.json','utf8'));
-  const allowed=['site/admin.html','site/studio.html','site/js/studio-shell.js','site/js/mock-service.js','site/js/client-portal.js','site/js/admin-sections.js'];
+  const allowed=['site/admin.html','site/studio.html','site/js/studio-shell.js','site/js/mock-service.js','site/js/client-portal.js','site/js/admin-sections.js',
+    'site/css/variables.css','site/css/dashboard.css','site/css/admin.css','site/css/workflow.css','site/css/client-portal.css'];
   for(const [file,hash] of Object.entries(baseline))if(!allowed.includes(file))assert.equal(crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex'),hash,file+' unchanged');
   checks.push('Baseline hash guard: workflow implementation, status logic, fixture data, dashboard renderer, public pages and assets unchanged');
   fs.writeFileSync('qa/studio-polish-results.json',JSON.stringify({checks,scans,errors},null,2));await browser.close();assert.deepEqual(errors,[]);console.log(JSON.stringify({checks,scans:scans.length,errors},null,2));

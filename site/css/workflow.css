@@ -67,3 +67,24 @@
   .admin-action-queue li { align-items:flex-start; flex-direction:column; gap:6px; }
   .admin-action-label { flex-shrink:1; }
 }
+
+/* ==========================================================================
+   Typography and hierarchy — shared workflow UI (scale in variables.css)
+   ========================================================================== */
+.studio-body .workflow-toolbar { padding: var(--space-lg); }
+.studio-body .workflow-table th:first-child { width: 24%; }
+.studio-body .workflow-table th:nth-child(3) { width: 20%; }
+.studio-body .workflow-toolbar label { font-size: var(--text-meta); font-weight: var(--weight-semibold); color: var(--text-muted); }
+.studio-body .workflow-body { font-size: var(--text-body); line-height: var(--leading-relaxed); }
+.studio-body .workflow-body .review-bar__label { font-size: var(--text-card-title); font-weight: var(--weight-bold); }
+.studio-body .review-bar .admin-muted { color: var(--text-muted); }
+.studio-body .field-hint { font-size: var(--text-small); }
+.studio-body :is(.workflow-notice, .workflow-error) { font-size: var(--text-meta); }
+.studio-body .media-placeholder__text { font-size: var(--text-body); line-height: var(--leading-relaxed); }
+.studio-body .workflow-version summary { font-size: var(--text-body); }
+.studio-body .sidebar-count { font-size: var(--text-xs); font-weight: var(--weight-semibold); }
+@media(max-width:600px) {
+  .studio-body .workflow-toolbar { padding: var(--space-md); }
+  .studio-body .mobile-records tbody tr { margin: var(--space-md); padding: var(--space-md); }
+  .studio-body .mobile-records td::before { font-size: var(--text-xs); font-weight: var(--weight-semibold); letter-spacing: .05em; text-transform: uppercase; color: var(--text-light); }
+}

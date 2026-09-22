@@ -152,11 +152,35 @@
   --shadow-card-hover: 0 8px 26px rgba(16, 24, 40, .1);
   --shadow-primary-sm: 0 2px 8px rgba(91, 75, 245, .35);
   --shadow-primary-md: 0 4px 14px rgba(91, 75, 245, .35);
+
+  /* Typography scale — portal */
+  --text-page-title: 32px;
+  --text-section-heading: 20px;
+  --text-card-title: 16px;
+  --text-body: 15px;
+  --text-meta: 14px;
+  --text-small: 13px;
+  --text-xs: 12px;
+  --text-kpi: 40px;
+
+  /* Font weights */
+  --weight-normal: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+
+  /* Line heights */
+  --leading-tight: 1.2;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.6;
 }
 
 /* Mobile: tighter side gutter */
 @media (max-width: 767px) {
   :root {
     --gutter: 20px;
+    --text-page-title: 24px;
+    --text-section-heading: 18px;
+    --text-kpi: 32px;
   }
 }

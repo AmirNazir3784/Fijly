@@ -1,29 +1,29 @@
 {
-  "measuredAt": "2026-09-22T01:55:12.084Z",
+  "measuredAt": "2026-09-22T02:51:33.627Z",
   "note": "Local static server, Chromium, three fresh contexts. Diagnostic timings, not a production SLA. Gzip sizes are estimates; the QA server serves uncompressed files.",
   "reports": [
     {
       "portal": "studio",
       "samples": [
         {
-          "domReadyMs": 464.30000000447035,
-          "loadMs": 464.40000000596046,
+          "domReadyMs": 1376.5,
+          "loadMs": 1376.6000000014901,
           "domNodes": 835,
-          "resources": 22
+          "resources": 18
         },
         {
-          "domReadyMs": 460.8999999985099,
-          "loadMs": 461,
+          "domReadyMs": 1387.8999999985099,
+          "loadMs": 1388.1000000014901,
           "domNodes": 835,
-          "resources": 22
+          "resources": 18
         },
         {
-          "domReadyMs": 457.6000000014901,
-          "loadMs": 457.80000000447035,
+          "domReadyMs": 1420.1999999955297,
+          "loadMs": 1421.1999999955297,
           "domNodes": 835,
-          "resources": 22,
+          "resources": 18,
           "noopUpdates": {
-            "tenNoopSavesMs": 15.599999994039536,
+            "tenNoopSavesMs": 1,
             "domMutations": 0
           }
         }
@@ -33,24 +33,24 @@
       "portal": "admin",
       "samples": [
         {
-          "domReadyMs": 419.1000000014901,
-          "loadMs": 419.1000000014901,
+          "domReadyMs": 1357.7999999970198,
+          "loadMs": 1357.7999999970198,
           "domNodes": 1761,
           "resources": 17
         },
         {
-          "domReadyMs": 424.5,
-          "loadMs": 424.5,
+          "domReadyMs": 1354.7000000029802,
+          "loadMs": 1355.2999999970198,
           "domNodes": 1761,
           "resources": 17
         },
         {
-          "domReadyMs": 390.80000000447035,
-          "loadMs": 390.80000000447035,
+          "domReadyMs": 1391.1000000014901,
+          "loadMs": 1391.1000000014901,
           "domNodes": 1761,
           "resources": 17,
           "noopUpdates": {
-            "tenNoopSavesMs": 0.5,
+            "tenNoopSavesMs": 1,
             "domMutations": 0
           }
         }
@@ -61,14 +61,14 @@
     {
       "portal": "studio",
       "jsCssFiles": 16,
-      "jsCssBytes": 221715,
-      "jsCssGzipBytes": 58824
+      "jsCssBytes": 247170,
+      "jsCssGzipBytes": 63000
     },
     {
       "portal": "admin",
       "jsCssFiles": 15,
-      "jsCssBytes": 248298,
-      "jsCssGzipBytes": 63863
+      "jsCssBytes": 272045,
+      "jsCssGzipBytes": 67727
     }
   ],
   "sizes": [
@@ -144,8 +144,8 @@
     },
     {
       "file": "css/admin.css",
-      "bytes": 12272,
-      "gzipBytes": 2895
+      "bytes": 19619,
+      "gzipBytes": 4144
     },
     {
       "file": "css/base.css",
@@ -154,8 +154,8 @@
     },
     {
       "file": "css/client-portal.css",
-      "bytes": 6408,
-      "gzipBytes": 1883
+      "bytes": 8116,
+      "gzipBytes": 2195
     },
     {
       "file": "css/components.css",
@@ -164,8 +164,8 @@
     },
     {
       "file": "css/dashboard.css",
-      "bytes": 34734,
-      "gzipBytes": 6262
+      "bytes": 48866,
+      "gzipBytes": 8376
     },
     {
       "file": "css/fonts.css",
@@ -184,13 +184,13 @@
     },
     {
       "file": "css/variables.css",
-      "bytes": 5099,
-      "gzipBytes": 1876
+      "bytes": 5649,
+      "gzipBytes": 2051
     },
     {
       "file": "css/workflow.css",
-      "bytes": 6221,
-      "gzipBytes": 1821
+      "bytes": 7939,
+      "gzipBytes": 2147
     },
     {
       "file": "assets/concept-aiflow.svg",

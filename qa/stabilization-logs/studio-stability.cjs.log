@@ -40,5 +40,7 @@
   "scans": 1,
   "errors": [],
   "failedRequests": [],
-  "cancelledResourcesChecked": []
+  "cancelledResourcesChecked": [
+    "http://localhost:8766/assets/concept-finly.svg"
+  ]
 }
