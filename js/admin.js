@@ -1,8 +1,8 @@
-/* Admin Dashboard and Clients. Reads the shared data service: Supabase in the
-   Admin portal (FijlyData), the session mock where FijlyData is absent. */
+/* Admin Dashboard and Clients. Reads and writes Supabase through the shared
+   data service (FijlyData). */
 (function () {
   'use strict';
-  var api = window.FijlyData || window.FijlyMock;
+  var api = window.FijlyData;
   var data = api.state;
   var search = document.getElementById('client-search');
   var status = document.getElementById('client-status');

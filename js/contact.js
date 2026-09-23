@@ -11,6 +11,7 @@
   var db = null;
   var email = config.contactEmail || 'hello@fijly.com';
   var pending = false;
+  var honeypot = document.getElementById('fijly-hp');
   submit.disabled = false;
   // One anonymous client, created on first send. It keeps no session, so it
   // never touches a Studio sign-in in the same browser.
@@ -20,6 +21,12 @@
     }
     if (!db) throw new Error('Supabase SDK not loaded');
     return db;
+  }
+  function showSuccess() {
+    status.hidden = false;
+    status.textContent = 'Your project brief has been sent. Thank you for getting in touch.';
+    form.reset();
+    document.getElementById('contact-plan-note').hidden = true;
   }
   // Prevent an accidental page submission if JavaScript is unavailable.
   form.addEventListener('submit', async function (event) {
@@ -31,6 +38,12 @@
     var message = document.getElementById('contact-message');
     message.setCustomValidity(message.value.length < 20 ? 'Please add at least 20 characters about your project.' : '');
     if (!form.reportValidity()) return;
+    // A bot filled the hidden field: report success without sending anything.
+    if (honeypot && honeypot.value) {
+      showSuccess();
+      status.focus({ preventScroll: true });
+      return;
+    }
     var data = new FormData(form);
     var body = ['Name: ' + data.get('name'), 'Work email: ' + data.get('email'),
       'Company: ' + (data.get('company') || 'Not provided'), 'Video type: ' + data.get('project_type'),
@@ -62,9 +75,7 @@
         project_type: data.get('project_type') || null, message: data.get('message'), plan: data.get('plan') || null
       }).abortSignal(controller.signal);
       if (result.error) throw result.error;
-      status.textContent = 'Your project brief has been sent. Thank you for getting in touch.';
-      form.reset();
-      document.getElementById('contact-plan-note').hidden = true;
+      showSuccess();
     } catch (error) {
       fallback('We could not confirm delivery. Your brief is still here; you can send it by email.');
     } finally {
