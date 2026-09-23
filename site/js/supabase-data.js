@@ -233,6 +233,17 @@
     async createScriptScenes(rows) { return data(await db().from('script_scenes').insert(rows).select()); },
     async updateScriptScene(id, content) { return data(await db().from('script_scenes').update({ content: content }).eq('id', id).select().single()); },
 
+    // --- Orders (placed on order.html). Admin-only under RLS; the Orders screen
+    // loads them on demand rather than with the rest of the studio's data. ---
+    async getOrders() {
+      return data(await db().from('orders').select('*').order('created_at', { ascending: false }).limit(TABLE_LIMIT));
+    },
+    async updateOrder(id, updates) {
+      var rows = data(await db().from('orders').update(Object.assign({}, updates, { updated_at: stamp() })).eq('id', id).select());
+      if (!rows.length) fail('This order is no longer available. Refresh the list and try again.');
+      return rows[0];
+    },
+
     // --- Activity ---
     async getActivity() {
       return data(await db().from('activity_log').select('*').order('created_at', { ascending: false }).limit(TABLE_LIMIT));

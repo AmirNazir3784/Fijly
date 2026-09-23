@@ -7,7 +7,7 @@ node qa/run-all.cjs
 ```
 
 The runner starts a local static file server on port 8766, or uses the existing
-server there. It executes all 20 maintained checks, writes per-suite logs to
+server there. It executes all 21 maintained checks, writes per-suite logs to
 `qa/stabilization-logs/`, and exits nonzero if any check fails. Screenshots are regenerated
 under `qa/screenshots/`, `qa/refinement-after/` and `qa/visual-sheets/` on each
 run; they are run artifacts and are not kept in the repository.
@@ -45,6 +45,7 @@ and saves screenshots plus `qa/admin-analytics-visual-results.json`.
   the Northbeam client user, so one context can drive both portals against the
   same database; tabs refresh (`FijlyData.load()`) to see each other's writes.
   Older suites' `FijlyMock` refers to `FijlyData` in both portals.
+- `orders`: per-video pricing on the landing page, the three-step order form (validation, `?duration=` pre-selection, hash steps and browser Back, review, disabled Pay placeholder, honeypot, failure fallback, optional self sign-up that never sends a role), the saved order, and the Admin Orders screen (pending count, price-mismatch flag, filters, detail, status changes, RLS).
 - `round-b`: queue/badge counts, triage, submission feedback, assets, script visibility, deadline links, mobile cards and analytics date boundaries.
 - `studio-polish`: all portal headers, sidebar footer, logo navigation, profile editing/photo handling, shared references, keyboard focus and accessibility at all five widths; protected-file scope guard.
 - `functional`, `accessibility`, `refinement-check`, `final_browser`: current

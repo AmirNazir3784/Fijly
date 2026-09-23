@@ -61,6 +61,7 @@
     <nav class="sidebar-nav" aria-labelledby="sidebar-label">
 <ul>
 <li><a class="sidebar-link" href="#dashboard" data-screen="dashboard" aria-current="page"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/></svg><span>Dashboard</span></a></li>
+<li><a class="sidebar-link" href="#orders" data-screen="orders"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 2h12l2 5H4z"/><path d="M4 7h16v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><path d="M9 11a3 3 0 0 0 6 0"/></svg><span>Orders</span></a></li>
 <li><a class="sidebar-link" href="#clients" data-screen="clients"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg><span>Clients</span></a></li>
 <li><a class="sidebar-link" href="#requests" data-screen="requests"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="5" width="14" height="14" rx="2.5"/><path d="M17 10l4-2v8l-4-2"/></svg><span>Video Requests</span></a></li>
 <li><a class="sidebar-link" href="#videos" data-screen="videos"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="5" width="14" height="14" rx="2.5"/><path d="M17 10l4-2v8l-4-2"/></svg><span>Videos</span></a></li>
@@ -123,6 +124,22 @@
           <section class="panel" aria-labelledby="h-activity"><h2 id="h-activity">Recent activity</h2><ul class="admin-activity" id="admin-activity"></ul></section>
           <section class="panel" aria-labelledby="h-client-overview"><div class="admin-panel-head admin-panel-head--plain"><div><h2 id="h-client-overview">Client overview</h2><p class="panel__sub">Relationships across the studio</p></div><a class="btn-link" href="#clients" data-screen-link="clients">View all <span aria-hidden="true">&rarr;</span></a></div><ul class="admin-client-overview" id="admin-client-overview"></ul></section>
         </div>
+      </section>
+      <section class="screen" id="screen-orders" data-screen="orders" data-title="Orders" aria-labelledby="h-orders" hidden>
+        <div class="page-head page-head--row"><div><h1 id="h-orders">Orders</h1><p>Video orders placed on fijly.com. Create each client’s account and workspace, then track the order here.</p></div><button class="btn btn-outline btn--xs" type="button" id="orders-refresh">Refresh</button></div>
+        <div class="panel panel--flush">
+          <div class="admin-client-toolbar">
+            <label class="admin-search"><span class="field-label">Search orders</span><input class="input" type="search" id="order-search" placeholder="Name, email, or company" maxlength="150"></label>
+            <label><span class="field-label">Status</span><select class="input" id="order-status-filter"><option value="all">All statuses</option><option value="pending">Pending</option><option value="paid">Paid</option><option value="processing">Processing</option><option value="completed">Completed</option><option value="cancelled">Cancelled</option></select></label>
+          </div>
+          <p class="admin-result-count" id="order-count" role="status"></p>
+          <p class="table-hint">Scroll horizontally to see every column.</p>
+          <div class="table-scroll" tabindex="0" role="region" aria-label="Orders table, scroll horizontally">
+            <table class="table admin-orders-table"><caption class="visually-hidden">Video orders</caption><thead><tr><th scope="col">DATE</th><th scope="col">NAME</th><th scope="col">EMAIL</th><th scope="col">COMPANY</th><th scope="col">VIDEO TYPE</th><th scope="col">DURATION</th><th scope="col">PRICE</th><th scope="col">STATUS</th><th scope="col"><span class="visually-hidden">Actions</span></th></tr></thead><tbody id="order-rows"></tbody></table>
+          </div>
+          <div class="admin-empty" id="order-empty" hidden><h2 id="order-empty-title">No orders yet</h2><p id="order-empty-text">Orders placed on fijly.com will appear here.</p><button class="btn btn-outline btn--xs" type="button" id="order-empty-action" hidden>Try again</button></div>
+        </div>
+        <p class="admin-save-status" id="order-save-status" role="status"></p>
       </section>
       <section class="screen" id="screen-clients" data-screen="clients" data-title="Clients" aria-labelledby="h-clients" hidden>
         <div class="page-head page-head--row"><div><h1 id="h-clients">Clients</h1><p>Client relationships, production context, and project history.</p></div><button class="btn btn-primary btn--xs" type="button" data-add-client><span aria-hidden="true">+</span> Add client</button></div>
@@ -292,6 +309,15 @@
     <div class="admin-dialog-foot"><button class="btn btn-ghost btn--md dialog-dismiss" type="button" data-close-editor>Cancel</button><button class="btn btn-primary btn--md" type="submit">Save client</button></div>
   </form>
 </dialog>
+<dialog class="admin-dialog" id="order-detail" aria-labelledby="order-detail-title">
+  <div class="admin-dialog-head"><div><p class="admin-eyebrow">ORDER</p><h2 id="order-detail-title"></h2></div><button class="icon-btn" type="button" data-close-order aria-label="Close order details"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+  <div class="admin-dialog-fields">
+    <div id="order-detail-body"></div>
+    <div class="form-group order-status-group"><label class="field-label" for="order-detail-status">Status</label><select class="input" id="order-detail-status"><option value="pending">Pending</option><option value="paid">Paid</option><option value="processing">Processing</option><option value="completed">Completed</option><option value="cancelled">Cancelled</option></select></div>
+    <p class="workflow-error" id="order-detail-error" role="alert"></p>
+  </div>
+  <div class="admin-dialog-foot"><button class="btn btn-ghost btn--md dialog-dismiss" type="button" data-close-order>Close</button><button class="btn btn-primary btn--md" type="button" id="order-status-save">Update status</button></div>
+</dialog>
 <dialog class="admin-dialog" id="asset-detail" aria-labelledby="asset-detail-title">
   <div class="admin-dialog-head"><div><p class="admin-eyebrow">ASSET</p><h2 id="asset-detail-title"></h2></div><button class="icon-btn" type="button" data-close-asset-detail aria-label="Close asset details"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
   <div class="asset-preview" id="asset-detail-preview" hidden><img id="asset-detail-image" alt=""></div>
@@ -334,6 +360,7 @@
 <script src="js/admin.js"></script>
 <script src="js/workflow.js"></script>
 <script src="js/admin-sections.js"></script>
+<script src="js/admin-orders.js"></script>
 <dialog id="profile-dialog" class="admin-dialog profile-dialog"></dialog>
 <script src="js/profile.js"></script>
 </body>

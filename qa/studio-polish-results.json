@@ -11,6 +11,10 @@
       "violations": []
     },
     {
+      "label": "admin/orders/1440",
+      "violations": []
+    },
+    {
       "label": "admin/clients/1440",
       "violations": []
     },
@@ -88,6 +92,10 @@
     },
     {
       "label": "admin/dashboard/1024",
+      "violations": []
+    },
+    {
+      "label": "admin/orders/1024",
       "violations": []
     },
     {
@@ -171,6 +179,10 @@
       "violations": []
     },
     {
+      "label": "admin/orders/768",
+      "violations": []
+    },
+    {
       "label": "admin/clients/768",
       "violations": []
     },
@@ -251,6 +263,10 @@
       "violations": []
     },
     {
+      "label": "admin/orders/390",
+      "violations": []
+    },
+    {
       "label": "admin/clients/390",
       "violations": []
     },
@@ -328,6 +344,10 @@
     },
     {
       "label": "admin/dashboard/320",
+      "violations": []
+    },
+    {
+      "label": "admin/orders/320",
       "violations": []
     },
     {

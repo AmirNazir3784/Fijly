@@ -5,6 +5,6 @@
     "All 16 routes at 1440/1024/768/390/320px; one main title, shared spacing/type, logo keyboard navigation, persistent short-screen footer and modal/sidebar focus traps",
     "Baseline hash guard: workflow implementation, status logic, fixture data, dashboard renderer, public pages and assets unchanged"
   ],
-  "scans": 100,
+  "scans": 105,
   "errors": []
 }

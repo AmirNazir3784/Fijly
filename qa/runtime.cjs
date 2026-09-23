@@ -63,6 +63,8 @@ async function installSupabaseMock(context, as = 'auto', db = emulator.createDb(
     }
     if (url.pathname === '/auth/v1/user') return caller ? json(route, 200, authUser(caller)) : json(route, 401, { code: 401, error_code: 'bad_jwt', msg: 'invalid JWT' });
     if (url.pathname === '/auth/v1/logout') return route.fulfill({ status: 204, headers: cors });
+    // As on the live project, public sign-up is disabled.
+    if (url.pathname === '/auth/v1/signup') return json(route, 422, { code: 422, error_code: 'signup_disabled', msg: 'Signups not allowed for this instance' });
     if (url.pathname.startsWith('/rest/v1/')) {
       const result = emulator.handle(db, caller, method, url, request.headers(), request.postDataJSON());
       return result.status === 204 ? route.fulfill({ status: 204, headers: cors }) : json(route, result.status, result.body);
@@ -123,4 +125,4 @@ function withAuth(browser) {
 const chromium = Object.create(playwright.chromium);
 chromium.launch = async (...args) => withAuth(await playwright.chromium.launch(...args));
 
-module.exports = {...playwright, chromium, qaUsers, SUPABASE, STORAGE_KEY, base: process.env.QA_BASE_URL || `http://localhost:${process.env.QA_PORT || 8766}/`, widths: [1440,1024,768,390,320], routes: {studio:['overview','projects','requests','assets','scripts','analytics','settings'],admin:['dashboard','clients','requests','videos','revisions','assets','scripts','analytics','settings']}};
+module.exports = {...playwright, chromium, qaUsers, SUPABASE, STORAGE_KEY, base: process.env.QA_BASE_URL || `http://localhost:${process.env.QA_PORT || 8766}/`, widths: [1440,1024,768,390,320], routes: {studio:['overview','projects','requests','assets','scripts','analytics','settings'],admin:['dashboard','orders','clients','requests','videos','revisions','assets','scripts','analytics','settings']}};

@@ -72,14 +72,10 @@ const assert=require('assert/strict'),fs=require('fs'),crypto=require('crypto');
     'site/js/contact.js','site/js/config.js',
     // Pre-deployment fixes: HTTPS/HSTS, live legal pages in the sitemap, Admin-only
     // cleanup, sign-in icon.
-    'site/.htaccess','site/privacy.html','site/terms.html','site/robots.txt','site/sitemap.xml','site/login.html','site/js/supabase-client.js'];
-  // index.html may differ only by its three Sign in / Studio links, which now
-  // point to login.html, the Supabase SDK tag the contact form uses (Part 3D)
-  // and the contact form's honeypot field; restoring them must reproduce the
-  // baseline bytes.
-  const sdkTag='  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.116.0/dist/umd/supabase.js" integrity="sha384-iLddHTLokph6Omwoyid4XKxHaWa6w41BnoEj0q5oOrzmYPpHIKt1wyjReA7s//pP" crossorigin="anonymous" defer></script>\r\n';
-  const honeypot='          <div class="visually-hidden" aria-hidden="true"><label for="fijly-hp">Website</label><input type="text" name="website" id="fijly-hp" tabindex="-1" autocomplete="off"></div>\r\n';
-  const bytes=file=>file==='site/index.html'?Buffer.from(fs.readFileSync(file,'latin1').replace(sdkTag,'').replace(honeypot,'').replaceAll('href="login.html"','href="studio.html"'),'latin1'):fs.readFileSync(file);
+    'site/.htaccess','site/privacy.html','site/terms.html','site/robots.txt','site/sitemap.xml','site/login.html','site/js/supabase-client.js',
+    // Per-video pricing replaced the plans section; order CTAs link to order.html.
+    'site/index.html','site/css/marketing.css'];
+  const bytes=file=>fs.readFileSync(file);
   // Part 3B retired the session mock: these two files must be gone.
   const retired=['site/js/admin-data.js','site/js/mock-service.js'];
   for(const file of retired)assert.equal(fs.existsSync(file),false,file+' retired');

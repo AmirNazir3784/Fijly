@@ -41,9 +41,5 @@
   "scans": 1,
   "errors": [],
   "failedRequests": [],
-  "cancelledResourcesChecked": [
-    "http://localhost:8766/assets/concept-clouddesk.svg",
-    "http://localhost:8766/assets/concept-taskpilot.svg",
-    "http://localhost:8766/assets/concept-finly.svg"
-  ]
+  "cancelledResourcesChecked": []
 }

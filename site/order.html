@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Start Your Video — FIJLY Studio</title>
+  <meta name="description" content="Order a SaaS video from FIJLY Studio: choose your format and length, share your brief, and get one transparent price.">
+  <meta name="theme-color" content="#0C0E13">
+  <link rel="canonical" href="https://fijly.com/order.html">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="assets/favicon.ico" sizes="32x32">
+  <link rel="apple-touch-icon" href="assets/favicon.svg">
+  <link rel="stylesheet" href="css/fonts.css">
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/base.css">
+  <style>
+    /* Order page. Shares the sign-in page's layout; colours, type, spacing and
+       radii come from variables.css. */
+    .order {
+      display: grid;
+      grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+      min-height: 100vh;
+      min-height: 100dvh;
+      background: var(--surface-white);
+    }
+
+    /* Brand panel */
+    .order__brand {
+      position: sticky;
+      top: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: var(--space-2xl);
+      height: 100vh;
+      height: 100dvh;
+      padding: var(--space-2xl);
+      background: linear-gradient(160deg, var(--sidebar-plan-start), var(--surface-dark) 55%);
+      color: var(--text-lighter);
+    }
+
+    .order__logo { display: flex; align-items: center; gap: 11px; color: var(--surface-white); }
+    .order__logo:hover { color: var(--surface-white); }
+
+    .order__mark {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 34px;
+      height: 34px;
+      border-radius: var(--radius-md);
+      background: var(--primary);
+      box-shadow: var(--shadow-logo);
+    }
+
+    .order__wordmark { display: flex; flex-direction: column; line-height: 1; }
+    .order__word { font-size: var(--text-card-title); font-weight: 800; letter-spacing: .14em; }
+    .order__sub { margin-top: 3px; font-family: var(--font-mono); font-size: 10px; letter-spacing: .22em; color: var(--text-lighter); }
+
+    .order__pitch { max-width: 440px; }
+
+    .order__eyebrow {
+      margin-bottom: var(--space-md);
+      font-family: var(--font-mono);
+      font-size: var(--text-xs);
+      font-weight: var(--weight-semibold);
+      letter-spacing: .08em;
+      color: var(--primary-soft-line);
+    }
+
+    .order__tagline {
+      font-size: var(--text-page-title);
+      font-weight: var(--weight-bold);
+      line-height: var(--leading-tight);
+      letter-spacing: -.025em;
+      color: var(--surface-white);
+    }
+
+    .order__intro { margin-top: var(--space-md); font-size: var(--text-body); line-height: var(--leading-relaxed); }
+
+    /* Mini price reference; the chosen length is highlighted. */
+    .order__prices {
+      display: grid;
+      gap: 6px;
+      margin-top: var(--space-xl);
+    }
+
+    .order__prices li {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: var(--space-md);
+      padding: 10px 14px;
+      border: 1px solid transparent;
+      border-radius: var(--radius-md);
+      font-size: var(--text-meta);
+      color: var(--surface-muted);
+      transition: background-color .15s ease, border-color .15s ease;
+    }
+
+    .order__prices strong { font-family: var(--font-mono); font-size: var(--text-body); color: var(--surface-white); }
+
+    .order__prices li.is-selected {
+      border-color: var(--primary);
+      background: color-mix(in srgb, var(--primary) 18%, transparent);
+      color: var(--surface-white);
+    }
+
+    .order__prices-note { margin-top: var(--space-md); font-size: var(--text-small); line-height: var(--leading-normal); }
+
+    .order__foot { font-family: var(--font-mono); font-size: var(--text-xs); letter-spacing: .06em; color: var(--text-lighter); }
+
+    /* Form panel */
+    .order__panel {
+      display: flex;
+      justify-content: center;
+      padding: var(--space-2xl) var(--space-lg);
+    }
+
+    .order__card { width: 100%; max-width: 520px; }
+
+    .order__title {
+      font-size: var(--text-page-title);
+      font-weight: var(--weight-bold);
+      line-height: var(--leading-tight);
+      letter-spacing: -.025em;
+    }
+
+    /* Progress: Step 1 / 2 / 3 */
+    .order__progress {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: var(--space-sm);
+      margin-top: var(--space-lg);
+    }
+
+    .order__progress li {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-sm);
+      font-size: var(--text-small);
+      font-weight: var(--weight-semibold);
+      color: var(--text-light);
+    }
+
+    .order__progress li::before {
+      content: "";
+      display: block;
+      height: 4px;
+      border-radius: var(--radius-full);
+      background: var(--border-default);
+    }
+
+    .order__progress li.is-done,
+    .order__progress li[aria-current="step"] { color: var(--text-primary); }
+    .order__progress li.is-done::before,
+    .order__progress li[aria-current="step"]::before { background: var(--primary); }
+
+    .order__step { margin-top: var(--space-xl); }
+    .order__step[hidden] { display: none; }
+
+    .order__step-label {
+      font-family: var(--font-mono);
+      font-size: var(--text-xs);
+      font-weight: var(--weight-semibold);
+      letter-spacing: .08em;
+      color: var(--primary);
+    }
+
+    .order__step-title {
+      margin-top: 6px;
+      font-size: var(--text-section-heading);
+      font-weight: var(--weight-bold);
+      line-height: var(--leading-tight);
+      letter-spacing: -.02em;
+    }
+
+    .order__step-title:focus { outline: none; }
+
+    .order__step-intro { margin-top: var(--space-sm); font-size: var(--text-body); line-height: var(--leading-normal); color: var(--text-muted); }
+
+    .order__fields { display: grid; gap: var(--space-lg); margin-top: var(--space-lg); }
+
+    .order__label {
+      display: block;
+      margin-bottom: var(--space-sm);
+      font-size: var(--text-meta);
+      font-weight: var(--weight-semibold);
+    }
+
+    .order__hint { margin-top: 6px; font-size: var(--text-small); line-height: var(--leading-normal); color: var(--text-light); }
+
+    .order__input {
+      width: 100%;
+      height: 48px;
+      padding: 0 14px;
+      border: 1px solid var(--border-dark);
+      border-radius: var(--radius-md);
+      background: var(--surface-white);
+      font-size: var(--text-body);
+      color: var(--text-primary);
+      transition: border-color .15s ease, box-shadow .15s ease;
+    }
+
+    select.order__input { padding-right: 36px; }
+    textarea.order__input { height: auto; min-height: 132px; padding: 12px 14px; line-height: var(--leading-normal); resize: vertical; }
+    .order__input::placeholder { color: var(--text-placeholder); }
+    .order__input:hover { border-color: var(--border-hover); }
+    .order__input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-tint); }
+    .order__input[aria-invalid="true"] { border-color: var(--danger); }
+
+    .order__field { position: relative; }
+    .order__field .order__input { padding-right: 76px; }
+
+    .order__toggle {
+      position: absolute;
+      top: 50%;
+      right: 6px;
+      height: 36px;
+      padding: 0 12px;
+      border: 0;
+      border-radius: var(--radius-sm);
+      background: none;
+      color: var(--primary);
+      font-size: var(--text-small);
+      font-weight: var(--weight-semibold);
+      transform: translateY(-50%);
+    }
+
+    .order__toggle:hover { background: var(--primary-tint); }
+
+    /* Duration radio cards */
+    .order__durations { min-width: 0; margin: 0; padding: 0; border: 0; }
+    .order__durations legend { padding: 0; }
+
+    .order__duration-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: var(--space-sm);
+    }
+
+    .order__duration {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      padding: 14px 12px;
+      border: 1px solid var(--border-dark);
+      border-radius: var(--radius-md);
+      background: var(--surface-white);
+      cursor: pointer;
+      transition: border-color .15s ease, box-shadow .15s ease, background-color .15s ease;
+    }
+
+    .order__duration input { position: absolute; opacity: 0; pointer-events: none; }
+    .order__duration:hover { border-color: var(--border-hover); }
+    .order__duration-length { font-size: var(--text-small); font-weight: var(--weight-semibold); color: var(--text-muted); }
+    .order__duration-price { font-family: var(--font-mono); font-size: 20px; font-weight: 800; letter-spacing: -.02em; color: var(--text-primary); }
+    .order__duration-tag { font-size: 11px; font-weight: var(--weight-semibold); color: var(--primary); }
+
+    .order__duration:has(input:checked) {
+      border-color: var(--primary);
+      background: var(--primary-tint);
+      box-shadow: 0 0 0 1px var(--primary);
+    }
+
+    .order__duration:has(input:focus-visible) { outline: 2px solid var(--primary); outline-offset: 2px; }
+
+    .order__error {
+      padding: 12px 14px;
+      border-left: 3px solid var(--danger);
+      border-radius: var(--radius-sm);
+      background: var(--red-soft);
+      font-size: var(--text-meta);
+      line-height: var(--leading-normal);
+      color: var(--text-primary);
+    }
+
+    .order__field-error { margin-top: 6px; font-size: var(--text-small); font-weight: var(--weight-semibold); color: #B42318; }
+    .order__field-error:empty { display: none; }
+
+    .order__actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-md); margin-top: var(--space-xl); }
+
+    .order__button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--space-sm);
+      min-height: 48px;
+      padding: 0 22px;
+      border: 0;
+      border-radius: var(--radius-md);
+      background: var(--primary);
+      box-shadow: var(--shadow-primary-sm);
+      color: var(--surface-white);
+      font-size: var(--text-body);
+      font-weight: var(--weight-semibold);
+      transition: background-color .15s ease;
+    }
+
+    .order__button:hover { background: var(--primary-hover-btn); }
+    .order__button[aria-busy="true"] { cursor: progress; }
+    .order__button--block { width: 100%; }
+
+    .order__button:disabled:not([aria-busy="true"]) {
+      background: var(--surface-chip);
+      box-shadow: none;
+      color: var(--text-light);
+      cursor: not-allowed;
+    }
+
+    .order__button[aria-busy="true"]:disabled { background: var(--primary-hover-btn); }
+
+    .order__link-button {
+      padding: 10px 0;
+      border: 0;
+      background: none;
+      font-size: var(--text-meta);
+      font-weight: var(--weight-semibold);
+      color: var(--text-muted);
+    }
+
+    .order__link-button:hover { color: var(--primary); }
+
+    .order__spinner {
+      display: none;
+      width: 16px;
+      height: 16px;
+      border: 2px solid var(--primary-soft-line);
+      border-top-color: var(--surface-white);
+      border-radius: 50%;
+      animation: order-spin .6s linear infinite;
+    }
+
+    .order__button[aria-busy="true"] .order__spinner { display: block; }
+    @keyframes order-spin { to { transform: rotate(360deg); } }
+
+    /* Review */
+    .order__summary {
+      margin-top: var(--space-lg);
+      padding: var(--space-lg);
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-panel);
+      background: var(--surface-light);
+    }
+
+    .order__summary-title { font-size: var(--text-meta); font-weight: var(--weight-semibold); color: var(--text-muted); }
+    .order__summary-item { margin-top: var(--space-sm); font-size: var(--text-card-title); font-weight: var(--weight-bold); }
+
+    .order__summary-facts { display: grid; gap: var(--space-sm); margin-top: var(--space-md); font-size: var(--text-meta); }
+    .order__summary-facts div { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: var(--space-md); }
+    .order__summary-facts dt { color: var(--text-muted); }
+    .order__summary-facts dd { overflow-wrap: anywhere; }
+
+    .order__total {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      margin-top: var(--space-lg);
+      padding-top: var(--space-md);
+      border-top: 1px solid var(--border-default);
+      font-weight: var(--weight-semibold);
+    }
+
+    .order__total strong { font-family: var(--font-mono); font-size: 28px; font-weight: 800; letter-spacing: -.02em; }
+
+    .order__pay { margin-top: var(--space-lg); display: grid; gap: var(--space-sm); }
+
+    .order__pay-note {
+      padding: 12px 14px;
+      border-radius: var(--radius-sm);
+      background: var(--amber-soft);
+      font-size: var(--text-small);
+      line-height: var(--leading-normal);
+      color: var(--text-primary);
+    }
+
+    .order__legal { margin-top: var(--space-md); font-size: var(--text-small); line-height: var(--leading-normal); color: var(--text-light); }
+    .order__legal a { color: var(--primary); text-decoration: underline; text-underline-offset: 2px; }
+
+    /* Success */
+    .order__success { margin-top: var(--space-xl); }
+    .order__success[hidden] { display: none; }
+
+    .order__success-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: var(--success-tint);
+      color: var(--success-dark);
+    }
+
+    .order__success-title { margin-top: var(--space-lg); }
+    .order__success-title:focus { outline: none; }
+    .order__success p { margin-top: var(--space-md); font-size: var(--text-body); line-height: var(--leading-relaxed); color: var(--text-muted); }
+
+    .order__back {
+      display: inline-flex;
+      margin-top: var(--space-2xl);
+      font-size: var(--text-meta);
+      font-weight: var(--weight-semibold);
+      color: var(--text-muted);
+    }
+
+    .order__back:hover { color: var(--primary); }
+
+    @media (max-width: 899px) {
+      .order { grid-template-columns: minmax(0, 1fr); align-content: start; }
+      .order__brand { position: static; height: auto; gap: var(--space-lg); padding: var(--space-lg) var(--gutter); }
+      .order__tagline { font-size: var(--text-section-heading); }
+      .order__intro, .order__prices, .order__prices-note, .order__foot, .order__eyebrow { display: none; }
+      .order__panel { padding: var(--space-xl) var(--gutter) var(--space-2xl); }
+    }
+
+    @media (max-width: 559px) {
+      .order__duration-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .order__actions .order__button { width: 100%; }
+      .order__summary { padding: var(--space-md); }
+      .order__summary-facts div { grid-template-columns: minmax(0, 1fr); gap: 2px; }
+    }
+
+    /* 16px keeps iOS from zooming into focused fields. */
+    @media (max-width: 767px) {
+      .order__input { font-size: 16px; }
+    }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#order-main">Skip to the order form</a>
+  <div class="order">
+    <aside class="order__brand" aria-label="FIJLY Studio pricing">
+      <a class="order__logo" href="index.html" aria-label="FIJLY home">
+        <span class="order__mark"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M8 5v14l11-7z" fill="currentColor"/></svg></span>
+        <span class="order__wordmark"><span class="order__word">FIJLY</span><span class="order__sub">STUDIO</span></span>
+      </a>
+      <div class="order__pitch">
+        <p class="order__eyebrow">NEW PROJECT</p>
+        <p class="order__tagline">Start your video project</p>
+        <p class="order__intro">Pick a format and length, tell us about your product, and we’ll take it from script to final delivery.</p>
+        <ul class="order__prices" aria-label="Prices by video length">
+          <li data-duration="30"><span>30 seconds</span><strong>$300</strong></li>
+          <li data-duration="60"><span>60 seconds</span><strong>$500</strong></li>
+          <li data-duration="90"><span>90 seconds · most popular</span><strong>$700</strong></li>
+          <li data-duration="120"><span>120 seconds</span><strong>$950</strong></li>
+        </ul>
+        <p class="order__prices-note">Same price for every format. Script, motion design, two revision rounds and all source files included.</p>
+      </div>
+      <p class="order__foot">ONE VIDEO · ONE PRICE · NO SUBSCRIPTION</p>
+    </aside>
+
+    <main class="order__panel" id="order-main" tabindex="-1">
+      <div class="order__card">
+        <h1 class="order__title">Start your video</h1>
+        <noscript><p class="order__error">JavaScript is required to place an order. You can also email <a href="mailto:hello@fijly.com">hello@fijly.com</a>.</p></noscript>
+
+        <ol class="order__progress" id="order-progress" aria-label="Order progress">
+          <li data-progress="1" aria-current="step">1. Your video</li>
+          <li data-progress="2">2. Your account</li>
+          <li data-progress="3">3. Review &amp; pay</li>
+        </ol>
+
+        <form id="order-form" novalidate>
+          <!-- Step 1 -->
+          <section class="order__step" data-step="1" aria-labelledby="step-1-title">
+            <p class="order__step-label">STEP 1 OF 3</p>
+            <h2 class="order__step-title" id="step-1-title" tabindex="-1">Your video</h2>
+            <div class="order__fields">
+              <div>
+                <label class="order__label" for="order-type">Video type</label>
+                <select class="order__input" id="order-type" name="videoType" required aria-describedby="order-type-error">
+                  <option value="">Choose a video type</option>
+                  <option>Product Launch</option>
+                  <option>Homepage Video</option>
+                  <option>Product Demo</option>
+                  <option>Product Promo</option>
+                  <option>SaaS Explainer</option>
+                  <option>Tutorial / Onboarding</option>
+                </select>
+                <p class="order__field-error" id="order-type-error"></p>
+              </div>
+              <fieldset class="order__durations" aria-describedby="order-duration-error">
+                <legend class="order__label">Duration</legend>
+                <div class="order__duration-grid">
+                  <label class="order__duration"><input type="radio" name="duration" value="30" required><span class="order__duration-length">30 seconds</span><span class="order__duration-price">$300</span></label>
+                  <label class="order__duration"><input type="radio" name="duration" value="60"><span class="order__duration-length">60 seconds</span><span class="order__duration-price">$500</span></label>
+                  <label class="order__duration"><input type="radio" name="duration" value="90"><span class="order__duration-length">90 seconds</span><span class="order__duration-price">$700</span><span class="order__duration-tag">Most popular</span></label>
+                  <label class="order__duration"><input type="radio" name="duration" value="120"><span class="order__duration-length">120 seconds</span><span class="order__duration-price">$950</span></label>
+                </div>
+                <p class="order__field-error" id="order-duration-error"></p>
+              </fieldset>
+              <div>
+                <label class="order__label" for="order-company">Company name</label>
+                <input class="order__input" id="order-company" name="company" autocomplete="organization" required maxlength="200" aria-describedby="order-company-error">
+                <p class="order__field-error" id="order-company-error"></p>
+              </div>
+              <div>
+                <label class="order__label" for="order-brief">Project brief</label>
+                <textarea class="order__input" id="order-brief" name="brief" required minlength="20" maxlength="5000" placeholder="Tell us what your product does and what this video should achieve" aria-describedby="order-brief-hint order-brief-error"></textarea>
+                <p class="order__hint" id="order-brief-hint">Who is it for, where will it run, and what should viewers do next?</p>
+                <p class="order__field-error" id="order-brief-error"></p>
+              </div>
+            </div>
+            <div class="order__actions">
+              <button class="order__button" type="button" data-next="2">Continue <span aria-hidden="true">→</span></button>
+            </div>
+          </section>
+
+          <!-- Step 2 -->
+          <section class="order__step" data-step="2" aria-labelledby="step-2-title" hidden>
+            <p class="order__step-label">STEP 2 OF 3</p>
+            <h2 class="order__step-title" id="step-2-title" tabindex="-1">Create your account</h2>
+            <p class="order__step-intro">This will be your FIJLY Studio login, where you’ll review drafts and approve your video.</p>
+            <div class="order__fields">
+              <div>
+                <label class="order__label" for="order-name">Full name</label>
+                <input class="order__input" id="order-name" name="name" autocomplete="name" required maxlength="200" aria-describedby="order-name-error">
+                <p class="order__field-error" id="order-name-error"></p>
+              </div>
+              <div>
+                <label class="order__label" for="order-email">Work email</label>
+                <input class="order__input" id="order-email" name="email" type="email" autocomplete="email" inputmode="email" autocapitalize="none" spellcheck="false" required maxlength="320" placeholder="you@company.com" aria-describedby="order-email-error">
+                <p class="order__field-error" id="order-email-error"></p>
+              </div>
+              <div>
+                <label class="order__label" for="order-password">Password</label>
+                <div class="order__field">
+                  <input class="order__input" id="order-password" name="password" type="password" autocomplete="new-password" required minlength="8" maxlength="72" aria-describedby="order-password-hint order-password-error">
+                  <button class="order__toggle" id="order-toggle" type="button" aria-controls="order-password" aria-pressed="false" aria-label="Show password">Show</button>
+                </div>
+                <p class="order__hint" id="order-password-hint">At least 8 characters.</p>
+                <p class="order__field-error" id="order-password-error"></p>
+              </div>
+            </div>
+            <div class="visually-hidden" aria-hidden="true"><label for="order-hp">Website</label><input type="text" name="website" id="order-hp" tabindex="-1" autocomplete="off"></div>
+            <div class="order__actions">
+              <button class="order__button" type="button" data-next="3">Continue <span aria-hidden="true">→</span></button>
+              <button class="order__link-button" type="button" data-back="1">← Back to your video</button>
+            </div>
+          </section>
+
+          <!-- Step 3 -->
+          <section class="order__step" data-step="3" aria-labelledby="step-3-title" hidden>
+            <p class="order__step-label">STEP 3 OF 3</p>
+            <h2 class="order__step-title" id="step-3-title" tabindex="-1">Review &amp; pay</h2>
+            <div class="order__summary">
+              <h3 class="order__summary-title">Order summary</h3>
+              <p class="order__summary-item" id="summary-item"></p>
+              <dl class="order__summary-facts">
+                <div><dt>Company</dt><dd id="summary-company"></dd></div>
+                <div><dt>Account</dt><dd id="summary-account"></dd></div>
+                <div><dt>Brief</dt><dd id="summary-brief"></dd></div>
+              </dl>
+              <p class="order__total"><span>Total</span><strong id="summary-total"></strong></p>
+              <div class="order__pay">
+                <button class="order__button order__button--block" id="order-pay" type="button" disabled aria-describedby="order-pay-note">Pay <span id="order-pay-amount"></span> <span aria-hidden="true">→</span></button>
+                <p class="order__pay-note" id="order-pay-note">Online payment is coming soon. For now, create your account and submit your brief — we’ll invoice you directly.</p>
+                <p class="order__error" id="order-error" role="alert" hidden></p>
+                <button class="order__button order__button--block" id="order-submit" type="submit" aria-busy="false"><span class="order__spinner" aria-hidden="true"></span><span id="order-submit-label">Create account &amp; submit brief</span> <span aria-hidden="true">→</span></button>
+              </div>
+            </div>
+            <p class="order__legal">By submitting, you agree to our <a href="terms.html">Terms</a> and <a href="privacy.html">Privacy Notice</a>. Nothing is charged until we confirm your order.</p>
+            <div class="order__actions">
+              <button class="order__link-button" type="button" data-back="2">← Back to details</button>
+            </div>
+          </section>
+        </form>
+
+        <section class="order__success" id="order-success" aria-labelledby="order-success-title" hidden>
+          <span class="order__success-icon" aria-hidden="true"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span>
+          <h2 class="order__step-title order__success-title" id="order-success-title" tabindex="-1">Your order has been received!</h2>
+          <p id="order-success-text"></p>
+          <p id="order-success-summary"></p>
+        </section>
+
+        <a class="order__back" href="index.html">← Back to fijly.com</a>
+      </div>
+    </main>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.116.0/dist/umd/supabase.js" integrity="sha384-iLddHTLokph6Omwoyid4XKxHaWa6w41BnoEj0q5oOrzmYPpHIKt1wyjReA7s//pP" crossorigin="anonymous"></script>
+  <script src="js/supabase-client.js"></script>
+  <script src="js/order.js"></script>
+</body>
+</html>

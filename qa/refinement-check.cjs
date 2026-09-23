@@ -12,15 +12,15 @@ const assert=require('assert/strict'),fs=require('fs');
    const r=await p.locator(selector).boundingBox();assert(r.x>=0&&r.x+r.width<=width+1,`${width} clipped ${selector}`);
   }
   assert.equal(await p.locator('a[href="#"]').count(),0);
-  assert.equal(await p.locator('.hero__actions a').first().getAttribute('href'),'#contact');
+  assert.equal(await p.locator('.hero__actions a').first().getAttribute('href'),'order.html');
   for(const key of ['aiflow','clouddesk','finly']){
    await p.locator(`[data-concept="${key}"]`).click();assert(await p.locator('#concept-dialog').isVisible());
    assert((await p.locator('#concept-image').getAttribute('src')).includes(key));
    await p.keyboard.press('Escape');assert.equal(await p.locator('#concept-dialog').isVisible(),false);
    assert.equal(await p.evaluate(()=>document.activeElement.dataset.concept),key);
   }
-  await p.locator('[data-plan="Studio"]').click();assert.equal(await p.locator('#contact-plan').inputValue(),'Studio');
-  assert.equal(await p.locator('#contact-type').inputValue(),'Recurring video production');
+  // Per-video pricing links to order.html; the contact form is for general enquiries.
+  await p.locator('#contact-type').selectOption('Recurring video production');assert.equal(await p.locator('#contact-plan').inputValue(),'');
   await p.locator('#contact-form button').click();assert.equal(await p.locator('#contact-status').isVisible(),false);
   await p.locator('#contact-name').fill('Jane Founder');await p.locator('#contact-email').fill('invalid');
   await p.locator('#contact-message').fill('We need a launch video for our new product.');
@@ -29,7 +29,7 @@ const assert=require('assert/strict'),fs=require('fs');
   // Briefs are saved to Supabase (the emulator in QA); the form then clears.
   await p.waitForFunction(()=>/has been sent/.test(document.getElementById('contact-status').textContent));
   assert.equal(await p.locator('#contact-name').inputValue(),'');assert.equal(await p.locator('#contact-status a').count(),0);
-  assert.ok(b.fijlyDb.contact_submissions.some(x=>x.name==='Jane Founder'&&x.email==='jane@example.com'&&x.plan==='Studio'&&x.project_type==='Recurring video production'),'brief saved to contact_submissions');
+  assert.ok(b.fijlyDb.contact_submissions.some(x=>x.name==='Jane Founder'&&x.email==='jane@example.com'&&x.plan===null&&x.project_type==='Recurring video production'),'brief saved to contact_submissions');
   assert.doesNotMatch(await p.locator('#contact-help').textContent(),/not connected/);
   await p.locator('[data-concept="aiflow"]').click();await p.locator('[data-close-concept]').click();assert.equal(await p.locator('#concept-dialog').isVisible(),false);assert.equal(await p.evaluate(()=>document.activeElement.id),'contact');
   if(width===375){await p.locator('#contact').screenshot({path:'qa/refinement-after/contact-ready-375.png'});}

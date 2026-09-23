@@ -8,8 +8,8 @@
    - RLS stand-in: admins read and write everything; a client reads and
      writes its own client's rows (directly or through their video or script)
      and its own profile, never admin_settings; anonymous callers see nothing.
-   - contact_submissions (landing page briefs): anyone may insert, only
-     admins may read.
+   - contact_submissions (landing page briefs) and orders (order.html): anyone
+     may insert, only admins may read (and update orders).
    Supports what the portals send: select with eq filters, order and limit;
    insert, update and delete with return=representation; single objects.
    Storage: the private `client-assets` bucket (upload, signed URL, download
@@ -32,9 +32,16 @@ const COLUMNS = {
   script_scenes: 'id script_id scene_order label content created_at updated_at',
   activity_log: 'id client_id video_id actor_id action details created_at',
   admin_settings: 'id admin_id studio_name studio_email default_length default_priority default_lead_days notify_new_request notify_revision notify_approval created_at updated_at',
-  contact_submissions: 'id name email company project_type message plan created_at'
+  contact_submissions: 'id name email company project_type message plan created_at',
+  orders: 'id name email company video_type duration price brief status payment_intent_id created_at updated_at'
 };
 Object.keys(COLUMNS).forEach(table => { COLUMNS[table] = new Set(COLUMNS[table].split(' ')); });
+// Tables anyone may insert into (RLS "WITH CHECK (true)"); only admins read them.
+const PUBLIC_INSERT = {
+  contact_submissions: { required: ['name', 'email', 'message'], defaults: {} },
+  orders: { required: ['name', 'email', 'company', 'video_type', 'duration', 'price'], defaults: { status: 'pending' },
+    checks: row => !row.status || ['pending', 'paid', 'processing', 'completed', 'cancelled'].includes(row.status) }
+};
 const UNIQUE = { versions: ['video_id', 'version_number'], revisions: ['video_id', 'round_number'], admin_settings: ['admin_id'], client_settings: ['client_id'] };
 
 // The demo records the portals were built against, frozen from the retired
@@ -116,17 +123,20 @@ function handle(db, caller, method, url, headers, body) {
     return represent || method === 'GET' ? { status: status || 200, body: copy } : { status: 204 };
   };
   const unknown = row => Object.keys(row).find(key => !columns.has(key));
-  const writable = row => role === 'admin' || table === 'contact_submissions' || (table === 'profiles' ? row.id === caller.id : table !== 'admin_settings' && own(row));
-  // The contact form inserts anonymously, and can't read the row back.
-  if (table === 'contact_submissions' && method === 'POST' && !represent) {
+  const writable = row => role === 'admin' || (table === 'profiles' ? row.id === caller.id : table !== 'admin_settings' && !PUBLIC_INSERT[table] && own(row));
+  // The contact and order forms insert as anyone (signed in or not) and can't
+  // read the row back; only admins read or change them.
+  if (PUBLIC_INSERT[table] && method === 'POST' && !represent) {
     const input = body || {}, bad = unknown(input);
     if (bad) return error(400, 'PGRST204', `Could not find the '${bad}' column of '${table}' in the schema cache`);
-    if (!input.name || !input.email || !input.message) return error(400, '23502', 'null value in column violates not-null constraint');
-    db.contact_submissions.push(Object.assign({ id: crypto.randomUUID(), company: null, project_type: null, plan: null, created_at: new Date().toISOString() }, input));
+    if (PUBLIC_INSERT[table].required.some(key => input[key] == null || input[key] === '')) return error(400, '23502', 'null value in column violates not-null constraint');
+    if (PUBLIC_INSERT[table].checks && !PUBLIC_INSERT[table].checks(input)) return error(400, '23514', `new row for relation "${table}" violates check constraint`);
+    const now = new Date().toISOString();
+    db[table].push(Object.assign(Object.fromEntries([...columns].map(key => [key, null])), { id: crypto.randomUUID(), created_at: now }, columns.has('updated_at') ? { updated_at: now } : {}, PUBLIC_INSERT[table].defaults, input));
     return { status: 201 };
   }
   if (!caller) return error(401, '42501', 'permission denied for table ' + table);
-  if (table === 'contact_submissions' && role !== 'admin') return error(403, '42501', 'permission denied for table ' + table);
+  // Otherwise RLS hides these rows from non-admins: reads return nothing.
 
   if (method === 'GET') {
     let rows = db[table].filter(visible).filter(matches);

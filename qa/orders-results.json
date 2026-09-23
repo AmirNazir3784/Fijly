@@ -1,0 +1,42 @@
+{
+  "checks": [
+    "Pricing: 4 duration cards ($300/$500/$700/$950), 90s featured, order links carry the duration, includes list, custom link; old plans gone; nav and hero start an order; 4/2/1 columns at 1280/768/375",
+    "Order step 1: ?duration pre-selects the length and highlights the price, six video types, inline validation with focus, brief minimum, advances to #step-2",
+    "Order step 2: name/email/password validation, show/hide password, browser Back and Forward keep every field",
+    "Order step 3: summary (type, length, company, $700 total), disabled Pay placeholder with note, Back keeps data, deep links to later steps fall back to the first incomplete step",
+    "Submit saves the order (pending, $700, 90 seconds) anonymously; sign-up is disabled so the manual-account message shows; the password is never stored",
+    "Honeypot orders show success but are not saved; with self sign-up enabled the order also creates the login (name only, never a role) and asks for email confirmation; a failed save keeps the brief, offers an email fallback and allows retry; order page has no overflow at 375/768/1280",
+    "Admin Orders: sidebar link between Dashboard and Clients with a pending count, newest-first table with every column, status badges, price-mismatch flag, search/filter/clear, detail with full brief and email link, status updates saved (processing, completed, cancelled), no overflow at 375"
+  ],
+  "scans": [
+    {
+      "label": "order step 1",
+      "violations": []
+    },
+    {
+      "label": "order step 2",
+      "violations": []
+    },
+    {
+      "label": "order step 3",
+      "violations": []
+    },
+    {
+      "label": "order success",
+      "violations": []
+    },
+    {
+      "label": "order step 1 / 375",
+      "violations": []
+    },
+    {
+      "label": "admin orders",
+      "violations": []
+    },
+    {
+      "label": "admin order detail",
+      "violations": []
+    }
+  ],
+  "errors": []
+}

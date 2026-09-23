@@ -35,6 +35,16 @@ After upload, check the homepage, `login.html`, `studio.html#settings`, both leg
 
 Browser tests use locally available Playwright tooling solely for QA; it is not a website dependency.
 
+## Orders
+
+`order.html` (linked from "Start Your Video" and each pricing card) saves orders to the Supabase `orders` table: name, email, company, video type, length, price and brief, with status `pending`. Payment isn't connected; the Pay button is a disabled placeholder.
+
+**Processing an order (manual for now):** open Admin → Orders, then create the customer's account (Supabase → Authentication → Add user), their client workspace (Admin → Clients) and link the two (`profiles.client_id`), email their login, and move the order to Processing, then Completed. The customer's password from the order form is never saved; they get the login you send them.
+
+- **Check the price before invoicing.** The price is sent by the browser, so the Orders screen flags any order whose price doesn't match its length ("Check price"). A database check that ties `price` to `duration` would block tampered orders outright.
+- **Before ever enabling public sign-up:** the `handle_new_user` trigger copies `role` from sign-up metadata, so a visitor could register as an admin. Make it always create `client` profiles first. The order form can then create logins itself by setting `window.FIJLY_SELF_SIGNUP = true` (see `site/js/order.js`).
+- Orders have the same honeypot as the contact form and no CAPTCHA; watch for spam.
+
 ## Contact form configuration
 
 The homepage form saves briefs to the Supabase table `contact_submissions` (anonymous insert only; only admins can read them in Supabase → Table Editor). `site/js/config.js` holds the Supabase URL, the public anon key and `contactEmail`. If saving fails, the SDK can't load, or the Supabase settings are removed from `config.js`, the form keeps the brief and offers a prefilled email draft to `contactEmail` instead. Requests time out after 15 seconds.

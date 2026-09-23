@@ -24,6 +24,8 @@
 .document-page h2 { margin-top: 32px; margin-bottom: 12px; font-size: 22px; }
 .document-page p { margin-top: 16px; line-height: 1.7; color: var(--text-muted); }
 .document-page .document-lead { font-size: 20px; }
+/* Links inside legal text are underlined, not told apart by colour alone. */
+.document-page p a:not(.btn) { color: var(--primary); text-decoration: underline; text-underline-offset: 3px; }
 .owner-review { margin-top: 32px; padding: 24px; border: 1px solid var(--border-default); border-radius: var(--radius-xl); background: var(--surface-light); }
 .owner-review h2 { margin-top: 0; }
 .document-footer { padding-block: 24px; border-top: 1px solid var(--border-default); }
@@ -317,8 +319,7 @@ section[id] {
 }
 
 .services__grid,
-.work__grid,
-.pricing__grid {
+.work__grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 22px;
@@ -722,15 +723,23 @@ section[id] {
 }
 
 /* 9. Pricing ============================================================= */
+/* One card per video length; every format costs the same. */
 .pricing__grid {
-  align-items: start;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 18px;
+  align-items: stretch;
 }
 
 .price-card {
   position: relative;
-  padding: 30px;
+  display: flex;
+  flex-direction: column;
+  padding: 30px 26px 26px;
   border-radius: var(--radius-panel);
 }
+
+.price-card .btn { margin-top: auto; }
 
 .price-card .badge-solid {
   position: absolute;
@@ -766,39 +775,81 @@ section[id] {
 }
 
 .price-card__desc {
-  margin: var(--space-sm) 0 22px;
+  margin: var(--space-sm) 0 24px;
   font-size: 13.5px;
   line-height: 1.5;
   color: var(--text-light);
 }
 
-.price-card__features {
-  display: flex;
-  flex-direction: column;
-  gap: 11px;
-  margin-top: var(--space-lg);
+/* Featured (dark) length */
+.price-card.card-dark .price-card__name { color: var(--secondary); }
+.price-card.card-dark .price-card__amount { color: var(--surface-white); }
+.price-card.card-dark .price-card__per,
+.price-card.card-dark .price-card__desc { color: var(--text-lighter); }
+
+/* What every video includes */
+.pricing__includes {
+  margin-top: 28px;
+  padding: 22px 26px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-panel);
+  background: var(--surface-white);
+  box-shadow: var(--shadow-xs);
+  text-align: center;
 }
 
-.price-card__features li {
+.pricing__includes-title {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.pricing__features {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px 28px;
+  margin-top: 14px;
+}
+
+.pricing__features li {
   display: flex;
   align-items: center;
-  gap: 10px;
-  font-size: 13.5px;
+  gap: 9px;
+  font-size: 14px;
+  font-weight: 600;
   color: var(--surface-dark-hover);
 }
 
-.price-card__features svg {
+.pricing__features svg {
   flex: none;
   color: var(--primary);
 }
 
-/* Featured (dark) plan */
-.price-card.card-dark .price-card__name,
-.price-card.card-dark .price-card__features svg { color: var(--secondary); }
-.price-card.card-dark .price-card__amount { color: var(--surface-white); }
-.price-card.card-dark .price-card__per,
-.price-card.card-dark .price-card__desc { color: var(--text-lighter); }
-.price-card.card-dark .price-card__features li { color: var(--text-on-dark); }
+.pricing__formats,
+.pricing__custom {
+  max-width: 640px;
+  margin: 22px auto 0;
+  font-size: 14.5px;
+  line-height: 1.6;
+  text-align: center;
+  text-wrap: balance;
+  color: var(--text-muted);
+}
+
+.pricing__custom { margin-top: 8px; }
+
+.pricing__custom a {
+  font-weight: 600;
+  color: var(--primary);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.pricing__custom a:hover { color: var(--primary-hover); }
 
 /* 10. FAQ ================================================================ */
 .faq {
@@ -960,10 +1011,12 @@ section[id] {
   .process__cta { margin-top: 32px; }
 
   .pricing__grid {
-    grid-template-columns: minmax(0, 1fr);
-    max-width: 440px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    max-width: 680px;
     margin-inline: auto;
   }
+
+  .pricing__includes { max-width: 680px; margin-inline: auto; }
 
   .footer__grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -987,6 +1040,14 @@ section[id] {
   .process__grid {
     grid-template-columns: minmax(0, 1fr);
   }
+
+  .pricing__grid {
+    grid-template-columns: minmax(0, 1fr);
+    max-width: 440px;
+  }
+
+  .pricing__includes { max-width: 440px; padding: 20px; }
+  .pricing__features { flex-direction: column; align-items: flex-start; width: fit-content; margin-inline: auto; }
 
   .step { padding: 22px 20px; }
   .step__icon { width: 44px; height: 44px; }
@@ -1087,10 +1148,6 @@ section[id] {
   .work-card__body { padding: 16px; }
   .work-card__view { font-size: 10px; padding: 8px; bottom: 8px; right: 8px; }
   .work-card__metric { flex-wrap: wrap; }
-  .pricing__grid { max-width: none; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 14px; }
-  .price-card { padding: 22px 16px; }
-  .price-card__amount { font-size: 34px; }
-  .price-card__features { font-size: 12px; }
   .contact__grid { grid-template-columns: 1fr; }
   .contact__intro { border-radius: 22px 22px 0 0; }
   .contact__intro h2 { max-width: 560px; }

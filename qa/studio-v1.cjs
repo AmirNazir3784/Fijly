@@ -20,7 +20,7 @@ const { pathToFileURL } = require('url');
     if (/^https:\/\/eaddovqkarognynnybeh\.supabase\.co\/(auth\/v1\/|rest\/v1\/)/.test(r.url())) return;
     if (['fetch', 'xhr'].includes(r.resourceType()) || r.method() !== 'GET') requests.push(r.url());
   });
-  const routes = { studio: ['overview', 'projects', 'requests', 'assets', 'scripts', 'analytics', 'settings'], admin: ['dashboard', 'clients', 'requests', 'videos', 'revisions', 'assets', 'scripts', 'analytics', 'settings'] };
+  const routes = { studio: ['overview', 'projects', 'requests', 'assets', 'scripts', 'analytics', 'settings'], admin: ['dashboard', 'orders', 'clients', 'requests', 'videos', 'revisions', 'assets', 'scripts', 'analytics', 'settings'] };
   const url = (file, screen) => pathToFileURL(path.resolve(`site/${file}.html`)).href + '#' + screen;
   async function load(file, screen) {
     await page.goto(url(file, screen));
@@ -51,7 +51,7 @@ const { pathToFileURL } = require('url');
         await page.screenshot({ path: `qa/screenshots/v1-${file}-${screen}-${width}.png`, fullPage: true });
       }
     }
-    checks.push(`${width}px: all 15 active routes, selected navigation, one heading, no overflow or subscription UI`);
+    checks.push(`${width}px: all 17 active routes, selected navigation, one heading, no overflow or subscription UI`);
   }
   for (const file of Object.keys(routes)) {
     await load(file, routes[file][0]);
