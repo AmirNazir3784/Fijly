@@ -1,14 +1,26 @@
-/* Project briefs and concept previews. No external dependencies. */
+/* Project briefs and concept previews. Briefs are saved to Supabase
+   (contact_submissions) with the SDK loaded in <head>; if that fails, the
+   form offers the brief as an email draft instead. */
 (function () {
   'use strict';
   var config = window.FIJLY_CONFIG || {};
   var form = document.getElementById('contact-form');
   var status = document.getElementById('contact-status');
   var submit = form.querySelector('[type="submit"]');
-  var endpoint = config.contactEndpoint || '';
+  var backend = !!(config.supabaseUrl && config.supabaseAnonKey);
+  var db = null;
   var email = config.contactEmail || 'hello@fijly.com';
   var pending = false;
   submit.disabled = false;
+  // One anonymous client, created on first send. It keeps no session, so it
+  // never touches a Studio sign-in in the same browser.
+  function database() {
+    if (!db && window.supabase && window.supabase.createClient) {
+      db = window.supabase.createClient(config.supabaseUrl, config.supabaseAnonKey, { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } });
+    }
+    if (!db) throw new Error('Supabase SDK not loaded');
+    return db;
+  }
   // Prevent an accidental page submission if JavaScript is unavailable.
   form.addEventListener('submit', async function (event) {
     event.preventDefault();
@@ -32,7 +44,7 @@
       status.appendChild(document.createTextNode('. If no email app opens, copy your brief and email ' + email + '.'));
     }
     status.hidden = false;
-    if (!endpoint) {
+    if (!backend) {
       fallback('Your brief is ready, but has not been sent. Open the draft in your email app, review it, and send it there.');
       status.focus({ preventScroll: true });
       return;
@@ -44,13 +56,12 @@
     var controller = new AbortController();
     var timeout = setTimeout(function () { controller.abort(); }, 15000);
     try {
-      var response = await fetch(endpoint, { method: 'POST', body: data,
-        headers: { Accept: 'application/json' }, signal: controller.signal });
-      if (!response.ok) throw new Error('Delivery failed');
-      if ((response.headers.get('content-type') || '').includes('application/json')) {
-        var result = await response.json();
-        if (result.success === false || result.error || result.errors) throw new Error('Delivery rejected');
-      }
+      // Insert only: anonymous visitors can't read submissions back.
+      var result = await database().from('contact_submissions').insert({
+        name: data.get('name'), email: data.get('email'), company: data.get('company') || null,
+        project_type: data.get('project_type') || null, message: data.get('message'), plan: data.get('plan') || null
+      }).abortSignal(controller.signal);
+      if (result.error) throw result.error;
       status.textContent = 'Your project brief has been sent. Thank you for getting in touch.';
       form.reset();
       document.getElementById('contact-plan-note').hidden = true;
@@ -65,7 +76,7 @@
     }
   });
   document.getElementById('contact-message').addEventListener('input', function () { this.setCustomValidity(''); });
-  if (endpoint) {
+  if (backend) {
     submit.textContent = 'Start Your Video';
     document.getElementById('contact-help').textContent = 'Tell us a little about your product, audience, and goal.';
     form.querySelector('.contact-form__privacy').firstChild.textContent = 'Submitting shares these details with FIJLY to discuss your project. ';

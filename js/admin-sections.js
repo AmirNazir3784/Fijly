@@ -1,7 +1,7 @@
 /* Admin Assets, Scripts, Analytics and Settings.
    Reads and writes the shared data service (Supabase via FijlyData in the
-   Admin portal). Assets are metadata records only — a picked file contributes
-   its name, type and size and nothing is uploaded or stored. */
+   Admin portal). An asset's file is uploaded to Supabase Storage, kept in its
+   client's folder and downloaded through a short-lived signed link. */
 (function () {
   'use strict';
   var api = window.FijlyData || window.FijlyMock;
@@ -53,9 +53,16 @@
   var assetConfirm = document.getElementById('asset-confirm');
   var assetForm = document.getElementById('asset-form');
   var assetStatus = document.getElementById('asset-save-status');
+  var fileError = document.getElementById('asset-file-error');
+  var uploadProgress = document.getElementById('asset-upload-progress');
+  var preview = document.getElementById('asset-detail-preview');
+  var previewImage = document.getElementById('asset-detail-image');
+  var downloadButton = document.getElementById('download-asset');
+  var downloadError = document.getElementById('asset-download-error');
   var selectedAsset = null;
   var editingAsset = null;
   var pickedFile = null;
+  var savingAsset = false;
 
   fillOptions(assetClient, state.clients.map(function (item) { return item.id; }), clientName);
   fillOptions(assetCategory, api.assetCategories);
@@ -124,10 +131,55 @@
       facts.append(group);
     });
     body.append(intro, facts, node('h3', null, 'Notes'),
-      node('p', 'admin-detail-notes', item.notes || 'No notes for this asset.'),
-      node('p', 'admin-muted', 'Simulated record. The file itself is not stored or downloadable in this preview.'));
-    assetDetail.showModal();
+      node('p', 'admin-detail-notes', item.notes || 'No notes for this asset.'));
+    if (!item.fileUrl) body.append(node('p', 'admin-muted', 'No file is stored for this asset — only its details were recorded.'));
+    downloadButton.hidden = !item.fileUrl;
+    if (!assetDetail.open) downloadError.textContent = '';
+    showPreview(item);
+    if (!assetDetail.open) assetDetail.showModal();
   }
+
+  // Image assets show a thumbnail through a signed URL.
+  function showPreview(item) {
+    if (!api.isImageAsset(item)) { preview.hidden = true; previewImage.removeAttribute('src'); delete previewImage.dataset.asset; return; }
+    previewImage.alt = 'Preview of ' + item.name;
+    if (previewImage.dataset.asset === item.id + item.fileUrl) return;
+    previewImage.dataset.asset = item.id + item.fileUrl;
+    previewImage.removeAttribute('src');
+    preview.hidden = true;
+    api.assetUrl(item).then(function (url) {
+      if (previewImage.dataset.asset !== item.id + item.fileUrl) return;
+      previewImage.src = url;
+      preview.hidden = false;
+    }).catch(function () { /* No thumbnail; Download still reports the problem. */ });
+  }
+  previewImage.addEventListener('error', function () { preview.hidden = true; });
+
+  downloadButton.addEventListener('click', async function () {
+    var item = state.assets.find(function (record) { return record.id === selectedAsset; });
+    if (!item || !item.fileUrl || downloadButton.disabled) return;
+    downloadError.textContent = '';
+    // Open the tab inside the click so pop-up blockers allow it, then point it at the file.
+    var tab = window.open('', '_blank');
+    var release = busy(downloadButton);
+    try {
+      var url = await api.assetUrl(item);
+      if (tab) { tab.opener = null; tab.location.href = url; } else window.open(url, '_blank', 'noopener');
+    } catch (error) {
+      if (tab) tab.close();
+      downloadError.textContent = 'Couldn’t prepare the download. ' + error.message;
+    } finally { release(); }
+  });
+
+  // Small files get an indeterminate bar; large ones a spinner (the SDK reports no progress).
+  function showUploadProgress(file) {
+    var large = file.size >= 5 * 1024 * 1024;
+    var indicator = node('span', large ? 'upload-progress__spinner' : 'upload-progress__bar');
+    indicator.setAttribute('aria-hidden', 'true');
+    uploadProgress.replaceChildren(indicator, node('span', null, large ? 'Uploading large file… (' + bytes(file.size) + ')' : 'Uploading ' + file.name + '…'));
+    uploadProgress.hidden = false;
+  }
+  function hideUploadProgress() { uploadProgress.hidden = true; uploadProgress.replaceChildren(); }
 
   function openAssetEditor(id) {
     if (!state.clients.length) { assetStatus.textContent='Add a client before adding an asset.';return; }
@@ -137,8 +189,10 @@
     Array.from(assetForm.elements).forEach(function (field) {
       if (field.setCustomValidity) field.setCustomValidity('');
     });
+    fileError.textContent = '';
+    hideUploadProgress();
     document.getElementById('asset-editor-title').textContent = id ? 'Edit asset' : 'Add asset';
-    // The simulated picker only makes sense when creating a record.
+    // A file is uploaded when the asset is created; editing changes its details.
     document.getElementById('asset-file-group').hidden = !!id;
     if (id) {
       var item = state.assets.find(function (record) { return record.id === id; });
@@ -152,13 +206,16 @@
       assetForm.elements.category.value = assetCategory.value !== 'all' ? assetCategory.value : 'Other';
     }
     assetEditor.showModal();
-    assetForm.elements.name.focus();
+    (id ? assetForm.elements.name : assetForm.elements.file).focus();
   }
 
+  // Checks the picked file straight away; the problem shows under the picker.
   assetForm.elements.file.addEventListener('change', function (event) {
     var file = event.target.files && event.target.files[0];
-    if (!file) { pickedFile = null; return; }
-    pickedFile = { name: file.name, size: file.size, type: file.type };
+    pickedFile = null;
+    fileError.textContent = file ? api.validateAssetFile(file) : '';
+    if (!file || fileError.textContent) return;
+    pickedFile = file;
     if (!assetForm.elements.name.value.trim()) assetForm.elements.name.value = file.name;
     assetForm.elements.name.setCustomValidity('');
   });
@@ -171,7 +228,14 @@
     event.preventDefault();
     var submit = assetForm.querySelector('[type="submit"]');
     if(!assetEditor.open||submit.disabled)return;
-    var name = assetForm.elements.name;
+    var name = assetForm.elements.name, file = assetForm.elements.file;
+    if (!editingAsset) {
+      // File problems are shown under the picker, not as a browser bubble.
+      var picked = file.files && file.files[0];
+      fileError.textContent = api.validateAssetFile(picked);
+      if (fileError.textContent) { file.focus(); return; }
+      pickedFile = picked;
+    }
     name.value = name.value.trim();
     name.setCustomValidity(name.value ? '' : 'Please give the file a name.');
     if (!assetForm.reportValidity()) return;
@@ -182,20 +246,23 @@
       category: assetForm.elements.category.value,
       notes: assetForm.elements.notes.value
     };
-    if (!editingAsset && pickedFile) {
-      payload.size = pickedFile.size;
-      payload.fileType = (pickedFile.name.split('.').pop() || 'file');
-    }
+    if (!editingAsset) payload.file = pickedFile;
     var release = busy(submit);
+    savingAsset = true;
+    if (!editingAsset) showUploadProgress(pickedFile);
     try {
       var saved = await api.saveAsset(payload);
-      assetStatus.textContent = saved.name + (editingAsset ? ' updated' : ' added') + ' for ' + clientName(saved.client) + '. Metadata only; no file was uploaded.';
+      assetStatus.textContent = editingAsset ? saved.name + ' updated for ' + clientName(saved.client) + '.'
+        : pickedFile.name + ' uploaded for ' + clientName(saved.client) + '.';
+      savingAsset = false;
       assetEditor.close();
     } catch (error) {
-      name.setCustomValidity(error.message);
-      assetForm.reportValidity();
-    } finally { release(); }
+      if (editingAsset) { name.setCustomValidity(error.message); assetForm.reportValidity(); }
+      else fileError.textContent = 'Upload failed. ' + error.message;
+    } finally { savingAsset = false; hideUploadProgress(); release(); }
   });
+  // An upload in progress can't be abandoned half-way by closing the form.
+  assetEditor.addEventListener('cancel', function (event) { if (savingAsset) event.preventDefault(); });
 
   document.getElementById('edit-asset').addEventListener('click', function () {
     var id = selectedAsset;
@@ -225,7 +292,7 @@
     var release = busy(control);
     try {
       var removed = await api.deleteAsset(selectedAsset);
-      assetStatus.textContent = removed.name + ' removed from ' + clientName(removed.client) + '.';
+      assetStatus.textContent = removed.name + (removed.fileUrl ? ' and its file' : '') + ' removed from ' + clientName(removed.client) + '.';
       selectedAsset = null;
     } catch (error) {
       assetStatus.textContent = error.message;
@@ -238,7 +305,7 @@
     if (target) openAssetDetail(target.dataset.asset);
     if (event.target.closest('[data-add-asset]')) openAssetEditor();
     if (event.target.closest('[data-close-asset-detail]')) assetDetail.close();
-    if (event.target.closest('[data-close-asset-editor]')) assetEditor.close();
+    if (event.target.closest('[data-close-asset-editor]') && !savingAsset) assetEditor.close();
   });
 
   [assetSearch, assetClient, assetCategory, assetSort].forEach(function (control) {
@@ -541,7 +608,7 @@
     [
       ['Active clients', clientsInScope, analyticsClient.value === 'all' ? state.clients.length + ' in the studio' : 'Filtered to one client'],
       ['New requests', data.requests.length, 'Submitted in range'],
-      ['In production', production.length, 'Status: In Production'],
+      ['In production', production.length, 'Being produced now'],
       ['Awaiting review', review.length, 'With the client now'],
       ['Completed', completed.length, 'Delivered in range'],
       ['Revision rounds', data.revisions.length, 'Opened in range'],
@@ -568,6 +635,8 @@
       var bar = node('div', 'progress-bar');
       bar.setAttribute('aria-hidden', 'true');
       var fill = node('div', 'progress-bar__fill');
+      // Reuse the workflow badge's tone without changing status definitions.
+      fill.className += ' ' + api.statusClass(stage).replace('badge ', '');
       fill.style.width = (data.videos.length ? count / data.videos.length * 100 : 0) + '%';
       bar.append(fill);
       item.append(label, bar);
@@ -619,13 +688,13 @@
       ? (withRevision.reduce(function (total, video) { return total + api.rounds(video).length; }, 0) / withRevision.length)
       : 0;
     [
-      ['Approved without a revision', firstPass + ' of ' + reviewed.length],
-      ['Needed at least one round', withRevision.length + ' of ' + reviewed.length],
+      ['Approved without revision', firstPass + ' / ' + reviewed.length],
+      ['Needed at least one round', withRevision.length + ' / ' + reviewed.length],
       ['Avg. rounds when revised', withRevision.length ? roundsPer.toFixed(1) : '—'],
       ['Revision rounds still open', String(data.revisions.filter(function (revision) { return revision.status !== 'Resolved'; }).length)]
     ].forEach(function (pair) {
       var item = node('li');
-      item.append(node('span', null, pair[0]), node('strong', null, pair[1]));
+      item.append(node('strong', null, pair[1]), node('span', null, pair[0]));
       quality.append(item);
     });
   }
@@ -686,10 +755,12 @@
     });
     // The bars are decorative; the same numbers are available as text.
     chart.setAttribute('aria-hidden', 'true');
-    var summary = node('p', 'admin-muted', buckets.map(function (bucket) {
-      return bucket.full + ': ' + bucket.completed + ' completed, ' + bucket.revisions + ' revision rounds';
+    var summary = node('p', 'visually-hidden', buckets.map(function (bucket) {
+      return bucket.full + ': ' + bucket.completed + ' completed, ' + bucket.revisions + (bucket.revisions === 1 ? ' revision round' : ' revision rounds');
     }).join(' · '));
+    summary.id = 'analytics-trend-description';
     host.append(chart, legend, summary);
+    host.closest('section').setAttribute('aria-describedby', summary.id);
   }
 
   [analyticsClient, analyticsRange].forEach(function (control) {
