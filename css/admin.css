@@ -753,3 +753,8 @@
 
 /* Overdue badge: the shared --danger text is 3.1:1 on its tint; this passes WCAG AA (5.4:1). */
 .admin-body .badge-danger { color: #B42318; }
+
+/* Orders */
+.order-brief { white-space: pre-wrap; }
+.order-status-group { margin-top: 22px; max-width: 260px; }
+.admin-orders-table td.num .badge { margin-left: 4px; }
