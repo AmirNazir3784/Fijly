@@ -73,6 +73,63 @@
   function requireValue(value, label) { if (!String(value || '').trim()) throw friendly(new Error(label + ' is required.')); return String(value).trim(); }
   function fail(message) { throw friendly(new Error(message)); }
 
+  /* Files (Supabase Storage) ----------------------------------------------- */
+  // Asset files live in the private `client-assets` bucket under
+  // `{client_id}/{uuid}.{ext}`; storage RLS keys on that first folder. The
+  // asset's file_url holds the storage path, read through short-lived signed URLs.
+  var BUCKET = 'client-assets', MAX_FILE_SIZE = 50 * 1024 * 1024, SIGNED_URL_SECONDS = 3600;
+  // Allowed extensions and the MIME type each is stored as (the bucket's list).
+  var fileTypes = { png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', gif: 'image/gif', svg: 'image/svg+xml', webp: 'image/webp', pdf: 'application/pdf',
+    mp4: 'video/mp4', webm: 'video/webm', mov: 'video/quicktime', woff2: 'font/woff2', woff: 'font/woff', ttf: 'font/ttf', otf: 'font/otf', zip: 'application/zip' };
+  var imageTypes = ['png', 'jpg', 'jpeg', 'gif', 'svg', 'webp'];
+  function extensionOf(name) { var match = /\.([a-z0-9]+)$/i.exec(String(name || '')); return match ? match[1].toLowerCase() : ''; }
+  // Returns the problem with a picked file as a sentence, or '' when it can be uploaded.
+  function fileProblem(file) {
+    if (!file || !String(file.name || '').trim()) return 'Please select a file.';
+    if (file.size > MAX_FILE_SIZE) return 'File too large. Maximum size is 50MB.';
+    if (!fileTypes[extensionOf(file.name)]) return 'This file type is not supported.';
+    return '';
+  }
+  // file_url normally holds the storage path; a full Storage URL is accepted too.
+  function storagePath(fileUrl) {
+    var value = String(fileUrl || '');
+    if (!/^https?:/i.test(value)) return value.replace(/^\/+/, '');
+    var marker = '/' + BUCKET + '/', at = value.indexOf(marker);
+    return at < 0 ? '' : decodeURIComponent(value.slice(at + marker.length).split('?')[0]);
+  }
+  var signedUrls = new Map(); // path -> { url, expires }, so re-renders reuse one URL
+  var storage = {
+    async uploadAssetFile(clientId, file) {
+      var problem = fileProblem(file);
+      if (problem) fail(problem);
+      var fileExt = extensionOf(file.name), fileName = crypto.randomUUID() + '.' + fileExt, filePath = clientId + '/' + fileName;
+      // The SDK sends a Blob's own type, so retype it: browsers often leave
+      // fonts and some videos untyped, which the bucket would refuse.
+      var body = new Blob([file], { type: fileTypes[fileExt] });
+      var result = await db().storage.from(BUCKET).upload(filePath, body, { contentType: fileTypes[fileExt], upsert: false });
+      if (result.error) throw friendly(result.error);
+      return { path: result.data.path, fileName: fileName };
+    },
+    // A signed download URL, valid for one hour.
+    async getAssetUrl(filePath) {
+      var path = storagePath(filePath);
+      if (!path) fail('This asset has no stored file.');
+      var cached = signedUrls.get(path);
+      if (cached && cached.expires > Date.now()) return cached.url;
+      var result = await db().storage.from(BUCKET).createSignedUrl(path, SIGNED_URL_SECONDS);
+      if (result.error) throw friendly(result.error);
+      signedUrls.set(path, { url: result.data.signedUrl, expires: Date.now() + (SIGNED_URL_SECONDS - 300) * 1000 });
+      return result.data.signedUrl;
+    },
+    async deleteAssetFile(filePath) {
+      var path = storagePath(filePath);
+      if (!path) return;
+      var result = await db().storage.from(BUCKET).remove([path]);
+      if (result.error) throw friendly(result.error);
+      signedUrls.delete(path);
+    }
+  };
+
   /* ======================================================================
      Query layer: FijlyData.admin (raw rows, live column names)
      ====================================================================== */
@@ -120,6 +177,18 @@
     },
     getVersions() { return admin.all('versions'); },
     async addVersion(values) { return data(await db().from('versions').insert(values).select().single()); },
+    // Uploads a draft video file to `videos/{client_id}/{video_id}/` (admin-only
+    // under storage RLS). Not wired into the Add Version dialog yet.
+    async uploadVideoFile(videoId, file) {
+      var video = await admin.getVideo(videoId);
+      var problem = fileProblem(file);
+      if (problem) fail(problem);
+      var fileExt = extensionOf(file.name), fileName = crypto.randomUUID() + '.' + fileExt;
+      var filePath = 'videos/' + video.client_id + '/' + videoId + '/' + fileName;
+      var result = await db().storage.from(BUCKET).upload(filePath, new Blob([file], { type: fileTypes[fileExt] }), { contentType: fileTypes[fileExt] });
+      if (result.error) throw friendly(result.error);
+      return { path: result.data.path };
+    },
     getFeedback() { return admin.all('feedback'); },
     async addFeedback(values) { return data(await db().from('feedback').insert(values).select().single()); },
     getRevisions() { return admin.all('revisions'); },
@@ -128,9 +197,29 @@
 
     // --- Assets ---
     getAssets() { return admin.all('assets'); },
-    async createAsset(values) { return data(await db().from('assets').insert(values).select().single()); },
+    async getAsset(id) { return data(await db().from('assets').select('*').eq('id', id).single()); },
+    uploadAssetFile: storage.uploadAssetFile,
+    getAssetUrl: storage.getAssetUrl,
+    deleteAssetFile: storage.deleteAssetFile,
+    // With a file: uploads it first, then saves the row with its storage path.
+    async createAsset(values, file) {
+      if (!file) return data(await db().from('assets').insert(values).select().single());
+      var stored = await storage.uploadAssetFile(values.client_id, file);
+      try {
+        return data(await db().from('assets').insert(Object.assign({}, values, { file_url: stored.path })).select().single());
+      } catch (error) {
+        // Don't leave an orphaned file. Clients may not delete, so this is best effort.
+        try { await storage.deleteAssetFile(stored.path); } catch (_) { /* Keep the original error. */ }
+        throw error;
+      }
+    },
     async updateAsset(id, updates) { return data(await db().from('assets').update(updates).eq('id', id).select().single()); },
-    async deleteAsset(id) { data(await db().from('assets').delete().eq('id', id)); },
+    // Removes the stored file, then the row.
+    async deleteAsset(id) {
+      var row = await admin.getAsset(id);
+      if (row.file_url) await storage.deleteAssetFile(row.file_url);
+      data(await db().from('assets').delete().eq('id', id));
+    },
 
     // --- Scripts ---
     getScripts() { return admin.all('scripts'); },
@@ -487,11 +576,19 @@
       return mutate(function () { return transition(video, 'Approved'); });
     },
     revise: function (identifier, feedback) { owned('videos', identifier); return FijlyData.requestRevision(identifier, feedback); },
+    // Uploads `input.file` into this workspace's folder, then saves its details.
     addAsset: function (input) {
       var values = Object.assign({}, input, { client: requireWorkspace().id });
       delete values.id;
       return FijlyData.saveAsset(values);
     },
+    // Storage RLS lets a client upload and read its own folder only. There is
+    // no deleteAssetFile here: removing files is admin-only.
+    uploadAssetFile: function (clientId, file) {
+      if (clientId !== requireWorkspace().id) fail('Files can only be added to your own workspace.');
+      return storage.uploadAssetFile(clientId, file);
+    },
+    getAssetUrl: storage.getAssetUrl,
     // Workspace details live on the client record; defaults on client_settings.
     saveProfile: function (values) {
       var workspace = requireWorkspace();
@@ -670,26 +767,42 @@
     },
 
     /* Assets ------------------------------------------------------------------ */
+    // A new asset needs `input.file`: the file is uploaded to Storage and its
+    // type and size are taken from it. Editing changes the details only.
     saveAsset: function (input) {
       var name = requireValue(input.name, 'File name');
       if (!assetCategories.includes(input.category)) fail('Choose a valid category.');
       get('clients', input.client);
-      var notes = String(input.notes || '').trim();
+      var notes = String(input.notes || '').trim(), file = input.file;
+      if (!input.id) { var problem = fileProblem(file); if (problem) fail(problem); }
       return mutate(async function () {
         var row;
-        if (input.id) row = await admin.updateAsset(input.id, { name: name, category: input.category, client_id: input.client, notes: notes });
-        else {
+        if (input.id) {
+          // A file is stored under its client's folder, so it can't move to another client.
+          var current = get('assets', input.id);
+          if (current.fileUrl && input.client !== current.client) fail('This file is stored with ' + get('clients', current.client).name + '. Upload it again to add it for another client.');
+          row = await admin.updateAsset(input.id, { name: name, category: input.category, client_id: input.client, notes: notes });
+        } else {
           var me = await admin.me();
           row = await admin.createAsset({ client_id: input.client, name: name, category: input.category, notes: notes, uploaded_by: me.id,
-            file_type: String(input.fileType || name.split('.').pop() || 'file').toLowerCase(), file_size: Math.max(0, Math.floor(Number(input.size) || 0)) });
+            file_type: extensionOf(file.name), file_size: file.size }, file);
         }
         return function () { return get('assets', row.id); };
       });
     },
+    // Removes the stored file and the asset row (admin only).
     deleteAsset: function (identifier) {
       var removed = get('assets', identifier);
       return mutate(async function () { await admin.deleteAsset(identifier); return removed; });
     },
+    // File rules, shared by both portals' upload forms.
+    assetFileTypes: Object.keys(fileTypes),
+    assetFileAccept: Object.keys(fileTypes).map(function (ext) { return '.' + ext; }).join(','),
+    maxAssetFileSize: MAX_FILE_SIZE,
+    validateAssetFile: fileProblem,
+    isImageAsset: function (asset) { return !!(asset && asset.fileUrl && imageTypes.includes(asset.fileType)); },
+    // A signed URL for an asset's stored file (valid for one hour).
+    assetUrl: function (asset) { return storage.getAssetUrl(asset && asset.fileUrl); },
 
     /* Scripts ---------------------------------------------------------------- */
     adminReviewScript: function (identifier) {

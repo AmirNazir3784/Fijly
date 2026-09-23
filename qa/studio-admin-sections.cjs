@@ -1,5 +1,6 @@
 /* Admin Assets, Analytics and Settings.
-   Covers search/filter/sort, the create/edit/delete mock flow, client
+   Covers search/filter/sort, create (real upload to emulated Storage),
+   file validation, preview, download, edit and delete (file and row), client
    relationships, analytics derivation from shared records, settings
    persistence, responsive widths and accessibility. */
 const { chromium, qaUsers } = require('./runtime.cjs');
@@ -80,11 +81,56 @@ const url = (portal, route) => require('./runtime.cjs').base+`${portal}.html#${r
   assert.equal(created.category, 'B-roll');
   assert.equal(created.fileType, 'mov', 'file type derived from the name');
   assert.equal(created.size, 2048, 'size recorded from the picked file');
-  // Stored in the database: metadata only, attributed to the signed-in admin.
+  // The file is in Storage under the client's folder; the row holds its path.
   const stored = browser.fijlyDb.assets.find(a => a.id === created.id);
-  assert.ok(stored && stored.file_size === 2048 && stored.file_type === 'mov' && stored.file_url === null, 'database row holds metadata only');
+  assert.ok(stored && stored.file_size === 2048 && stored.file_type === 'mov', 'database row holds the file details');
+  assert.match(stored.file_url, /^layerbase\/[0-9a-f-]{36}\.mov$/, 'file_url is the storage path in the client folder');
+  const object = browser.fijlyDb.storage.get('client-assets/' + stored.file_url);
+  assert.ok(object && object.size === 2048 && object.type === 'video/quicktime', 'file uploaded with its size and MIME type');
   assert.equal(stored.uploaded_by, qaUsers.admin.id, 'uploaded_by is the signed-in admin');
+  assert.match(await p.locator('#asset-save-status').innerText(), /qa-broll-take-1\.mov uploaded for Layerbase/);
   assert.equal(await rows(), total + 1);
+
+  /* ── Assets: file validation, shown under the picker ─────────────────── */
+  await p.locator('[data-add-asset]').click();
+  await p.locator('#asset-form button[type=submit]').click();
+  assert.equal(await p.locator('#asset-file-error').innerText(), 'Please select a file.', 'missing file');
+  await p.locator('#asset-file').setInputFiles({ name: 'notes.txt', mimeType: 'text/plain', buffer: Buffer.from('text') });
+  assert.equal(await p.locator('#asset-file-error').innerText(), 'This file type is not supported.', 'unsupported type');
+  await p.locator('#asset-form button[type=submit]').click();
+  assert.equal(await p.locator('#asset-editor').evaluate(d => d.open), true, 'invalid file blocks save');
+  assert.equal(await p.evaluate(() => FijlyData.validateAssetFile({ name: 'huge.mp4', size: 50 * 1024 * 1024 + 1 })), 'File too large. Maximum size is 50MB.');
+  assert.equal(await p.evaluate(() => FijlyData.validateAssetFile({ name: 'font.woff2', size: 1 })), '', 'fonts allowed');
+  await p.locator('[data-close-asset-editor]').last().click();
+  assert.equal(await rows(), total + 1, 'rejected files create nothing');
+
+  /* ── Assets: image upload, thumbnail preview and download ────────────── */
+  const png = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
+  await p.locator('[data-add-asset]').click();
+  // Browsers may leave a type blank; the upload is typed from the extension.
+  await p.locator('#asset-file').setInputFiles({ name: 'qa-logo.png', mimeType: '', buffer: Buffer.from(png, 'base64') });
+  await p.locator('#asset-form-client').selectOption('layerbase');
+  await p.locator('#asset-form button[type=submit]').click();
+  await p.waitForFunction(() => !document.getElementById('asset-editor').open);
+  const logo = await p.evaluate(() => FijlyMock.state.assets.find(a => a.name === 'qa-logo.png'));
+  assert.equal(browser.fijlyDb.storage.get('client-assets/' + browser.fijlyDb.assets.find(a => a.id === logo.id).file_url).type, 'image/png');
+  await p.locator('#asset-search').fill('qa-logo');
+  await p.locator('#asset-rows tr td:first-child button').first().click();
+  await p.locator('#asset-detail-preview').waitFor({ state: 'visible' });
+  await p.waitForFunction(() => document.getElementById('asset-detail-image').naturalWidth === 1);
+  assert.match(await p.locator('#asset-detail-image').getAttribute('alt'), /Preview of qa-logo\.png/);
+  assert.match(await p.locator('#asset-detail-body').innerText(), /PNG[\s\S]*\d+(\.\d)? KB/, 'type and human-readable size');
+  await scan('asset detail with preview');
+  const [tab] = await Promise.all([ctx.waitForEvent('page'), p.locator('#download-asset').click()]);
+  await tab.waitForURL(/\/storage\/v1\/object\/sign\/client-assets\/layerbase\/.+token=qa-signed/);
+  await tab.close();
+  await p.locator('#delete-asset').click();
+  await p.locator('#asset-confirm-ok').click();
+  await p.waitForFunction(() => !FijlyMock.state.assets.some(a => a.name === 'qa-logo.png'));
+  assert.equal([...browser.fijlyDb.storage.keys()].some(key => key.endsWith('.png')), false, 'image file deleted from Storage');
+  assert.match(await p.locator('#asset-save-status').innerText(), /qa-logo\.png and its file removed/);
+  await p.locator('#asset-search').fill('');
+  checks.push('Real upload to Storage (client folder, typed from extension), validation messages under the picker, image thumbnail, signed download in a new tab, delete removes file and row');
 
   /* ── Assets: validation ──────────────────────────────────────────────── */
   await p.locator('[data-add-asset]').click();
@@ -111,7 +157,7 @@ const url = (portal, route) => require('./runtime.cjs').base+`${portal}.html#${r
   assert.equal(edited.category, 'Reference Files', 'category updated');
   assert.equal(edited.uploadedAt, created.uploadedAt, 'edit does not reset the uploaded date');
   assert.equal(await p.evaluate(() => FijlyMock.state.assets.length), total + 1, 'edit does not duplicate');
-  checks.push('Asset creation from a simulated file, required-name validation, cancel, and in-place edit');
+  checks.push('Asset creation from an uploaded file, required-name validation, cancel, and in-place edit');
 
   /* ── Assets: delete with confirmation, including cancel ──────────────── */
   await p.locator('#asset-rows tr td:first-child button').first().click();
@@ -125,6 +171,7 @@ const url = (portal, route) => require('./runtime.cjs').base+`${portal}.html#${r
   await p.locator('#asset-confirm-ok').click();
   await p.waitForFunction(() => !document.getElementById('asset-confirm').open);
   assert.equal(await p.evaluate(() => FijlyMock.state.assets.length), total, 'confirmed delete removes it');
+  assert.equal(browser.fijlyDb.storage.has('client-assets/' + stored.file_url), false, 'confirmed delete removes the stored file');
   await p.locator('#clear-asset-filters').click();
   checks.push('Delete requires confirmation; cancel keeps the record, confirm removes it');
 
@@ -142,10 +189,9 @@ const url = (portal, route) => require('./runtime.cjs').base+`${portal}.html#${r
   const expected = await c.evaluate(() => FijlyMock.assetsFor('northbeam').length);
   assert.equal(portalCount, expected, 'client portal lists its own assets');
   // An asset added in Admin is stored in the database and survives a reload.
-  // Pending Part 3B: the Client portal reading it from the database.
   await p.goto(url('admin', 'assets'));
   await p.locator('[data-add-asset]').click();
-  await p.locator('#asset-name').fill('qa-shared-check.pdf');
+  await p.locator('#asset-file').setInputFiles({ name: 'qa-shared-check.pdf', mimeType: 'application/pdf', buffer: Buffer.from('%PDF-1.4 qa') });
   await p.locator('#asset-form-client').selectOption('northbeam');
   await p.locator('#asset-form-category').selectOption('Brand Guidelines');
   await p.locator('#asset-form button[type=submit]').click();
@@ -153,7 +199,13 @@ const url = (portal, route) => require('./runtime.cjs').base+`${portal}.html#${r
   assert.ok(browser.fijlyDb.assets.some(a => a.name === 'qa-shared-check.pdf' && a.client_id === 'northbeam'), 'asset stored in the database');
   await p.reload();
   assert.match(await p.locator('#asset-rows').innerText(), /qa-shared-check\.pdf/, 'asset survives a reload');
-  checks.push('Admin assets persist in the database across reloads (Client portal reads them in Part 3B)');
+  // The client sees the studio's upload and can sign its own folder's file.
+  await c.reload();
+  await c.locator('[data-client-assets] button').filter({ hasText: 'qa-shared-check.pdf' }).click();
+  assert.match(await c.evaluate(async () => FijlyData.assetUrl(FijlyData.client.records('assets').find(a => a.name === 'qa-shared-check.pdf'))), /token=qa-signed/);
+  assert.equal(await c.locator('#client-asset-detail button', { hasText: 'Download' }).isVisible(), true);
+  await c.keyboard.press('Escape');
+  checks.push('Admin assets persist in the database across reloads; the client can open and sign the uploaded file');
 
   /* ── Analytics derives from the shared records ───────────────────────── */
   await p.goto(url('admin', 'analytics'));
@@ -192,7 +244,7 @@ const url = (portal, route) => require('./runtime.cjs').base+`${portal}.html#${r
   assert.equal(n(derived.assetsShown), derived.assetsReal, 'Assets KPI matches');
   assert.equal(n(derived.activeShown), derived.activeReal, 'Active clients KPI matches');
   assert.equal(derived.stages, 6, 'all six production statuses listed');
-  assert.match(derived.quality, /Approved without a revision/);
+  assert.match(derived.quality, /Approved without revision/);
 
   // client filter narrows consistently
   await p.locator('#analytics-client').selectOption('northbeam');
@@ -281,7 +333,7 @@ const url = (portal, route) => require('./runtime.cjs').base+`${portal}.html#${r
   await p.locator('#set-admin-name').fill('Unsaved Edit');
   await c.goto(url('admin', 'assets'));
   await c.locator('[data-add-asset]').click();
-  await c.locator('#asset-name').fill('qa-broadcast-trigger.pdf');
+  await c.locator('#asset-file').setInputFiles({ name: 'qa-broadcast-trigger.pdf', mimeType: 'application/pdf', buffer: Buffer.from('%PDF-1.4 qa') });
   await c.locator('#asset-form button[type=submit]').click();
   await c.waitForFunction(() => !document.getElementById('asset-editor').open);
   await p.evaluate(() => FijlyData.load());

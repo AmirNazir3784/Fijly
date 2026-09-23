@@ -62,11 +62,30 @@
   }
 
   var modal = node('dialog', undefined, 'admin-dialog workflow-detail'); modal.id = 'client-asset-detail'; modal.setAttribute('aria-labelledby', 'client-dialog-title');
-  var head = node('div', undefined, 'admin-dialog-head'), title = node('h2'), closeX = node('button', undefined, 'icon-btn'); title.id = 'client-dialog-title'; var body = node('div', undefined, 'workflow-body'), foot = node('div', undefined, 'admin-dialog-foot'), dismiss = action('Close', function () { modal.close(); });
-  closeX.type = 'button'; closeX.setAttribute('aria-label', 'Close dialog'); closeX.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>'; closeX.onclick = function () { modal.close(); };
+  // While a file uploads the dialog stays open, so the upload isn't abandoned half-way.
+  var uploading = false; function closeModal() { if (!uploading) modal.close(); } modal.addEventListener('cancel', function (event) { if (uploading) event.preventDefault(); });
+  var head = node('div', undefined, 'admin-dialog-head'), title = node('h2'), closeX = node('button', undefined, 'icon-btn'); title.id = 'client-dialog-title'; var body = node('div', undefined, 'workflow-body'), foot = node('div', undefined, 'admin-dialog-foot'), dismiss = action('Close', closeModal);
+  closeX.type = 'button'; closeX.setAttribute('aria-label', 'Close dialog'); closeX.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>'; closeX.onclick = closeModal;
   dismiss.className = 'btn btn-ghost btn--md dialog-dismiss'; head.append(title, closeX); foot.append(dismiss); modal.append(head, body, foot); document.body.append(modal);
   var shownAsset = null;
-  function assetDetail(id) { var a = client.get('assets', id); shownAsset = id; title.textContent = a.name; dismiss.textContent = 'Close'; foot.replaceChildren(dismiss); body.replaceChildren(node('span', a.category, 'badge'), node('p', a.fileType.toUpperCase() + ' · ' + api.formatBytes(a.size) + ' · Added ' + date(a.uploadedAt)), node('p', a.notes || 'No additional notes.'), node('p', 'File details only. The file itself is not uploaded or stored.', 'admin-muted')); if (!modal.open) modal.showModal(); }
+  // Details, an image thumbnail and a Download button (signed link, valid for an hour).
+  function assetDetail(id) {
+    var a = client.get('assets', id), error = node('p', undefined, 'workflow-error'), parts = []; shownAsset = id; title.textContent = a.name; dismiss.textContent = 'Close'; error.setAttribute('role', 'alert');
+    var download = action('Download', function () { downloadAsset(a, download, error); }); download.className = 'btn btn-primary btn--md'; download.hidden = !a.fileUrl; foot.replaceChildren(dismiss, download);
+    if (api.isImageAsset(a)) { var figure = node('div', undefined, 'asset-preview'), img = node('img'); img.alt = 'Preview of ' + a.name; img.onerror = function () { figure.hidden = true; }; figure.hidden = true; figure.append(img); parts.push(figure); api.assetUrl(a).then(function (url) { img.src = url; figure.hidden = false; }).catch(function () { /* No thumbnail; Download reports the problem. */ }); }
+    parts.push(node('span', a.category, 'badge'), node('p', a.fileType.toUpperCase() + ' · ' + api.formatBytes(a.size) + ' · Added ' + date(a.uploadedAt)), node('p', a.notes || 'No additional notes.'));
+    if (!a.fileUrl) parts.push(node('p', 'No file is stored for this asset — only its details were recorded.', 'admin-muted'));
+    body.replaceChildren.apply(body, parts.concat(error)); if (!modal.open) modal.showModal();
+  }
+  async function downloadAsset(a, control, error) {
+    if (control.disabled) return; error.textContent = '';
+    // Open the tab inside the click so pop-up blockers allow it, then point it at the file.
+    var tab = window.open('', '_blank'), release = busy(control);
+    try { var url = await api.assetUrl(a); if (tab) { tab.opener = null; tab.location.href = url; } else window.open(url, '_blank', 'noopener'); }
+    catch (e) { if (tab) tab.close(); error.textContent = 'Couldn’t prepare the download. ' + e.message; } finally { release(); }
+  }
+  // Small files get an indeterminate bar; large ones a spinner (the SDK reports no progress).
+  function uploadProgress(target, file) { var large = file.size >= 5 * 1024 * 1024, indicator = node('span', undefined, large ? 'upload-progress__spinner' : 'upload-progress__bar'); indicator.setAttribute('aria-hidden', 'true'); target.replaceChildren(indicator, node('span', large ? 'Uploading large file… (' + api.formatBytes(file.size) + ')' : 'Uploading ' + file.name + '…')); target.hidden = false; }
   function assetRows(target, records) {
     target.replaceChildren(); if (!records.length) { target.append(node(target.tagName === 'UL' ? 'li' : 'p', 'No matching assets.', 'admin-muted')); return; }
     records.forEach(function (a) { var row = node(target.tagName === 'UL' ? 'li' : 'div', undefined, 'file-row'), info = node('span', undefined, 'file-row__body'); var b = action(a.name, function () { assetDetail(a.id); }); b.className = 'btn-link file-row__title'; info.append(b, node('span', a.category + ' · ' + api.formatBytes(a.size), 'file-row__sub')); row.append(info, node('span', a.fileType.toUpperCase(), 'file-row__ext')); target.append(row); });
@@ -80,18 +99,23 @@
   api.assetCategories.forEach(function (category) { $('#client-asset-category').append(node('option', category)); });
   $('#client-asset-search').oninput = assets; $('#client-asset-category').onchange = assets;
   $('#client-add-asset').onclick = function () {
-    shownAsset = null; title.textContent = 'Add asset'; body.innerHTML = '<form id="client-asset-form"><p class="admin-muted">The file name, type and size are saved to your workspace. The file itself is not uploaded.</p><div class="form-group"><label class="field-label" for="client-asset-file">Choose file</label><input class="input workflow-file" id="client-asset-file" type="file" required></div><div class="form-group"><label class="field-label" for="client-asset-kind">Category</label><select class="input" id="client-asset-kind"></select></div><div class="form-group"><label class="field-label" for="client-asset-notes">Notes</label><textarea class="input" id="client-asset-notes" maxlength="2000"></textarea></div><p role="alert" class="workflow-error" id="client-asset-error"></p></form>';
+    shownAsset = null; title.textContent = 'Add asset'; body.innerHTML = '<form id="client-asset-form"><p class="admin-muted">Your file is uploaded to your private workspace, where only you and the FIJLY team can open it.</p><div class="form-group"><label class="field-label" for="client-asset-file">Choose file</label><input class="input workflow-file" id="client-asset-file" type="file" aria-describedby="client-asset-file-hint client-asset-file-error"><p class="field-hint" id="client-asset-file-hint">Images, PDF, video, fonts or ZIP · up to 50MB.</p><p class="workflow-error asset-file-error" id="client-asset-file-error" role="alert"></p><div class="upload-progress" id="client-asset-progress" role="status" hidden></div></div><div class="form-group"><label class="field-label" for="client-asset-kind">Category</label><select class="input" id="client-asset-kind"></select></div><div class="form-group"><label class="field-label" for="client-asset-notes">Notes</label><textarea class="input" id="client-asset-notes" maxlength="2000"></textarea></div><p role="alert" class="workflow-error" id="client-asset-error"></p></form>';
     var save = node('button', 'Save asset', 'btn btn-primary btn--md'); save.type = 'submit'; save.setAttribute('form', 'client-asset-form'); dismiss.textContent = 'Cancel'; foot.replaceChildren(dismiss, save);
     api.assetCategories.forEach(function (c) { $('#client-asset-kind').append(node('option', c)); });
+    var input = $('#client-asset-file'), fileError = $('#client-asset-file-error'), progress = $('#client-asset-progress'); input.accept = api.assetFileAccept;
+    // Problems with the file show under the picker, as soon as it is chosen.
+    input.onchange = function () { fileError.textContent = input.files[0] ? api.validateAssetFile(input.files[0]) : ''; };
     $('#client-asset-form').onsubmit = async function (event) {
       event.preventDefault(); if (save.disabled) return;
-      var file = $('#client-asset-file').files[0], release = busy(save); $('#client-asset-error').textContent = '';
+      var file = input.files[0]; $('#client-asset-error').textContent = ''; fileError.textContent = api.validateAssetFile(file);
+      if (fileError.textContent) { input.focus(); return; }
+      var release = busy(save); uploading = true; dismiss.disabled = closeX.disabled = true; uploadProgress(progress, file);
       try {
-        await client.addAsset({ name: file.name, size: file.size, fileType: file.name.split('.').pop(), category: $('#client-asset-kind').value, notes: $('#client-asset-notes').value });
-        modal.close(); $('#client-asset-search').value = ''; $('#client-asset-category').value = 'all'; assets();
-        var note = $('#client-asset-success'); note.textContent = file.name + ' added to your assets. File details saved.'; note.hidden = false;
-      } catch (e) { $('#client-asset-error').textContent = e.message; } finally { release(); }
-    }; modal.showModal();
+        await client.addAsset({ name: file.name, file: file, category: $('#client-asset-kind').value, notes: $('#client-asset-notes').value });
+        uploading = false; modal.close(); $('#client-asset-search').value = ''; $('#client-asset-category').value = 'all'; assets();
+        var note = $('#client-asset-success'); note.textContent = file.name + ' added to your assets. The file was uploaded.'; note.hidden = false;
+      } catch (e) { $('#client-asset-error').textContent = 'Upload failed. ' + e.message; } finally { uploading = false; dismiss.disabled = closeX.disabled = false; progress.hidden = true; progress.replaceChildren(); release(); }
+    }; modal.showModal(); input.focus();
   };
 
   function scripts() {

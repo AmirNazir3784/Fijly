@@ -26,23 +26,31 @@ const assert=require('assert/strict'),fs=require('fs');
   await p.locator('#contact-message').fill('We need a launch video for our new product.');
   await p.locator('#contact-form button').click();assert.equal(await p.locator('#contact-email').evaluate(e=>e.validity.typeMismatch),true);
   await p.locator('#contact-email').fill('jane@example.com');await p.locator('#contact-form button').click();
-  assert.match(await p.locator('#contact-status').textContent(),/has not been sent/);
-  const href=await p.locator('#contact-status a').getAttribute('href');assert(href.startsWith('mailto:hello@fijly.com?'));assert(decodeURIComponent(href).includes('Jane Founder'));
+  // Briefs are saved to Supabase (the emulator in QA); the form then clears.
+  await p.waitForFunction(()=>/has been sent/.test(document.getElementById('contact-status').textContent));
+  assert.equal(await p.locator('#contact-name').inputValue(),'');assert.equal(await p.locator('#contact-status a').count(),0);
+  assert.ok(b.fijlyDb.contact_submissions.some(x=>x.name==='Jane Founder'&&x.email==='jane@example.com'&&x.plan==='Studio'&&x.project_type==='Recurring video production'),'brief saved to contact_submissions');
+  assert.doesNotMatch(await p.locator('#contact-help').textContent(),/not connected/);
   await p.locator('[data-concept="aiflow"]').click();await p.locator('[data-close-concept]').click();assert.equal(await p.locator('#concept-dialog').isVisible(),false);assert.equal(await p.evaluate(()=>document.activeElement.id),'contact');
   if(width===375){await p.locator('#contact').screenshot({path:'qa/refinement-after/contact-ready-375.png'});}
   checks.push(`${width}: hero bounds, CTA plan context, all concept dialogs, validation, email fallback, contact focus`);
  }
- // Exercise configured success and failure locally; no real messages are sent.
- for(const accepted of [false,true]){
-  await p.route('**/js/config.js',r=>r.fulfill({contentType:'application/javascript',body:"window.FIJLY_CONFIG={contactEndpoint:'/test-delivery',contactEmail:'hello@fijly.studio'}"}));
-  await p.route('**/test-delivery',r=>r.fulfill({status:200,contentType:'application/json',body:JSON.stringify({success:accepted})}));
+ // Fallbacks, locally: unconfigured (email draft only), database refusal and
+ // a blocked SDK (email draft offered, brief kept). No real messages are sent.
+ for(const variant of ['unconfigured','rejected','blocked']){
+  if(variant==='unconfigured')await p.route('**/js/config.js',r=>r.fulfill({contentType:'application/javascript',body:"window.FIJLY_CONFIG={contactEmail:'hello@fijly.com'}"}));
+  if(variant==='rejected')await p.route('**/rest/v1/contact_submissions',r=>r.fulfill({status:500,contentType:'application/json',body:JSON.stringify({code:'XX000',message:'QA failure'})}));
+  if(variant==='blocked')await p.route('**/supabase-js@*/**',r=>r.abort());
   await p.goto(base+'index.html',{waitUntil:'domcontentloaded'});
   await p.locator('#contact-name').fill('Test');await p.locator('#contact-email').fill('test@example.com');await p.locator('#contact-type').selectOption('Explainer Videos');await p.locator('#contact-message').fill('This is a local automated delivery test.');await p.locator('#contact-form button').click();
-  await p.waitForFunction(()=>!document.querySelector('#contact-form button').disabled);
-  assert.match(await p.locator('#contact-status').textContent(),accepted?/has been sent/:/could not confirm delivery/);
-  if(!accepted)assert.equal(await p.locator('#contact-message').inputValue(),'This is a local automated delivery test.');
+  await p.waitForFunction(()=>!document.querySelector('#contact-form button').disabled&&!/Sending/.test(document.getElementById('contact-status').textContent));
+  assert.match(await p.locator('#contact-status').textContent(),variant==='unconfigured'?/has not been sent/:/could not confirm delivery/);
+  const href=await p.locator('#contact-status a').getAttribute('href');assert(href.startsWith('mailto:hello@fijly.com?'));assert(decodeURIComponent(href).includes('local automated delivery test'));
+  assert.equal(await p.locator('#contact-message').inputValue(),'This is a local automated delivery test.');
+  await p.unrouteAll();
  }
- await p.unrouteAll();checks.push('Mock endpoint accepted/rejected responses; rejected brief retained');
+ assert.equal(b.fijlyDb.contact_submissions.filter(x=>x.name==='Test').length,0,'failed sends store nothing');
+ checks.push('Contact brief saved to Supabase and form cleared; unconfigured, refused and SDK-blocked sends fall back to an email draft and keep the brief');
  await p.setViewportSize({width:1440,height:900});await p.goto(base+'studio.html#overview',{waitUntil:'domcontentloaded'});
  assert.equal(await p.locator('#preview .canvas, #preview .timeline').count(),0);assert.ok(await p.locator('.preview-placeholder').isVisible());
  checks.push('Overview preview is a clear placeholder, not a simulated player');

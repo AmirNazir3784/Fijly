@@ -1,10 +1,10 @@
 {
   "checks": [
     "One derived queue, matching live badges, direct record links and deadline navigation; inactive controls removed; Overview notification preserved",
-    "Needs-review default and all-record filter; distinct shared status tones; success banner and field-level errors; immediate cross-tab synchronization",
+    "Needs-review default and all-record filter; distinct shared status tones; success banner and field-level errors; client submissions reach the Admin queue from the database",
     "Assets shown once, all categories searchable, shared KB/MB formatting and add feedback; destructive removal styling and confirmation preserved",
-    "Unshared drafts hidden, shared scripts marked for review, approval completed, useful empty state and live visibility updates",
-    "Queue and badge counts track draft sharing, requested/in-progress revisions, client approval and final completion across tabs, including live zero state",
+    "Studio script review cycle (send, client revision request, reopen, resend, client approval) keeps the queue exact; Client portal empty state. Pending Part 3B: client script view and feedback text",
+    "Queue and badge counts track draft sharing, requested/in-progress revisions, client approval (database) and final completion, including live zero state",
     "Analytics current endpoint, exact date boundaries, future exclusion, all-time/client scope and In Production breakdown agreement",
     "Empty action queue and zero-count badge state",
     "Desktop tables preserved; 375/390px labelled cards have no horizontal table/page scrolling, open records, and pass accessibility scans"
@@ -16,7 +16,16 @@
     },
     {
       "label": "admin/dashboard/1440",
-      "violations": []
+      "violations": [
+        {
+          "id": "color-contrast",
+          "targets": [
+            [
+              ".badge-danger"
+            ]
+          ]
+        }
+      ]
     },
     {
       "label": "admin/requests/1440",
@@ -56,7 +65,16 @@
     },
     {
       "label": "admin/dashboard/390",
-      "violations": []
+      "violations": [
+        {
+          "id": "color-contrast",
+          "targets": [
+            [
+              ".badge-danger"
+            ]
+          ]
+        }
+      ]
     },
     {
       "label": "admin/requests/390",
@@ -96,7 +114,16 @@
     },
     {
       "label": "admin/dashboard/375",
-      "violations": []
+      "violations": [
+        {
+          "id": "color-contrast",
+          "targets": [
+            [
+              ".badge-danger"
+            ]
+          ]
+        }
+      ]
     },
     {
       "label": "admin/requests/375",

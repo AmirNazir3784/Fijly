@@ -1,6 +1,7 @@
 {
   "checks": [
-    "Client submission, request edit/review, cancel/confirm production, V1/V2/V3, two client revision rounds, approval/completion, append-only history, cross-tab sync and reload persistence",
+    "Client submission (database), request edit/review, cancel/confirm production, editor set in production, V1/V2/V3, two client revision rounds, approval/completion, append-only history and database persistence across reload",
+    "Pending Part 3B: the Client portal showing the same records (it still reads its session mock)",
     "Combined request filters, sorting and empty-state reset",
     "1440px: 12 portal routes, no horizontal page overflow",
     "1024px: 12 portal routes, no horizontal page overflow",

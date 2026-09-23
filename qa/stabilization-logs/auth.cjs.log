@@ -9,19 +9,6 @@
     "SDK blocked: overlay stays up with an explanation, Try again and Go to sign in; the portal stays inert",
     "Landing page: public, only the pinned SDK loads (no Supabase calls or session); both Sign in links and the footer Studio link point to login.html"
   ],
-  "scans": [
-    {
-      "label": "login/1440",
-      "violations": []
-    },
-    {
-      "label": "login/390",
-      "violations": []
-    },
-    {
-      "label": "no-workspace",
-      "violations": []
-    }
-  ],
+  "scans": 3,
   "errors": []
 }

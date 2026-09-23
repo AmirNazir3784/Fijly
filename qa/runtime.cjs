@@ -20,7 +20,7 @@ if (!playwright) throw new Error('Install Playwright locally or set PLAYWRIGHT_M
    admin.html, so older suites can use both portals in one context. An explicit
    { fijlyAuth: 'admin' | 'admin2' | 'client' | 'noprofile' | null } follows
    the real session token instead (auth.cjs).
-   The REST API is served by supabase-emulator.cjs: one in-memory database per
+   The REST and Storage APIs are served by supabase-emulator.cjs: one in-memory database per
    launched browser, shared by its contexts and tabs like a real backend. */
 const emulator = require('./supabase-emulator.cjs');
 const SDK = fs.readFileSync(path.join(__dirname, 'vendor', 'supabase-js-2.116.0.js'));
@@ -66,6 +66,10 @@ async function installSupabaseMock(context, as = 'auto', db = emulator.createDb(
     if (url.pathname.startsWith('/rest/v1/')) {
       const result = emulator.handle(db, caller, method, url, request.headers(), request.postDataJSON());
       return result.status === 204 ? route.fulfill({ status: 204, headers: cors }) : json(route, result.status, result.body);
+    }
+    if (url.pathname.startsWith('/storage/v1/object/')) {
+      const result = emulator.handleStorage(db, caller, method, url, request.headers(), request.postDataBuffer());
+      return result.raw ? route.fulfill({ status: result.status, headers: { ...cors, 'content-type': result.type }, body: result.raw }) : json(route, result.status, result.body);
     }
     return json(route, 404, { message: 'Not mocked in QA: ' + method + ' ' + url.pathname });
   });

@@ -112,15 +112,18 @@ fs.mkdirSync('qa/screenshots',{recursive:true});
     await ctx.close();}
   checks.push('SDK blocked: overlay stays up with an explanation, Try again and Go to sign in; the portal stays inert');
 
-  // 8. The landing page is public and never contacts Supabase.
+  // 8. The landing page is public. It loads the pinned SDK for the contact
+  // form (Part 3D) but makes no Supabase call until a brief is sent.
   {const {ctx,page}=await fresh();const requests=[];page.on('request',r=>requests.push(r.url()));
     await page.goto(base+'index.html',{waitUntil:'load'});
-    assert.equal(requests.filter(u=>/supabase|jsdelivr/.test(u)).length,0);
+    assert.equal(requests.filter(u=>/supabase\.co/.test(u)).length,0);
+    assert.deepEqual(requests.filter(u=>/jsdelivr/.test(u)),['https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.116.0/dist/umd/supabase.js']);
+    assert.equal(await page.evaluate(()=>Object.keys(localStorage).some(k=>k.startsWith('sb-'))),false,'no session is created or read');
     assert.deepEqual(await page.locator('.nav__signin').evaluateAll(a=>a.map(x=>x.getAttribute('href'))),['login.html','login.html']);
     assert.equal(await page.locator('.footer a[href="login.html"]').count(),1);
     assert.equal(await page.locator('a[href="studio.html"]').count(),0);
     await ctx.close();}
-  checks.push('Landing page: public, no Supabase or CDN requests; both Sign in links and the footer Studio link point to login.html');
+  checks.push('Landing page: public, only the pinned SDK loads (no Supabase calls or session); both Sign in links and the footer Studio link point to login.html');
 
   fs.writeFileSync('qa/auth-results.json',JSON.stringify({checks,scans,errors},null,2));await browser.close();
   assert.deepEqual(errors,[]);console.log(JSON.stringify({checks,scans:scans.length,errors},null,2));

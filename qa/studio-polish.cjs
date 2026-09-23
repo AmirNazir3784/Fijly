@@ -66,10 +66,14 @@ const assert=require('assert/strict'),fs=require('fs'),crypto=require('crypto');
   const allowed=['site/admin.html','site/studio.html','site/js/studio-shell.js','site/js/mock-service.js','site/js/client-portal.js','site/js/admin-sections.js',
     'site/css/variables.css','site/css/dashboard.css','site/css/admin.css','site/css/workflow.css','site/css/client-portal.css',
     // Part 3A: the Admin portal reads Supabase; these controllers now await its writes.
-    'site/js/admin.js','site/js/workflow.js'];
+    'site/js/admin.js','site/js/workflow.js',
+    // Part 3D: the contact form saves briefs to Supabase.
+    'site/js/contact.js','site/js/config.js'];
   // index.html may differ only by its three Sign in / Studio links, which now
-  // point to login.html; restoring them must reproduce the baseline bytes.
-  const bytes=file=>file==='site/index.html'?Buffer.from(fs.readFileSync(file,'latin1').replaceAll('href="login.html"','href="studio.html"'),'latin1'):fs.readFileSync(file);
+  // point to login.html, and the Supabase SDK tag the contact form uses (Part 3D);
+  // restoring both must reproduce the baseline bytes.
+  const sdkTag='  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.116.0/dist/umd/supabase.js" integrity="sha384-iLddHTLokph6Omwoyid4XKxHaWa6w41BnoEj0q5oOrzmYPpHIKt1wyjReA7s//pP" crossorigin="anonymous" defer></script>\r\n';
+  const bytes=file=>file==='site/index.html'?Buffer.from(fs.readFileSync(file,'latin1').replace(sdkTag,'').replaceAll('href="login.html"','href="studio.html"'),'latin1'):fs.readFileSync(file);
   // Part 3B retired the session mock: these two files must be gone.
   const retired=['site/js/admin-data.js','site/js/mock-service.js'];
   for(const file of retired)assert.equal(fs.existsSync(file),false,file+' retired');

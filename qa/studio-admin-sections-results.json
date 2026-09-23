@@ -1,13 +1,14 @@
 {
   "checks": [
     "Assets search, client/category filters, five sort orders, empty state and reset",
-    "Asset creation from a simulated file, required-name validation, cancel, and in-place edit",
+    "Real upload to Storage (client folder, typed from extension), validation messages under the picker, image thumbnail, signed download in a new tab, delete removes file and row",
+    "Asset creation from an uploaded file, required-name validation, cancel, and in-place edit",
     "Delete requires confirmation; cancel keeps the record, confirm removes it",
     "All assets resolve to an existing client record",
-    "Admin and Client Brand Assets share one asset collection across tabs",
+    "Admin assets persist in the database across reloads; the client can open and sign the uploaded file",
     "Analytics KPIs, status breakdown, trend and client table derive from shared records; client and range filters scope them",
     "Settings save, survive reload, reject invalid email and turnaround, and discard restores",
-    "Workflow defaults seed the request form and the created record; typed values and unsaved edits are never overwritten",
+    "Workflow defaults persist to admin_settings; unsaved edits survive a data refresh",
     "1440px: Assets, Analytics and Settings render without page overflow",
     "1024px: Assets, Analytics and Settings render without page overflow",
     "768px: Assets, Analytics and Settings render without page overflow",
@@ -16,6 +17,10 @@
   ],
   "errors": [],
   "scans": [
+    {
+      "label": "asset detail with preview",
+      "violations": []
+    },
     {
       "label": "admin/assets/1440",
       "violations": []

@@ -8,8 +8,14 @@
    - RLS stand-in: admins read and write everything; a client reads and
      writes its own client's rows (directly or through their video or script)
      and its own profile, never admin_settings; anonymous callers see nothing.
+   - contact_submissions (landing page briefs): anyone may insert, only
+     admins may read.
    Supports what the portals send: select with eq filters, order and limit;
-   insert, update and delete with return=representation; single objects. */
+   insert, update and delete with return=representation; single objects.
+   Storage: the private `client-assets` bucket (upload, signed URL, download
+   through the signed URL, remove) with the live bucket's size and MIME limits
+   and storage RLS: admins everything; a client uploads and reads its own
+   `{client_id}/` folder and cannot delete. Objects live in db.storage. */
 const fs = require('fs'), path = require('path'), crypto = require('crypto');
 
 const COLUMNS = {
@@ -25,7 +31,8 @@ const COLUMNS = {
   scripts: 'id video_id client_id title status created_at updated_at',
   script_scenes: 'id script_id scene_order label content created_at updated_at',
   activity_log: 'id client_id video_id actor_id action details created_at',
-  admin_settings: 'id admin_id studio_name studio_email default_length default_priority default_lead_days notify_new_request notify_revision notify_approval created_at updated_at'
+  admin_settings: 'id admin_id studio_name studio_email default_length default_priority default_lead_days notify_new_request notify_revision notify_approval created_at updated_at',
+  contact_submissions: 'id name email company project_type message plan created_at'
 };
 Object.keys(COLUMNS).forEach(table => { COLUMNS[table] = new Set(COLUMNS[table].split(' ')); });
 const UNIQUE = { versions: ['video_id', 'version_number'], revisions: ['video_id', 'round_number'], admin_settings: ['admin_id'], client_settings: ['client_id'] };
@@ -40,6 +47,7 @@ function mockSeedState() {
 function createDb(users) {
   const s = mockSeedState(), now = new Date().toISOString(), db = {};
   Object.keys(COLUMNS).forEach(table => { db[table] = []; });
+  db.storage = new Map(); // 'client-assets/<path>' -> { type, size, bytes, owner }
   const request = id => s.requests.find(r => r.id === id);
   s.clients.forEach(c => {
     db.clients.push({ id: c.id, name: c.name, status: c.status, contact_name: c.contact, contact_email: c.email, website: null, notes: c.notes, created_at: '2026-08-01T09:00:00Z', updated_at: '2026-08-01T09:00:00Z' });
@@ -108,8 +116,17 @@ function handle(db, caller, method, url, headers, body) {
     return represent || method === 'GET' ? { status: status || 200, body: copy } : { status: 204 };
   };
   const unknown = row => Object.keys(row).find(key => !columns.has(key));
-  const writable = row => role === 'admin' || (table === 'profiles' ? row.id === caller.id : table !== 'admin_settings' && own(row));
+  const writable = row => role === 'admin' || table === 'contact_submissions' || (table === 'profiles' ? row.id === caller.id : table !== 'admin_settings' && own(row));
+  // The contact form inserts anonymously, and can't read the row back.
+  if (table === 'contact_submissions' && method === 'POST' && !represent) {
+    const input = body || {}, bad = unknown(input);
+    if (bad) return error(400, 'PGRST204', `Could not find the '${bad}' column of '${table}' in the schema cache`);
+    if (!input.name || !input.email || !input.message) return error(400, '23502', 'null value in column violates not-null constraint');
+    db.contact_submissions.push(Object.assign({ id: crypto.randomUUID(), company: null, project_type: null, plan: null, created_at: new Date().toISOString() }, input));
+    return { status: 201 };
+  }
   if (!caller) return error(401, '42501', 'permission denied for table ' + table);
+  if (table === 'contact_submissions' && role !== 'admin') return error(403, '42501', 'permission denied for table ' + table);
 
   if (method === 'GET') {
     let rows = db[table].filter(visible).filter(matches);
@@ -184,4 +201,55 @@ const simClient = {
   }
 };
 
-module.exports = { createDb, handle, COLUMNS, simClient };
+/* Storage ------------------------------------------------------------------ */
+const BUCKET = 'client-assets', MAX_FILE = 52428800;
+const MIME = ['image/png', 'image/jpeg', 'image/gif', 'image/svg+xml', 'image/webp', 'application/pdf', 'video/mp4', 'video/webm', 'video/quicktime', 'font/woff2', 'font/woff', 'font/ttf', 'font/otf', 'application/zip'];
+const storageError = (status, message) => ({ status, body: { statusCode: String(status), error: message, message } });
+// Pulls the file part (field name "") out of the SDK's multipart upload.
+function filePart(buffer, contentType) {
+  const boundary = /boundary=(?:"([^"]+)"|([^;]+))/.exec(contentType || '');
+  if (!boundary) return { type: contentType || '', bytes: buffer };
+  const marker = '--' + (boundary[1] || boundary[2]), text = buffer.toString('latin1');
+  for (const part of text.split(marker)) {
+    const split = part.indexOf('\r\n\r\n');
+    if (split < 0 || !/name=""/.test(part.slice(0, split))) continue;
+    const type = (/content-type:\s*([^\r\n]*)/i.exec(part.slice(0, split)) || [])[1] || '';
+    return { type: type.trim(), bytes: Buffer.from(part.slice(split + 4).replace(/\r\n$/, ''), 'latin1') };
+  }
+  return { type: '', bytes: Buffer.alloc(0) };
+}
+// Returns { status, body, raw?, type? } for one Storage call.
+function handleStorage(db, caller, method, url, headers, buffer) {
+  const role = caller && caller.profile && caller.profile.role, clientId = caller && caller.profile && caller.profile.client_id;
+  const rest = decodeURIComponent(url.pathname.replace(/^\/storage\/v1\/object\//, ''));
+  const canRead = objectPath => role === 'admin' || (!!clientId && objectPath.split('/')[0] === clientId);
+  if (method === 'GET' && rest.startsWith('sign/' + BUCKET + '/')) {
+    const key = rest.slice(5), object = db.storage.get(key);
+    if (url.searchParams.get('token') !== 'qa-signed' || !object) return storageError(400, 'Object not found');
+    return { status: 200, raw: object.bytes, type: object.type };
+  }
+  if (!caller) return storageError(403, 'new row violates row-level security policy');
+  if (method === 'POST' && rest.startsWith('sign/' + BUCKET + '/')) {
+    const key = rest.slice(5), objectPath = key.slice(BUCKET.length + 1);
+    if (!db.storage.has(key) || !canRead(objectPath)) return storageError(400, 'Object not found');
+    return { status: 200, body: { signedURL: '/object/sign/' + key.split('/').map(encodeURIComponent).join('/') + '?token=qa-signed' } };
+  }
+  if (method === 'POST' && rest.startsWith(BUCKET + '/')) {
+    const objectPath = rest.slice(BUCKET.length + 1), file = filePart(buffer || Buffer.alloc(0), headers['content-type']);
+    if (!canRead(objectPath)) return storageError(403, 'new row violates row-level security policy');
+    if (db.storage.has(rest)) return storageError(409, 'The resource already exists');
+    if (file.bytes.length > MAX_FILE) return storageError(413, 'The object exceeded the maximum allowed size');
+    if (!MIME.includes(file.type)) return storageError(415, `mime type ${file.type || 'application/octet-stream'} is not supported`);
+    db.storage.set(rest, { type: file.type, size: file.bytes.length, bytes: file.bytes, owner: caller.id });
+    return { status: 200, body: { Id: crypto.randomUUID(), Key: rest } };
+  }
+  if (method === 'DELETE' && rest === BUCKET) {
+    // As in Storage, objects RLS won't let this caller delete are silently kept.
+    const prefixes = (JSON.parse((buffer || '').toString() || '{}').prefixes) || [];
+    const removed = role === 'admin' ? prefixes.filter(item => db.storage.delete(BUCKET + '/' + item)) : [];
+    return { status: 200, body: removed.map(name => ({ name, bucket_id: BUCKET })) };
+  }
+  return storageError(400, 'Not supported by the QA emulator: ' + method + ' ' + url.pathname);
+}
+
+module.exports = { createDb, handle, handleStorage, COLUMNS, simClient };

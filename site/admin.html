@@ -294,14 +294,16 @@
 </dialog>
 <dialog class="admin-dialog" id="asset-detail" aria-labelledby="asset-detail-title">
   <div class="admin-dialog-head"><div><p class="admin-eyebrow">ASSET</p><h2 id="asset-detail-title"></h2></div><button class="icon-btn" type="button" data-close-asset-detail aria-label="Close asset details"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+  <div class="asset-preview" id="asset-detail-preview" hidden><img id="asset-detail-image" alt=""></div>
   <div id="asset-detail-body"></div>
-  <div class="admin-dialog-foot"><button class="btn btn-ghost btn--md dialog-dismiss" type="button" data-close-asset-detail>Close</button><button class="btn btn-danger btn--md" type="button" id="delete-asset">Remove asset</button><button class="btn btn-primary btn--md" type="button" id="edit-asset">Edit asset</button></div>
+  <p class="workflow-error asset-download-error" id="asset-download-error" role="alert"></p>
+  <div class="admin-dialog-foot"><button class="btn btn-ghost btn--md dialog-dismiss" type="button" data-close-asset-detail>Close</button><button class="btn btn-danger btn--md" type="button" id="delete-asset">Remove asset</button><button class="btn btn-outline btn--md" type="button" id="download-asset" hidden>Download</button><button class="btn btn-primary btn--md" type="button" id="edit-asset">Edit asset</button></div>
 </dialog>
 <dialog class="admin-dialog" id="asset-editor" aria-labelledby="asset-editor-title">
-  <form id="asset-form">
+  <form id="asset-form" novalidate>
     <div class="admin-dialog-head"><div><p class="admin-eyebrow">ASSET DETAILS</p><h2 id="asset-editor-title">Add asset</h2></div><button class="icon-btn" type="button" data-close-asset-editor aria-label="Close asset form"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
     <div class="admin-dialog-fields">
-      <div class="form-group" id="asset-file-group"><label class="field-label" for="asset-file">Choose a file (simulated)</label><input class="input workflow-file" id="asset-file" name="file" type="file"><p class="panel__sub">Only the file name, type and size are recorded. Nothing is uploaded or stored.</p></div>
+      <div class="form-group" id="asset-file-group"><label class="field-label" for="asset-file">File</label><input class="input workflow-file" id="asset-file" name="file" type="file" accept=".png,.jpg,.jpeg,.gif,.svg,.webp,.pdf,.mp4,.webm,.mov,.woff2,.woff,.ttf,.otf,.zip" aria-describedby="asset-file-hint asset-file-error"><p class="field-hint" id="asset-file-hint">Images, PDF, video, fonts or ZIP · up to 50MB. The file is stored privately with the client.</p><p class="workflow-error asset-file-error" id="asset-file-error" role="alert"></p><div class="upload-progress" id="asset-upload-progress" role="status" hidden></div></div>
       <div class="form-group"><label class="field-label" for="asset-name">File name</label><input class="input" id="asset-name" name="name" required maxlength="120"></div>
       <div class="admin-form-row">
         <div class="form-group"><label class="field-label" for="asset-form-client">Client</label><select class="input" id="asset-form-client" name="client" required></select></div>

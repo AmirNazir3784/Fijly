@@ -6,8 +6,17 @@
         "invalid date": true,
         "invalid reference": true,
         "incomplete link": true,
-        "unknown client": true,
+        "invalid workspace email": true,
+        "invalid default length": true,
+        "approve outside review": true,
+        "script review outside Client Review": true,
+        "attachment names normalized": true
+      }
+    },
+    {
+      "dbValidation": {
         "invalid client email": true,
+        "invalid client website": true,
         "invalid studio email": true,
         "fractional turnaround": true,
         "invalid length": true,
@@ -15,25 +24,17 @@
         "completed revision": true,
         "completed transition": true,
         "completed request edit": true,
-        "metadata normalized": true,
         "production idempotent": true,
         "no draft review": true,
         "no draft ready": true,
-        "no-op revision unchanged": true,
         "unsubscribe works": true
       }
     },
-    "Delayed concurrent tab writes preserve both independent requests and converge",
-    "New client filters refresh, live profile asset count updates, cross-tab deletion closes stale asset editor",
+    "Two client tabs submitting at once both persist; each tab sees both after a refresh",
+    "New client filters refresh, profile asset count updates on refresh, a deletion made elsewhere closes the stale asset editor",
     "Long title/instructions, repeated submit and dialog wrapping at all five widths",
     "Approval/close returns visible keyboard focus; route changes close modal details",
-    "no-clients: all 15 routes render; invalid relationships excluded, valid work preserved",
-    "no-work: all 15 routes render; invalid relationships excluded, valid work preserved",
-    "no-videos: all 15 routes render; invalid relationships excluded, valid work preserved",
-    "no-requests: all 15 routes render; invalid relationships excluded, valid work preserved",
-    "no-assets: all 15 routes render; invalid relationships excluded, valid work preserved",
-    "missing-fields: all 15 routes render; invalid relationships excluded, valid work preserved",
-    "orphaned-records: all 15 routes render; invalid relationships excluded, valid work preserved",
+    "Empty database: all 9 Admin screens render, Dashboard shows zeros, assets ask for a client first",
     "Integrity checks pass; inactive-client analytics and seeded completion dates are accurate",
     "Assets use cards on mobile and tables on desktop; analytics retain readable columns"
   ],
@@ -46,6 +47,8 @@
   "errors": [],
   "failedRequests": [],
   "cancelledResourcesChecked": [
+    "http://localhost:8766/assets/concept-clouddesk.svg",
+    "http://localhost:8766/assets/concept-taskpilot.svg",
     "http://localhost:8766/assets/concept-finly.svg"
   ],
   "integrity": []
