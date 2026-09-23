@@ -1,26 +1,16 @@
-AssertionError [ERR_ASSERTION]: admin/dashboard/1440
-+ actual - expected
-
-+ [
-+   {
-+     id: 'color-contrast',
-+     targets: [
-+       [
-+         '.badge-danger'
-+       ]
-+     ]
-+   }
-+ ]
-- []
-
-    at scan (C:\Users\Mister Naveed\OneDrive\Desktop\FIJLY\qa\studio-v1.cjs:36:12)
-    at runNextTicks (node:internal/process/task_queues:65:5)
-    at process.processImmediate (node:internal/timers:472:9)
-    at async C:\Users\Mister Naveed\OneDrive\Desktop\FIJLY\qa\studio-v1.cjs:50:9 {
-  generatedMessage: false,
-  code: 'ERR_ASSERTION',
-  actual: [Array],
-  expected: [],
-  operator: 'deepStrictEqual',
-  diff: 'simple'
+{
+  "checks": [
+    "1440px: all 15 active routes, selected navigation, one heading, no overflow or subscription UI",
+    "1024px: all 15 active routes, selected navigation, one heading, no overflow or subscription UI",
+    "768px: all 15 active routes, selected navigation, one heading, no overflow or subscription UI",
+    "390px: all 15 active routes, selected navigation, one heading, no overflow or subscription UI",
+    "320px: all 15 active routes, selected navigation, one heading, no overflow or subscription UI",
+    "Both shells: mobile links, focus trap, Escape, resize, and browser back/forward",
+    "Team and subscriptions retained only in inactive templates; deferred Admin routes fall back safely",
+    "Client filters, preview placeholder, storyboard, stored settings defaults, validated requests and database persistence",
+    "Admin search/status/sort/empty state, validation and duplicate prevention, safe text rendering, add/edit/cancel, metric updates, profiles, dialogs, and database persistence"
+  ],
+  "accessibilityScans": 36,
+  "errors": [],
+  "apiRequests": []
 }

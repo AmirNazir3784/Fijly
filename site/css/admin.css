@@ -750,3 +750,6 @@
 .workflow-body .asset-preview { margin: 0 0 16px; }
 .asset-preview[hidden] { display: none; }
 .asset-preview img { display: block; max-width: 100%; max-height: 280px; object-fit: contain; border-radius: var(--radius-sm); }
+
+/* Overdue badge: the shared --danger text is 3.1:1 on its tint; this passes WCAG AA (5.4:1). */
+.admin-body .badge-danger { color: #B42318; }

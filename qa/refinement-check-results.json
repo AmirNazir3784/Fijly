@@ -6,7 +6,7 @@
     "768: hero bounds, CTA plan context, all concept dialogs, validation, email fallback, contact focus",
     "390: hero bounds, CTA plan context, all concept dialogs, validation, email fallback, contact focus",
     "375: hero bounds, CTA plan context, all concept dialogs, validation, email fallback, contact focus",
-    "Contact brief saved to Supabase and form cleared; unconfigured, refused and SDK-blocked sends fall back to an email draft and keep the brief",
+    "Contact brief saved to Supabase and form cleared; unconfigured, refused and SDK-blocked sends fall back to an email draft and keep the brief; honeypot submissions show success but store nothing",
     "Overview preview is a clear placeholder, not a simulated player"
   ],
   "errors": [],

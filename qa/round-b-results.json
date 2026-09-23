@@ -16,16 +16,7 @@
     },
     {
       "label": "admin/dashboard/1440",
-      "violations": [
-        {
-          "id": "color-contrast",
-          "targets": [
-            [
-              ".badge-danger"
-            ]
-          ]
-        }
-      ]
+      "violations": []
     },
     {
       "label": "admin/requests/1440",
@@ -65,16 +56,7 @@
     },
     {
       "label": "admin/dashboard/390",
-      "violations": [
-        {
-          "id": "color-contrast",
-          "targets": [
-            [
-              ".badge-danger"
-            ]
-          ]
-        }
-      ]
+      "violations": []
     },
     {
       "label": "admin/requests/390",
@@ -114,16 +96,7 @@
     },
     {
       "label": "admin/dashboard/375",
-      "violations": [
-        {
-          "id": "color-contrast",
-          "targets": [
-            [
-              ".badge-danger"
-            ]
-          ]
-        }
-      ]
+      "violations": []
     },
     {
       "label": "admin/requests/375",

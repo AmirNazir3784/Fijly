@@ -1,6 +1,6 @@
 User-agent: *
 Allow: /
 
-# Studio and draft legal pages use HTML noindex directives.
-# Keep these pages crawlable so search engines can read those directives.
+# The sign-in page and both portals use HTML noindex directives.
+# Keep them crawlable so search engines can read those directives.
 Sitemap: https://fijly.com/sitemap.xml

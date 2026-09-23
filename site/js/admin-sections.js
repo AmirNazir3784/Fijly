@@ -4,7 +4,7 @@
    client's folder and downloaded through a short-lived signed link. */
 (function () {
   'use strict';
-  var api = window.FijlyData || window.FijlyMock;
+  var api = window.FijlyData;
   var state = api.state;
   if (!document.getElementById('screen-assets')) return;
 

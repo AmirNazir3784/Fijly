@@ -115,11 +115,3 @@ function onAuthStateChange(callback) {
     if (callback) callback(event, session);
   });
 }
-
-// Admin: create a client user account
-async function adminCreateUser(email, password, fullName, clientId) {
-  // This uses the admin API through a Supabase Edge Function or direct insert
-  // For now, admin creates users through Supabase dashboard
-  // This function will be expanded when we add the invite flow
-  return { error: 'Use Supabase dashboard to create users for now' };
-}

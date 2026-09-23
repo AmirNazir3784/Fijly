@@ -50,7 +50,15 @@ const assert=require('assert/strict'),fs=require('fs');
   await p.unrouteAll();
  }
  assert.equal(b.fijlyDb.contact_submissions.filter(x=>x.name==='Test').length,0,'failed sends store nothing');
- checks.push('Contact brief saved to Supabase and form cleared; unconfigured, refused and SDK-blocked sends fall back to an email draft and keep the brief');
+ // Honeypot: a bot that fills the hidden field sees success, and nothing is saved.
+ await p.goto(base+'index.html',{waitUntil:'domcontentloaded'});
+ // Off-screen for people (clipped to 1px, hidden from assistive tech, not a tab stop), present for bots.
+ assert.deepEqual(await p.locator('#fijly-hp').evaluate(e=>{const r=e.parentElement.getBoundingClientRect();return [e.parentElement.getAttribute('aria-hidden'),e.tabIndex,r.width<=1&&r.height<=1];}),['true',-1,true]);
+ await p.locator('#contact-name').fill('Bot');await p.locator('#contact-email').fill('bot@example.com');await p.locator('#contact-type').selectOption('Explainer Videos');await p.locator('#contact-message').fill('Automated spam message for the honeypot test.');
+ await p.locator('#fijly-hp').evaluate(e=>{e.value='https://spam.example';});await p.locator('#contact-form button').click();
+ await p.waitForFunction(()=>/has been sent/.test(document.getElementById('contact-status').textContent));
+ assert.equal(await p.locator('#contact-name').inputValue(),'');assert.equal(b.fijlyDb.contact_submissions.filter(x=>x.name==='Bot').length,0,'honeypot submissions are not saved');
+ checks.push('Contact brief saved to Supabase and form cleared; unconfigured, refused and SDK-blocked sends fall back to an email draft and keep the brief; honeypot submissions show success but store nothing');
  await p.setViewportSize({width:1440,height:900});await p.goto(base+'studio.html#overview',{waitUntil:'domcontentloaded'});
  assert.equal(await p.locator('#preview .canvas, #preview .timeline').count(),0);assert.ok(await p.locator('.preview-placeholder').isVisible());
  checks.push('Overview preview is a clear placeholder, not a simulated player');

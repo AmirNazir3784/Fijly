@@ -7,8 +7,9 @@ Only the contents of `site/` are deployed. Keep `qa/`, the root `README.md`, `se
 ## Owner checks before public launch
 
 - The source supplied `fijly.com` and `hello@fijly.com`; ownership and mailbox availability have not been confirmed. If the purchased domain differs, update the canonical URL, `og:url`, and `og:image` in `site/index.html`, plus the URLs in `site/robots.txt` and `site/sitemap.xml`. Confirm or replace the marketing email links.
-- Review and replace the clearly marked draft Privacy and Terms notices with approved text reflecting actual business practices. They deliberately remain `noindex, nofollow` and outside the public sitemap until approved.
-- The portals (`studio.html`, `admin.html`) require sign-in through `login.html` (Supabase Auth). Admins go to the Admin portal, clients to the Client portal. Both portals read and write the Supabase database. A client account must be linked to its workspace (`profiles.client_id`); without one the Client portal shows a "workspace is being set up" message. Media files are not uploaded (versions and assets store file names only). Search, notification, date-selection, storyboard-editing, and logo-change controls remain unavailable.
+- **Privacy and Terms are live** (no longer placeholders). Both pages are indexable and listed in `sitemap.xml`. They commit FIJLY to specific practices (12-month retention of contact submissions, portal data kept for the service agreement plus 90 days, a 30-day response to data requests, a liability cap), so confirm these match how the business actually operates.
+- The portals (`studio.html`, `admin.html`) require sign-in through `login.html` (Supabase Auth). Admins go to the Admin portal, clients to the Client portal. Both portals read and write the Supabase database. A client account must be linked to its workspace (`profiles.client_id`); without one the Client portal shows a "workspace is being set up" message. Asset files are uploaded to the private Supabase Storage bucket `client-assets` (one folder per client, 50MB limit, downloads through one-hour signed links). Video draft versions still store file names only. Search, notification, date-selection, storyboard-editing, and logo-change controls remain unavailable.
+- **Enable leaked password protection in Supabase** (Dashboard → Authentication → Settings). The Supabase security advisor reports it as disabled; it rejects passwords known from data breaches.
 - **Disable public sign-ups in Supabase** (Authentication → Sign In / Providers → "Allow new users to sign up" off). As of this change the project still reports sign-ups enabled, so anyone with the public anon key could register; the portals refuse accounts without a `profiles` row, but RLS and any profile-creation trigger must not grant access to such accounts.
 - Portfolio stills, product brands, results, and the testimonial are explicitly marked as sample/concept content. Supply approved films and verified client evidence before representing these as real engagements. Prices and existing sample metrics have been preserved.
 - Unavailable About, Careers, LinkedIn, X / Twitter, and YouTube links have been removed. Add social links only when real URLs are supplied.
@@ -16,9 +17,11 @@ Only the contents of `site/` are deployed. Keep `qa/`, the root `README.md`, `se
 
 ## Hosting checks
 
-Enable the domain's SSL certificate in Hostinger, then check the homepage, `studio.html#settings`, both legal notices, and an unknown URL. The unknown URL should return HTTP 404 and show the custom page. Enable HTTPS enforcement through Hostinger after SSL is active.
+**The HTTPS redirect is now in `.htaccess`.** Activate the domain's SSL certificate in Hostinger *before* uploading `.htaccess`; otherwise every visit is redirected to an HTTPS address that doesn't work yet. Hostinger's own "Force HTTPS" setting is not needed as well.
 
-The conservative `.htaccess` config supplies a custom 404, optional compression/cache directives, and basic response headers. It contains no routing rewrites. Its Apache behavior must be verified on Hostinger; the local test server serves static files and does not interpret `.htaccess`.
+After upload, check the homepage, `login.html`, `studio.html#settings`, both legal pages, and an unknown URL. The unknown URL should return HTTP 404 and show the custom page. Confirm `http://` addresses redirect to `https://`.
+
+`.htaccess` supplies the HTTPS redirect, HSTS (one year, including subdomains), a custom 404, compression, cache lifetimes (CSS/JS/images 7 days, fonts and favicon 30 days), and basic security headers. HSTS makes browsers refuse plain HTTP for a year, and `includeSubDomains` applies that to every subdomain of the domain, so make sure any subdomain in use also has SSL. Because CSS and JS are cached for 7 days without versioned file names, returning visitors may see old files for up to a week after an update; rename or add a query string to changed files if that matters. Verify the Apache behavior on Hostinger; the local test server serves static files and does not interpret `.htaccess`.
 
 ## Verification evidence
 
@@ -34,8 +37,8 @@ Browser tests use locally available Playwright tooling solely for QA; it is not 
 
 ## Contact form configuration
 
-`site/js/config.js` is the single configuration point for `contactEndpoint` and `contactEmail`. With an empty endpoint, the form validates and prepares a prefilled email link. It explicitly says the brief has **not** been sent. The visitor reviews and sends the draft in their email app. No form data is saved or sent to a server by this fallback.
+The homepage form saves briefs to the Supabase table `contact_submissions` (anonymous insert only; only admins can read them in Supabase → Table Editor). `site/js/config.js` holds the Supabase URL, the public anon key and `contactEmail`. If saving fails, the SDK can't load, or the Supabase settings are removed from `config.js`, the form keeps the brief and offers a prefilled email draft to `contactEmail` instead. Requests time out after 15 seconds.
 
-To enable direct submission, provide an HTTPS endpoint accepting `multipart/form-data` with `name`, `email`, `company`, `project_type`, `message`, and `plan`. It must return a successful HTTP status only after accepting the enquiry. JSON responses containing `success: false`, `error`, or `errors` are treated as failures. Failures preserve the brief and offer email fallback; requests time out after 15 seconds. The endpoint must handle server validation, spam protection, CORS when needed, and delivery. Never put private credentials in the public config. Update the Privacy notice to match the chosen provider before enabling it.
+**Spam:** the form has a hidden honeypot field (bots that fill it see a success message and nothing is saved) and the database enforces field-length limits, but there is **no CAPTCHA or rate limit**. Check `contact_submissions` regularly for spam; if it becomes a problem, add a CAPTCHA or move the insert behind a rate-limited Edge Function. New submissions don't send notifications, so someone needs to check the table.
 
 Current interaction evidence: `qa/refinement-check-results.json` and `qa/functional-results.json`. The refinement covers 1440, 1280, 1024, 768, 390, and 375 pixel layouts. Files in `qa/` are not deployment files.

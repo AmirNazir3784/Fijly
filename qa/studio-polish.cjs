@@ -43,7 +43,8 @@ const assert=require('assert/strict'),fs=require('fs'),crypto=require('crypto');
     await p.setViewportSize({width,height:900});
     for(const route of routes[portal]){
       await go(p,portal,route);assert.equal(await p.locator('.screen:visible h1').count(),1);assert.equal(await p.locator('#topbar-title').innerText(),portal==='admin'?'FIJLY ADMIN':'FIJLY STUDIO');assert.equal(await p.locator('.sidebar-link--site,.studio-topbar a[href="index.html"],.admin-portal-label').count(),0);
-      const metrics=await p.locator('.screen:visible .page-head').evaluate(e=>({size:getComputedStyle(e.querySelector('h1')).fontSize,weight:getComputedStyle(e.querySelector('h1')).fontWeight,description:getComputedStyle(e.querySelector('p')).fontSize,gap:getComputedStyle(e).marginBottom}));assert.equal(metrics.size,width<768?'24px':'32px');assert.equal(metrics.weight,'700');assert.equal(metrics.description,'15px');assert.equal(metrics.gap,'28px');
+      const metrics=await p.locator('.screen:visible .page-head').evaluate(e=>({size:getComputedStyle(e.querySelector('h1')).fontSize,weight:getComputedStyle(e.querySelector('h1')).fontWeight,description:getComputedStyle(e.querySelector('p')).fontSize,gap:getComputedStyle(e).marginBottom}));// The Admin portal's premium pass uses larger, heavier titles (see admin-premium.cjs).
+      assert.equal(metrics.size,portal==='admin'?(width<768?'30px':'36px'):(width<768?'24px':'32px'));assert.equal(metrics.weight,portal==='admin'?'750':'700');assert.equal(metrics.description,portal==='admin'&&width>=768?'16px':'15px');assert.equal(metrics.gap,route==='analytics'?'32px':'28px');
       assert.equal(await p.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false,portal+'/'+route+'/'+width);await scan(p,portal+'/'+route+'/'+width);
       if(['settings',portal==='admin'?'clients':'overview'].includes(route))await p.screenshot({path:`qa/screenshots/polish-${portal}-${route}-${width}.png`,fullPage:true});
     }
@@ -68,12 +69,17 @@ const assert=require('assert/strict'),fs=require('fs'),crypto=require('crypto');
     // Part 3A: the Admin portal reads Supabase; these controllers now await its writes.
     'site/js/admin.js','site/js/workflow.js',
     // Part 3D: the contact form saves briefs to Supabase.
-    'site/js/contact.js','site/js/config.js'];
+    'site/js/contact.js','site/js/config.js',
+    // Pre-deployment fixes: HTTPS/HSTS, live legal pages in the sitemap, Admin-only
+    // cleanup, sign-in icon.
+    'site/.htaccess','site/privacy.html','site/terms.html','site/robots.txt','site/sitemap.xml','site/login.html','site/js/supabase-client.js'];
   // index.html may differ only by its three Sign in / Studio links, which now
-  // point to login.html, and the Supabase SDK tag the contact form uses (Part 3D);
-  // restoring both must reproduce the baseline bytes.
+  // point to login.html, the Supabase SDK tag the contact form uses (Part 3D)
+  // and the contact form's honeypot field; restoring them must reproduce the
+  // baseline bytes.
   const sdkTag='  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.116.0/dist/umd/supabase.js" integrity="sha384-iLddHTLokph6Omwoyid4XKxHaWa6w41BnoEj0q5oOrzmYPpHIKt1wyjReA7s//pP" crossorigin="anonymous" defer></script>\r\n';
-  const bytes=file=>file==='site/index.html'?Buffer.from(fs.readFileSync(file,'latin1').replace(sdkTag,'').replaceAll('href="login.html"','href="studio.html"'),'latin1'):fs.readFileSync(file);
+  const honeypot='          <div class="visually-hidden" aria-hidden="true"><label for="fijly-hp">Website</label><input type="text" name="website" id="fijly-hp" tabindex="-1" autocomplete="off"></div>\r\n';
+  const bytes=file=>file==='site/index.html'?Buffer.from(fs.readFileSync(file,'latin1').replace(sdkTag,'').replace(honeypot,'').replaceAll('href="login.html"','href="studio.html"'),'latin1'):fs.readFileSync(file);
   // Part 3B retired the session mock: these two files must be gone.
   const retired=['site/js/admin-data.js','site/js/mock-service.js'];
   for(const file of retired)assert.equal(fs.existsSync(file),false,file+' retired');
