@@ -367,7 +367,10 @@
       function showError(message) { error.textContent = message; error.hidden = false; }
       function clearError() { error.hidden = true; error.textContent = ''; }
       function ready() { card.dataset.state = 'ready'; }
-      function portalFor(profile) { return profile ? PORTAL_FOR_ROLE[profile.role] : null; }
+      // ?next=order.html (from the landing page sign-up) returns there after
+      // signing in; no other destination is accepted.
+      var next = new URLSearchParams(window.location.search).get('next') === 'order.html' ? 'order.html' : null;
+      function portalFor(profile) { var portal = profile ? PORTAL_FOR_ROLE[profile.role] : null; return portal && next ? next : portal; }
 
       function busy(on, text) {
         submit.disabled = on;

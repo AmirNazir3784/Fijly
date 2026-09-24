@@ -78,35 +78,10 @@
 
     .order__intro { margin-top: var(--space-md); font-size: var(--text-body); line-height: var(--leading-relaxed); }
 
-    /* Mini price reference; the chosen length is highlighted. */
-    .order__prices {
-      display: grid;
-      gap: 6px;
-      margin-top: var(--space-xl);
-    }
-
-    .order__prices li {
-      display: flex;
-      align-items: baseline;
-      justify-content: space-between;
-      gap: var(--space-md);
-      padding: 10px 14px;
-      border: 1px solid transparent;
-      border-radius: var(--radius-md);
-      font-size: var(--text-meta);
-      color: var(--surface-muted);
-      transition: background-color .15s ease, border-color .15s ease;
-    }
-
-    .order__prices strong { font-family: var(--font-mono); font-size: var(--text-body); color: var(--surface-white); }
-
-    .order__prices li.is-selected {
-      border-color: var(--primary);
-      background: color-mix(in srgb, var(--primary) 18%, transparent);
-      color: var(--surface-white);
-    }
-
-    .order__prices-note { margin-top: var(--space-md); font-size: var(--text-small); line-height: var(--leading-normal); }
+    /* What every video includes (no prices here: the price shows at review). */
+    .order__includes { display: grid; gap: var(--space-md); margin-top: var(--space-xl); font-size: var(--text-meta); color: var(--surface-muted); }
+    .order__includes li { display: flex; align-items: center; gap: var(--space-sm); }
+    .order__includes svg { flex: none; color: var(--success-light); }
 
     .order__foot { font-family: var(--font-mono); font-size: var(--text-xs); letter-spacing: .06em; color: var(--text-lighter); }
 
@@ -129,7 +104,7 @@
     /* Progress: Step 1 / 2 / 3 */
     .order__progress {
       display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
+      grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: var(--space-sm);
       margin-top: var(--space-lg);
     }
@@ -209,26 +184,6 @@
     .order__input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-tint); }
     .order__input[aria-invalid="true"] { border-color: var(--danger); }
 
-    .order__field { position: relative; }
-    .order__field .order__input { padding-right: 76px; }
-
-    .order__toggle {
-      position: absolute;
-      top: 50%;
-      right: 6px;
-      height: 36px;
-      padding: 0 12px;
-      border: 0;
-      border-radius: var(--radius-sm);
-      background: none;
-      color: var(--primary);
-      font-size: var(--text-small);
-      font-weight: var(--weight-semibold);
-      transform: translateY(-50%);
-    }
-
-    .order__toggle:hover { background: var(--primary-tint); }
-
     /* Duration radio cards */
     .order__durations { min-width: 0; margin: 0; padding: 0; border: 0; }
     .order__durations legend { padding: 0; }
@@ -254,8 +209,7 @@
 
     .order__duration input { position: absolute; opacity: 0; pointer-events: none; }
     .order__duration:hover { border-color: var(--border-hover); }
-    .order__duration-length { font-size: var(--text-small); font-weight: var(--weight-semibold); color: var(--text-muted); }
-    .order__duration-price { font-family: var(--font-mono); font-size: 20px; font-weight: 800; letter-spacing: -.02em; color: var(--text-primary); }
+    .order__duration-length { font-size: var(--text-body); font-weight: var(--weight-semibold); color: var(--text-primary); }
     .order__duration-tag { font-size: 11px; font-weight: var(--weight-semibold); color: var(--primary); }
 
     .order__duration:has(input:checked) {
@@ -407,11 +361,20 @@
 
     .order__back:hover { color: var(--primary); }
 
+    /* Signed-in account and the session check */
+    .order__account { margin-top: var(--space-sm); font-size: var(--text-meta); color: var(--text-muted); }
+    .order__account strong { font-weight: var(--weight-semibold); color: var(--text-primary); overflow-wrap: anywhere; }
+    .order__account button { padding: 0; border: 0; background: none; font-weight: var(--weight-semibold); color: var(--primary); text-decoration: underline; text-underline-offset: 2px; }
+    .order__checking { display: none; align-items: center; gap: var(--space-sm); margin-top: var(--space-xl); font-size: var(--text-meta); color: var(--text-muted); }
+    .order__checking .order__spinner { display: block; border-color: var(--primary-tint); border-top-color: var(--primary); }
+    .order__card[data-state="checking"] .order__checking { display: flex; }
+    .order__card[data-state="checking"] :is(.order__account, .order__progress, #order-form) { display: none; }
+
     @media (max-width: 899px) {
       .order { grid-template-columns: minmax(0, 1fr); align-content: start; }
       .order__brand { position: static; height: auto; gap: var(--space-lg); padding: var(--space-lg) var(--gutter); }
       .order__tagline { font-size: var(--text-section-heading); }
-      .order__intro, .order__prices, .order__prices-note, .order__foot, .order__eyebrow { display: none; }
+      .order__intro, .order__includes, .order__foot, .order__eyebrow { display: none; }
       .order__panel { padding: var(--space-xl) var(--gutter) var(--space-2xl); }
     }
 
@@ -427,78 +390,47 @@
       .order__input { font-size: 16px; }
     }
   </style>
+  <noscript><style>.order__card[data-state="checking"] .order__checking { display: none; }</style></noscript>
 </head>
 <body>
   <a class="skip-link" href="#order-main">Skip to the order form</a>
   <div class="order">
-    <aside class="order__brand" aria-label="FIJLY Studio pricing">
+    <aside class="order__brand" aria-label="FIJLY Studio">
       <a class="order__logo" href="index.html" aria-label="FIJLY home">
         <span class="order__mark"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M8 5v14l11-7z" fill="currentColor"/></svg></span>
         <span class="order__wordmark"><span class="order__word">FIJLY</span><span class="order__sub">STUDIO</span></span>
       </a>
       <div class="order__pitch">
         <p class="order__eyebrow">NEW PROJECT</p>
-        <p class="order__tagline">Start your video project</p>
-        <p class="order__intro">Set up your FIJLY Studio login, pick a format and length, and tell us about your product. We’ll take it from script to final delivery.</p>
-        <ul class="order__prices" aria-label="Prices by video length">
-          <li data-duration="30"><span>30 seconds</span><strong>$300</strong></li>
-          <li data-duration="60"><span>60 seconds</span><strong>$500</strong></li>
-          <li data-duration="90"><span>90 seconds · most popular</span><strong>$700</strong></li>
-          <li data-duration="120"><span>120 seconds</span><strong>$950</strong></li>
+        <p class="order__tagline">Your video project</p>
+        <p class="order__intro">Tell us about your product and the video you need. We’ll take it from script to final delivery.</p>
+        <ul class="order__includes" aria-label="Every video includes">
+          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>Professional scriptwriting</li>
+          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>Custom motion design</li>
+          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>Two revision rounds</li>
+          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>All source files delivered</li>
         </ul>
-        <p class="order__prices-note">Same price for every format. Script, motion design, two revision rounds and all source files included.</p>
       </div>
       <p class="order__foot">ONE VIDEO · ONE PRICE · NO SUBSCRIPTION</p>
     </aside>
 
     <main class="order__panel" id="order-main" tabindex="-1">
-      <div class="order__card">
+      <div class="order__card" id="order-card" data-state="checking">
         <h1 class="order__title">Start your video</h1>
+        <p class="order__account" id="order-account" hidden>Signed in as <strong id="order-account-email"></strong> · <button type="button" id="order-signout">Sign out</button></p>
+        <p class="order__checking" role="status"><span class="order__spinner" aria-hidden="true"></span>Checking your account…</p>
         <noscript><p class="order__error">JavaScript is required to place an order. You can also email <a href="mailto:hello@fijly.com">hello@fijly.com</a>.</p></noscript>
 
         <ol class="order__progress" id="order-progress" aria-label="Order progress">
-          <li data-progress="1" aria-current="step">1. Your account</li>
-          <li data-progress="2">2. Your video</li>
-          <li data-progress="3">3. Review &amp; pay</li>
+          <li data-progress="1" aria-current="step">1. Your video</li>
+          <li data-progress="2">2. Review &amp; submit</li>
         </ol>
 
         <form id="order-form" novalidate>
           <!-- Step 1 -->
           <section class="order__step" data-step="1" aria-labelledby="step-1-title">
-            <p class="order__step-label">STEP 1 OF 3</p>
-            <h2 class="order__step-title" id="step-1-title" tabindex="-1">Create your account</h2>
-            <p class="order__step-intro">This will be your FIJLY Studio login, where you’ll review drafts and approve your video.</p>
-            <div class="order__fields">
-              <div>
-                <label class="order__label" for="order-name">Full name</label>
-                <input class="order__input" id="order-name" name="name" autocomplete="name" required maxlength="200" aria-describedby="order-name-error">
-                <p class="order__field-error" id="order-name-error"></p>
-              </div>
-              <div>
-                <label class="order__label" for="order-email">Work email</label>
-                <input class="order__input" id="order-email" name="email" type="email" autocomplete="email" inputmode="email" autocapitalize="none" spellcheck="false" required maxlength="320" placeholder="you@company.com" aria-describedby="order-email-error">
-                <p class="order__field-error" id="order-email-error"></p>
-              </div>
-              <div>
-                <label class="order__label" for="order-password">Password</label>
-                <div class="order__field">
-                  <input class="order__input" id="order-password" name="password" type="password" autocomplete="new-password" required minlength="8" maxlength="72" aria-describedby="order-password-hint order-password-error">
-                  <button class="order__toggle" id="order-toggle" type="button" aria-controls="order-password" aria-pressed="false" aria-label="Show password">Show</button>
-                </div>
-                <p class="order__hint" id="order-password-hint">At least 8 characters.</p>
-                <p class="order__field-error" id="order-password-error"></p>
-              </div>
-            </div>
-            <div class="visually-hidden" aria-hidden="true"><label for="order-hp">Website</label><input type="text" name="website" id="order-hp" tabindex="-1" autocomplete="off"></div>
-            <div class="order__actions">
-              <button class="order__button" type="button" data-next="2">Continue <span aria-hidden="true">→</span></button>
-            </div>
-          </section>
-
-          <!-- Step 2 -->
-          <section class="order__step" data-step="2" aria-labelledby="step-2-title" hidden>
-            <p class="order__step-label">STEP 2 OF 3</p>
-            <h2 class="order__step-title" id="step-2-title" tabindex="-1">Your video</h2>
+            <p class="order__step-label">STEP 1 OF 2</p>
+            <h2 class="order__step-title" id="step-1-title" tabindex="-1">Your video</h2>
             <div class="order__fields">
               <div>
                 <label class="order__label" for="order-type">Video type</label>
@@ -516,10 +448,10 @@
               <fieldset class="order__durations" aria-describedby="order-duration-error">
                 <legend class="order__label">Duration</legend>
                 <div class="order__duration-grid">
-                  <label class="order__duration"><input type="radio" name="duration" value="30" required><span class="order__duration-length">30 seconds</span><span class="order__duration-price">$300</span></label>
-                  <label class="order__duration"><input type="radio" name="duration" value="60"><span class="order__duration-length">60 seconds</span><span class="order__duration-price">$500</span></label>
-                  <label class="order__duration"><input type="radio" name="duration" value="90"><span class="order__duration-length">90 seconds</span><span class="order__duration-price">$700</span><span class="order__duration-tag">Most popular</span></label>
-                  <label class="order__duration"><input type="radio" name="duration" value="120"><span class="order__duration-length">120 seconds</span><span class="order__duration-price">$950</span></label>
+                  <label class="order__duration"><input type="radio" name="duration" value="30" required><span class="order__duration-length">30 seconds</span></label>
+                  <label class="order__duration"><input type="radio" name="duration" value="60"><span class="order__duration-length">60 seconds</span></label>
+                  <label class="order__duration"><input type="radio" name="duration" value="90"><span class="order__duration-length">90 seconds</span><span class="order__duration-tag">Most popular</span></label>
+                  <label class="order__duration"><input type="radio" name="duration" value="120"><span class="order__duration-length">120 seconds</span></label>
                 </div>
                 <p class="order__field-error" id="order-duration-error"></p>
               </fieldset>
@@ -535,35 +467,35 @@
                 <p class="order__field-error" id="order-brief-error"></p>
               </div>
             </div>
+            <div class="visually-hidden" aria-hidden="true"><label for="order-hp">Website</label><input type="text" name="website" id="order-hp" tabindex="-1" autocomplete="off"></div>
             <div class="order__actions">
-              <button class="order__button" type="button" data-next="3">Continue <span aria-hidden="true">→</span></button>
-              <button class="order__link-button" type="button" data-back="1">← Back to your account</button>
+              <button class="order__button" type="button" data-next="2">Continue <span aria-hidden="true">→</span></button>
             </div>
           </section>
 
-          <!-- Step 3 -->
-          <section class="order__step" data-step="3" aria-labelledby="step-3-title" hidden>
-            <p class="order__step-label">STEP 3 OF 3</p>
-            <h2 class="order__step-title" id="step-3-title" tabindex="-1">Review &amp; pay</h2>
+          <!-- Step 2 -->
+          <section class="order__step" data-step="2" aria-labelledby="step-2-title" hidden>
+            <p class="order__step-label">STEP 2 OF 2</p>
+            <h2 class="order__step-title" id="step-2-title" tabindex="-1">Review &amp; submit</h2>
             <div class="order__summary">
               <h3 class="order__summary-title">Order summary</h3>
               <dl class="order__summary-facts">
-                <div><dt>Account</dt><dd id="summary-account"></dd></div>
                 <div><dt>Video</dt><dd class="order__summary-item" id="summary-item"></dd></div>
                 <div><dt>Company</dt><dd id="summary-company"></dd></div>
                 <div><dt>Brief</dt><dd id="summary-brief"></dd></div>
+                <div><dt>Account</dt><dd id="summary-account"></dd></div>
               </dl>
               <p class="order__total"><span>Total</span><strong id="summary-total"></strong></p>
               <div class="order__pay">
                 <button class="order__button order__button--block" id="order-pay" type="button" disabled aria-describedby="order-pay-note">Pay <span id="order-pay-amount"></span> <span aria-hidden="true">→</span></button>
-                <p class="order__pay-note" id="order-pay-note">Online payment is coming soon. For now, create your account and submit your brief — we’ll invoice you directly.</p>
+                <p class="order__pay-note" id="order-pay-note">Online payment is coming soon. Submit your brief now and we’ll invoice you directly.</p>
                 <p class="order__error" id="order-error" role="alert" hidden></p>
-                <button class="order__button order__button--block" id="order-submit" type="submit" aria-busy="false"><span class="order__spinner" aria-hidden="true"></span><span id="order-submit-label">Create account &amp; submit brief</span> <span aria-hidden="true">→</span></button>
+                <button class="order__button order__button--block" id="order-submit" type="submit" aria-busy="false"><span class="order__spinner" aria-hidden="true"></span><span id="order-submit-label">Submit brief</span> <span aria-hidden="true">→</span></button>
               </div>
             </div>
             <p class="order__legal">By submitting, you agree to our <a href="terms.html">Terms</a> and <a href="privacy.html">Privacy Notice</a>. Nothing is charged until we confirm your order.</p>
             <div class="order__actions">
-              <button class="order__link-button" type="button" data-back="2">← Back to your video</button>
+              <button class="order__link-button" type="button" data-back="1">← Back to your video</button>
             </div>
           </section>
         </form>
@@ -573,6 +505,7 @@
           <h2 class="order__step-title order__success-title" id="order-success-title" tabindex="-1">Your order has been received!</h2>
           <p id="order-success-text"></p>
           <p id="order-success-summary"></p>
+          <p><a class="order__button" href="studio.html">Go to FIJLY Studio <span aria-hidden="true">→</span></a></p>
         </section>
 
         <a class="order__back" href="index.html">← Back to fijly.com</a>
