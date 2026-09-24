@@ -116,7 +116,35 @@
     });
   });
 
-  /* 4. Sticky nav state on scroll ---------------------------------------- */
+  /* 4. Concept previews in the Work section ------------------------------ */
+  // Native dialog provides modal focus containment, Escape, and focus restoration.
+  var dialog = document.getElementById('concept-dialog');
+  var concepts = {
+    aiflow: ['AIFlow — Launch film', 'A product-led launch direction: introduce the AI assistant, show its interface, and make the support workflow easy to follow.'],
+    clouddesk: ['CloudDesk — Homepage', 'A workspace story built around clarity: connect the brief, active work, and final review in one visual sequence.'],
+    finly: ['Finly — Tutorial series', 'A guided onboarding direction: one task at a time, a visible next step, and a clear completion state.']
+  };
+  document.querySelectorAll('[data-concept]').forEach(function (button) {
+    button.addEventListener('click', function () {
+      var key = button.dataset.concept;
+      document.getElementById('concept-title').textContent = concepts[key][0];
+      document.getElementById('concept-description').textContent = concepts[key][1];
+      var img = document.getElementById('concept-image');
+      img.src = 'assets/concept-' + key + '.svg';
+      img.alt = concepts[key][0] + ' — designed product interface concept';
+      dialog.showModal();
+      document.body.classList.add('concept-open');
+    });
+  });
+  dialog.querySelector('.concept-dialog__close').addEventListener('click', function () { dialog.close(); });
+  dialog.addEventListener('click', function (event) { if (event.target === dialog) dialog.close(); });
+  dialog.addEventListener('close', function () { document.body.classList.remove('concept-open'); });
+  dialog.querySelector('[data-close-concept]').addEventListener('click', function () {
+    dialog.close();
+    document.getElementById('contact').focus({ preventScroll: true });
+  });
+
+  /* 5. Sticky nav state on scroll ---------------------------------------- */
   if (nav) {
     var onScroll = function () {
       nav.classList.toggle('is-scrolled', window.scrollY > 50);

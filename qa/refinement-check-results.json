@@ -1,12 +1,11 @@
 {
   "checks": [
-    "1440: hero bounds, CTA plan context, all concept dialogs, validation, email fallback, contact focus",
-    "1280: hero bounds, CTA plan context, all concept dialogs, validation, email fallback, contact focus",
-    "1024: hero bounds, CTA plan context, all concept dialogs, validation, email fallback, contact focus",
-    "768: hero bounds, CTA plan context, all concept dialogs, validation, email fallback, contact focus",
-    "390: hero bounds, CTA plan context, all concept dialogs, validation, email fallback, contact focus",
-    "375: hero bounds, CTA plan context, all concept dialogs, validation, email fallback, contact focus",
-    "Contact brief saved to Supabase and form cleared; unconfigured, refused and SDK-blocked sends fall back to an email draft and keep the brief; honeypot submissions show success but store nothing",
+    "1440: hero bounds, CTA to the sign-up form, all concept dialogs, sign-up validation, button label fits, contact focus",
+    "1280: hero bounds, CTA to the sign-up form, all concept dialogs, sign-up validation, button label fits, contact focus",
+    "1024: hero bounds, CTA to the sign-up form, all concept dialogs, sign-up validation, button label fits, contact focus",
+    "768: hero bounds, CTA to the sign-up form, all concept dialogs, sign-up validation, button label fits, contact focus",
+    "390: hero bounds, CTA to the sign-up form, all concept dialogs, sign-up validation, button label fits, contact focus",
+    "375: hero bounds, CTA to the sign-up form, all concept dialogs, sign-up validation, button label fits, contact focus",
     "Overview preview is a clear placeholder, not a simulated player"
   ],
   "errors": [],

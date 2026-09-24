@@ -1,110 +1,110 @@
 {
-  "at": "2026-09-23T16:24:32.635Z",
+  "at": "2026-09-24T03:44:07.413Z",
   "results": [
     {
       "suite": "qa/static_check.py",
-      "exitCode": 1,
-      "seconds": 1.95
+      "exitCode": 0,
+      "seconds": 0.822
     },
     {
       "suite": "qa/studio-v1.cjs",
-      "exitCode": 1,
-      "seconds": 103.454
+      "exitCode": 0,
+      "seconds": 42.225
     },
     {
       "suite": "qa/studio-workflow.cjs",
       "exitCode": 0,
-      "seconds": 59.535
+      "seconds": 30.557
     },
     {
       "suite": "qa/studio-workflow-probe.cjs",
       "exitCode": 0,
-      "seconds": 15.746
+      "seconds": 8.285
     },
     {
       "suite": "qa/studio-workflow-sweep.cjs",
       "exitCode": 0,
-      "seconds": 10.792
+      "seconds": 7.079
     },
     {
       "suite": "qa/studio-admin-sections.cjs",
       "exitCode": 0,
-      "seconds": 38.003
+      "seconds": 15.674
     },
     {
       "suite": "qa/studio-client.cjs",
       "exitCode": 0,
-      "seconds": 36.81
+      "seconds": 15.736
     },
     {
       "suite": "qa/studio-stability.cjs",
       "exitCode": 0,
-      "seconds": 22.139
+      "seconds": 14.749
     },
     {
       "suite": "qa/round-b.cjs",
       "exitCode": 0,
-      "seconds": 69.93
+      "seconds": 23.36
     },
     {
       "suite": "qa/studio-polish.cjs",
       "exitCode": 0,
-      "seconds": 196.694
+      "seconds": 63.8
     },
     {
       "suite": "qa/auth.cjs",
       "exitCode": 0,
-      "seconds": 39.769
+      "seconds": 34.021
     },
     {
       "suite": "qa/functional.cjs",
       "exitCode": 0,
-      "seconds": 127.173
+      "seconds": 97.308
     },
     {
       "suite": "qa/accessibility.cjs",
       "exitCode": 0,
-      "seconds": 26.567
+      "seconds": 19.735
     },
     {
       "suite": "qa/refinement-check.cjs",
       "exitCode": 0,
-      "seconds": 77.141
+      "seconds": 43.547
     },
     {
       "suite": "qa/final_browser.cjs",
-      "exitCode": 1,
-      "seconds": 65.971
+      "exitCode": 0,
+      "seconds": 47.356
     },
     {
       "suite": "qa/render.cjs",
       "exitCode": 0,
-      "seconds": 105.22
+      "seconds": 83.865
     },
     {
       "suite": "qa/refinement-render.cjs",
       "exitCode": 0,
-      "seconds": 136.145
+      "seconds": 100.942
     },
     {
       "suite": "qa/visual-sheets.cjs",
       "exitCode": 0,
-      "seconds": 7.689
+      "seconds": 4.867
     },
     {
       "suite": "qa/compare.cjs",
       "exitCode": 0,
-      "seconds": 3.333
+      "seconds": 2.492
     },
     {
       "suite": "qa/performance.cjs",
       "exitCode": 0,
-      "seconds": 12.316
+      "seconds": 10.392
     },
     {
       "suite": "qa/orders.cjs",
       "exitCode": 0,
-      "seconds": 24.18
+      "seconds": 33.283
     }
   ]
 }

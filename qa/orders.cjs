@@ -1,18 +1,22 @@
-/* Per-video pricing, the order configurator (order.html) and the Admin
-   Orders screen. Runs against the Supabase emulator: orders are inserted
-   anonymously, sign-up answers "disabled" as on the live project, and only
-   admins read or update orders. */
-const { chromium, base } = require('./runtime.cjs');
+/* Per-video pricing, sign-up on the landing page (#contact), the order page
+   (order.html: video details, then review) and the Admin Orders screen. Runs
+   against the Supabase emulator: sign-up answers "disabled" as on the live
+   project unless a test stubs it, orders and account requests are inserted
+   as anyone, and only admins read or update orders. */
+const { chromium, base, qaUsers, qaSession, SUPABASE } = require('./runtime.cjs');
 const assert = require('assert/strict'), fs = require('fs');
 fs.mkdirSync('qa/screenshots', { recursive: true });
 
 (async () => {
   const browser = await chromium.launch();
   const errors = [], checks = [], scans = [];
-  const guest = await browser.newContext({ fijlyAuth: null }), p = await guest.newPage();
-  p.setDefaultTimeout(10000);
-  p.on('pageerror', e => errors.push('order pageerror: ' + e.message));
-  p.on('console', m => { if (m.type() === 'error') errors.push('order console: ' + m.text()); });
+  const watch = (page, label) => {
+    page.setDefaultTimeout(10000);
+    page.on('pageerror', e => errors.push(label + ' pageerror: ' + e.message));
+    // Expected: 422 from disabled sign-up, and the 500 the failure test forces.
+    page.on('console', m => { if (m.type() === 'error' && !/status of 422/.test(m.text()) && !(label === 'down' && /status of 500/.test(m.text()))) errors.push(label + ' console: ' + m.text()); });
+    return page;
+  };
   const scan = async (page, label) => {
     await page.addScriptTag({ path: 'qa/axe.min.js' });
     const violations = await page.evaluate(async () => (await axe.run(document, { runOnly: { type: 'tag', values: ['wcag2a', 'wcag2aa', 'wcag21aa', 'best-practice'] } })).violations.map(v => ({ id: v.id, targets: v.nodes.map(n => n.target) })));
@@ -20,195 +24,243 @@ fs.mkdirSync('qa/screenshots', { recursive: true });
     assert.deepEqual(violations, [], label);
   };
   const overflow = page => page.evaluate(() => document.documentElement.scrollWidth > innerWidth);
+  const guest = await browser.newContext({ fijlyAuth: null });
+  const p = watch(await guest.newPage(), 'landing');
+  // The sign-up request the page sent, for checks on what it carries.
+  const fillSignup = async (page, name, email, password) => {
+    await page.locator('#signup-name').fill(name); await page.locator('#signup-email').fill(email); await page.locator('#signup-password').fill(password);
+  };
 
-  /* Landing page pricing ---------------------------------------------------- */
+  /* Landing page: pricing and every "start" action lead to sign-up ------- */
   await p.setViewportSize({ width: 1280, height: 900 });
   await p.goto(base + 'index.html');
-  assert.equal(await p.locator('#pricing').count(), 1, 'section id kept for the nav');
   assert.equal(await p.locator('#pricing h2').innerText(), 'One video, one price. No subscriptions.');
   assert.deepEqual(await p.locator('#pricing .price-card__amount').allInnerTexts(), ['$300', '$500', '$700', '$950']);
-  assert.deepEqual(await p.locator('#pricing .price-card a').evaluateAll(a => a.map(x => x.getAttribute('href'))), ['order.html?duration=30', 'order.html?duration=60', 'order.html?duration=90', 'order.html?duration=120']);
-  assert.match(await p.locator('#pricing .card-dark').innerText(), /90 seconds[\s\S]*Most popular|Most popular[\s\S]*90 seconds/);
-  assert.equal(await p.locator('text=$3.5K').count() + await p.locator('text=$9K').count() + await p.locator('[data-plan]').count(), 0, 'old plans removed');
-  assert.equal(await p.locator('#pricing .pricing__features li').count(), 5);
-  assert.equal(await p.locator('#pricing .pricing__custom a').getAttribute('href'), '#contact');
-  assert.equal(await p.locator('.hero__actions a').first().getAttribute('href'), 'order.html');
-  assert.equal(await p.locator('.nav__actions .btn').getAttribute('href'), 'order.html');
-  assert.equal(await p.locator('#mobile-menu .btn').getAttribute('href'), 'order.html');
+  assert.deepEqual(await p.locator('#pricing .price-card a').evaluateAll(a => a.map(x => [x.getAttribute('href'), x.dataset.duration])), [['#contact', '30'], ['#contact', '60'], ['#contact', '90'], ['#contact', '120']]);
+  for (const selector of ['.nav__actions .btn', '#mobile-menu .btn', '.hero__actions .btn-primary']) assert.equal(await p.locator(selector).getAttribute('href'), '#contact', selector);
   assert.equal(await p.locator('.hero__actions a[href="#work"]').count(), 1, 'View Our Work still points at #work');
-  assert.doesNotMatch(await p.locator('#faq').innerText(), /Studio and Scale/);
+  assert.equal(await p.locator('a[href^="order.html"]').count(), 0, 'nothing links straight to the order page');
+  assert.equal(await p.locator('#pricing .pricing__custom a').getAttribute('href'), 'mailto:hello@fijly.com');
   const columns = async () => p.locator('#pricing .price-card').evaluateAll(cards => new Set(cards.map(c => Math.round(c.getBoundingClientRect().left))).size);
   for (const [width, expected] of [[1280, 4], [768, 2], [375, 1]]) {
     await p.setViewportSize({ width, height: 900 });
     assert.equal(await columns(), expected, width + ': pricing columns');
     assert.equal(await overflow(p), false, width + ': landing page overflow');
-    await p.locator('#pricing').screenshot({ path: `qa/screenshots/pricing-${width}.png` });
+    await p.locator('#contact').screenshot({ path: `qa/screenshots/signup-${width}.png` });
   }
-  checks.push('Pricing: 4 duration cards ($300/$500/$700/$950), 90s featured, order links carry the duration, includes list, custom link; old plans gone; nav and hero start an order; 4/2/1 columns at 1280/768/375');
-
-  /* Order page: step 1, your account --------------------------------------- */
   await p.setViewportSize({ width: 1280, height: 900 });
-  await p.locator('#pricing .price-card a[href="order.html?duration=90"]').click();
-  await p.waitForURL('**/order.html?duration=90');
-  assert.equal(await p.locator('[data-step="1"]').isVisible(), true);
-  assert.equal(await p.locator('[data-step="1"] .order__step-label').innerText(), 'STEP 1 OF 3');
-  assert.equal(await p.locator('#step-1-title').innerText(), 'Create your account');
-  assert.deepEqual(await p.locator('.order__progress li').allInnerTexts(), ['1. Your account', '2. Your video', '3. Review & pay']);
-  assert.equal(await p.locator('[data-progress="1"]').getAttribute('aria-current'), 'step');
-  assert.equal(await p.locator('#order-type').isVisible(), false, 'video details wait for step 2');
-  assert.match(await p.locator('.order__prices .is-selected').innerText(), /\$700/, 'the chosen length shows in the price panel from the start');
-  await scan(p, 'order step 1');
-  await p.locator('[data-next="2"]').click();
-  assert.equal(await p.locator('#order-name-error').innerText(), 'Enter your full name.');
-  assert.equal(await p.locator('#order-email-error').innerText(), 'Enter your work email.');
-  assert.equal(await p.locator('#order-password-error').innerText(), 'Choose a password.');
-  assert.equal(await p.evaluate(() => document.activeElement.id), 'order-name', 'first problem focused');
-  assert.equal(await p.locator('[data-step="1"]').isVisible(), true, 'invalid step does not advance');
-  await p.locator('#order-name').fill('Jane Founder');
-  await p.locator('#order-email').fill('not-an-email');
-  await p.locator('#order-password').fill('short');
-  await p.locator('[data-next="2"]').click();
-  assert.equal(await p.locator('#order-name-error').innerText(), '', 'fixed fields clear their errors');
-  assert.match(await p.locator('#order-email-error').innerText(), /valid email/);
-  assert.equal(await p.locator('#order-password-error').innerText(), 'Use at least 8 characters.');
-  await p.locator('#order-toggle').click();
-  assert.equal(await p.locator('#order-password').getAttribute('type'), 'text');
-  await p.locator('#order-toggle').click();
-  await p.locator('#order-email').fill('jane@acme.example');
-  await p.locator('#order-password').fill('correct horse battery');
-  await p.locator('[data-next="2"]').click();
-  await p.waitForFunction(n => location.hash === '#step-' + n && !document.querySelector('[data-step="' + n + '"]').hidden, 2);
-  assert.equal(await p.locator('[data-progress="1"]').getAttribute('class'), 'is-done');
-  assert.equal(await p.locator('[data-progress="2"]').getAttribute('aria-current'), 'step');
-  checks.push('Order step 1 (account): labels and progress in the new order, name/email/password validation with focus, show/hide password, Continue advances to #step-2');
+  await p.locator('.hero__actions .btn-primary').click();
+  await p.waitForFunction(() => location.hash === '#contact');
+  assert.ok(await p.locator('#signup-form').isVisible(), 'Start Your Video scrolls to the sign-up form');
+  checks.push('Landing: Start Your Video (nav, menu, hero) and every pricing card lead to the sign-up form, cards keep their length, no direct order links, custom requests go to email; 4/2/1 pricing columns, no overflow at 1280/768/375');
 
-  /* Step 2, your video; browser Back and deep links ------------------------- */
-  assert.equal(await p.locator('[data-step="2"] .order__step-label').innerText(), 'STEP 2 OF 3');
-  assert.equal(await p.locator('#step-2-title').innerText(), 'Your video');
-  assert.equal(await p.locator('input[name="duration"][value="90"]').isChecked(), true, '?duration pre-selects the length in step 2');
-  assert.deepEqual(await p.locator('#order-type option').allInnerTexts(), ['Choose a video type', 'Product Launch', 'Homepage Video', 'Product Demo', 'Product Promo', 'SaaS Explainer', 'Tutorial / Onboarding']);
-  await p.locator('[data-next="3"]').click();
-  assert.equal(await p.locator('#order-type-error').innerText(), 'Choose a video type.');
-  assert.equal(await p.locator('#order-company-error').innerText(), 'Enter your company name.');
-  assert.equal(await p.locator('#order-duration-error').innerText(), '', 'the pre-selected length needs no answer');
-  assert.equal(await p.evaluate(() => document.activeElement.id), 'order-type');
-  await p.locator('#order-type').selectOption('Product Demo');
-  await p.locator('#order-company').fill('Acme Inc');
-  await p.locator('#order-brief').fill('Too short');
-  await p.locator('[data-next="3"]').click();
-  assert.equal(await p.locator('#order-brief-error').innerText(), 'Please add at least 20 characters about your project.');
-  await p.locator('#order-brief').fill('We need a product demo that walks new trial users through setting up their first dashboard.');
-  await p.goBack();
-  await p.waitForFunction(() => !document.querySelector('[data-step="1"]').hidden);
-  assert.equal(await p.locator('#order-email').inputValue(), 'jane@acme.example', 'browser Back keeps the account details');
-  await p.goForward();
-  await p.waitForFunction(() => !document.querySelector('[data-step="2"]').hidden);
-  assert.equal(await p.locator('#order-company').inputValue(), 'Acme Inc', 'and the video details');
-  await p.locator('[data-back="1"]').click();
-  await p.waitForFunction(n => location.hash === '#step-' + n && !document.querySelector('[data-step="' + n + '"]').hidden, 1);
-  await p.locator('[data-next="2"]').click();
-  await p.waitForFunction(n => location.hash === '#step-' + n && !document.querySelector('[data-step="' + n + '"]').hidden, 2);
-  await scan(p, 'order step 2');
-  await p.locator('[data-next="3"]').click();
-  await p.waitForFunction(n => location.hash === '#step-' + n && !document.querySelector('[data-step="' + n + '"]').hidden, 3);
-  checks.push('Order step 2 (video): ?duration pre-selected, six video types, inline validation, brief minimum, Back to your account and browser Back/Forward keep every field');
+  /* Sign-up form ------------------------------------------------------------ */
+  assert.equal(await p.locator('#form-title').innerText(), 'Create your account');
+  assert.equal(await p.locator('#contact-title').innerText(), 'Create your FIJLY Studio account');
+  assert.equal(await p.locator('.contact__intro .eyebrow').innerText(), 'GET STARTED');
+  assert.equal(await p.locator('#google-signin').isDisabled(), true, 'Google is off until the provider is configured');
+  assert.equal(await p.locator('#google-signin-note').innerText(), 'Google sign-in will be available soon. Please use email for now.');
+  assert.deepEqual(await p.locator('#signup-form input:not([tabindex="-1"])').evaluateAll(i => i.map(x => x.name)), ['name', 'email', 'password']);
+  assert.equal(await p.locator('.signup__footer a').getAttribute('href'), 'login.html?next=order.html');
+  assert.equal(await p.locator('.signup__question a').getAttribute('href'), 'mailto:hello@fijly.com');
+  await scan(p, 'sign-up form');
+  await p.locator('#signup-submit').click();
+  assert.equal(await p.locator('#signup-name').evaluate(e => e.validity.valueMissing), true, 'required fields block sign-up');
+  await fillSignup(p, 'Jane Founder', 'jane@acme.example', 'short');
+  await p.locator('#signup-submit').click();
+  assert.equal(await p.locator('#signup-password').evaluate(e => e.validationMessage), 'Use at least 8 characters.');
+  await p.locator('.password-toggle').click();
+  assert.deepEqual([await p.locator('#signup-password').getAttribute('type'), await p.locator('.password-toggle').getAttribute('aria-label')], ['text', 'Hide password']);
+  await p.locator('.password-toggle').click();
+  // Sign-up is disabled (as on the live project): the request is saved for the studio.
+  await p.locator('#pricing .price-card a[data-duration="90"]').click();
+  await p.locator('#signup-password').fill('correct horse battery');
+  await p.locator('#signup-submit').click();
+  await p.waitForFunction(() => /received your request/.test(document.getElementById('signup-status').textContent));
+  assert.match(await p.locator('#signup-status').innerText(), /email your login details to jane@acme\.example within 24 hours/);
+  const request = browser.fijlyDb.contact_submissions.find(x => x.email === 'jane@acme.example');
+  assert.ok(request && request.project_type === 'Account request' && request.plan === '90 seconds' && request.name === 'Jane Founder', 'account request saved with the chosen length');
+  assert.equal(JSON.stringify(request).includes('correct horse'), false, 'the password is never saved');
+  assert.equal(await p.locator('#signup-name').inputValue(), '', 'form cleared');
+  assert.equal(await p.locator('.btn-google').isVisible(), true);
+  checks.push('Sign-up: GET STARTED panel, name/email/password with show/hide, Google disabled with a note, sign-in and email links; validation; with sign-up disabled the request is saved to contact_submissions (length kept, no password) and the visitor is told to expect their login');
 
-  /* Step 3: review ----------------------------------------------------------- */
-  assert.deepEqual(await p.locator('.order__summary-facts dt').allInnerTexts(), ['Account', 'Video', 'Company', 'Brief'], 'account first, then the video');
-  assert.equal(await p.locator('#summary-account').innerText(), 'Jane Founder · jane@acme.example');
-  assert.equal(await p.locator('#summary-item').innerText(), 'Product Demo · 90 seconds');
-  assert.equal(await p.locator('#summary-company').innerText(), 'Acme Inc');
-  assert.equal(await p.locator('#summary-total').innerText(), '$700');
-  assert.equal(await p.locator('#order-pay').isDisabled(), true, 'Pay is a disabled placeholder');
-  assert.match(await p.locator('#order-pay').innerText(), /Pay\s+\$700/);
-  assert.match(await p.locator('#order-pay-note').innerText(), /coming soon/);
-  await scan(p, 'order step 3');
-  await p.locator('[data-back="2"]').click();
-  await p.waitForFunction(n => location.hash === '#step-' + n && !document.querySelector('[data-step="' + n + '"]').hidden, 2);
-  assert.equal(await p.locator('#order-company').inputValue(), 'Acme Inc', 'Back keeps the data');
-  await p.locator('[data-next="3"]').click();
-  await p.waitForFunction(n => location.hash === '#step-' + n && !document.querySelector('[data-step="' + n + '"]').hidden, 3);
-  // A deep link to a later step opens the first incomplete step instead.
-  const fresh = await guest.newPage();
-  await fresh.goto(base + 'order.html#step-3');
+  const signup = async (label, reply, check) => {
+    const page = watch(await guest.newPage(), label), bodies = [];
+    await page.route('**/auth/v1/signup**', route => { bodies.push({ url: route.request().url(), body: route.request().postDataJSON() }); return route.fulfill({ status: 200, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: JSON.stringify(reply) }); });
+    await page.goto(base + 'index.html');
+    await page.locator('#pricing .price-card a[data-duration="60"]').click();
+    await fillSignup(page, 'Lee New', 'lee@new.example', 'password123');
+    await page.locator('#signup-submit').click();
+    await check(page, bodies);
+    await page.close();
+  };
+  const newUser = { id: 'qa-new-user', aud: 'authenticated', email: 'lee@new.example', identities: [{ id: 'qa-identity' }], user_metadata: { full_name: 'Lee New' } };
+  await signup('confirm', newUser, async (page, bodies) => {
+    await page.waitForFunction(() => /confirmation link/.test(document.getElementById('signup-status').textContent));
+    assert.match(await page.locator('#signup-status').innerText(), /Check your email — we sent a confirmation link to lee@new\.example/);
+    assert.deepEqual(bodies[0].body.data, { full_name: 'Lee New' }, 'sign-up sends the name, never a role');
+    assert.match(decodeURIComponent(bodies[0].url), /redirect_to=.*order\.html\?duration=60/, 'the confirmation link returns to the order page with the length');
+  });
+  await signup('exists', { ...newUser, identities: [] }, async page => {
+    await page.waitForFunction(() => /already has a FIJLY Studio account/.test(document.getElementById('signup-status').textContent));
+    assert.equal(await page.locator('#signup-status a').getAttribute('href'), 'login.html?next=order.html');
+  });
+  await signup('signed-in', qaSession(qaUsers.client), async page => {
+    await page.waitForURL('**/order.html?duration=60');
+    await page.locator('#order-card[data-state="ready"]').waitFor();
+    assert.equal(await page.locator('#order-account-email').innerText(), qaUsers.client.email, 'a signed-in sign-up continues to the order page');
+    assert.equal(await page.locator('input[name="duration"][value="60"]').isChecked(), true);
+  });
+  const bot = watch(await guest.newPage(), 'bot');
+  await bot.goto(base + 'index.html');
+  await fillSignup(bot, 'Bot', 'bot@example.com', 'password123');
+  await bot.locator('#fijly-hp').evaluate(e => { e.value = 'https://spam.example'; });
+  await bot.locator('#signup-submit').click();
+  await bot.waitForFunction(() => /received your request/.test(document.getElementById('signup-status').textContent));
+  assert.equal(browser.fijlyDb.contact_submissions.some(x => x.email === 'bot@example.com'), false, 'honeypot sign-ups are not saved');
+  await bot.close();
+  const google = watch(await guest.newPage(), 'google');
+  await google.route('**/js/config.js', r => r.fulfill({ contentType: 'application/javascript', body: "window.FIJLY_CONFIG={contactEmail:'hello@fijly.com',googleSignIn:true}" }));
+  await google.route('**/auth/v1/authorize**', r => r.fulfill({ status: 200, contentType: 'text/html', body: '<!doctype html><title>Google sign-in (QA stub)</title>' }));
+  await google.goto(base + 'index.html');
+  assert.equal(await google.locator('#google-signin').isDisabled(), false, 'enabled once configured');
+  await google.locator('#pricing .price-card a[data-duration="120"]').click();
+  const [authorize] = await Promise.all([google.waitForRequest(r => r.url().startsWith(SUPABASE + '/auth/v1/authorize')), google.locator('#google-signin').click()]);
+  const oauth = new URL(authorize.url());
+  assert.equal(oauth.searchParams.get('provider'), 'google');
+  assert.match(oauth.searchParams.get('redirect_to'), /\/order\.html\?duration=120$/);
+  await google.close();
+  checks.push('Sign-up outcomes: email confirmation (name only, link back to order.html with the length), existing account (sign-in link), signed-in (straight to order.html), honeypot (nothing saved); Google redirects to the Google provider and back to order.html once enabled');
+
+  /* Order page: signed out, and signing in to it ---------------------------- */
+  // A fresh context: the signed-in sign-up above left a session in `guest`.
+  const out = watch(await (await browser.newContext({ fijlyAuth: null })).newPage(), 'signed-out');
+  await out.goto(base + 'order.html?duration=90');
+  await out.waitForURL('**/index.html#contact');
+  assert.equal(await out.locator('#signup-form').count(), 1, 'signed-out visitors are sent to sign up');
+  await out.goto(base + 'login.html?next=order.html');
+  await out.locator('#login-email').fill(qaUsers.client.email); await out.locator('#login-password').fill(qaUsers.client.password);
+  await out.locator('#login-submit').click();
+  await out.waitForURL('**/order.html');
+  await out.goto(base + 'login.html?next=https://evil.example');
+  await out.waitForURL('**/studio.html**');
+  assert.doesNotMatch(out.url(), /evil/, 'only order.html is accepted as a destination');
+  await out.close();
+  checks.push('order.html sends signed-out visitors to the sign-up form; login.html?next=order.html returns there after signing in, and no other destination is accepted');
+
+  /* Order page: video details, then review ---------------------------------- */
+  const clientCtx = await browser.newContext({ fijlyAuth: 'client' });
+  const o = watch(await clientCtx.newPage(), 'order');
+  await o.setViewportSize({ width: 1280, height: 900 });
+  await o.goto(base + 'order.html?duration=90');
+  await o.locator('#order-card[data-state="ready"]').waitFor();
+  assert.equal(await o.locator('#order-account-email').innerText(), qaUsers.client.email);
+  assert.equal(await o.locator('#order-company').inputValue(), 'Northbeam', 'company pre-filled from the workspace');
+  assert.deepEqual(await o.locator('.order__progress li').allInnerTexts(), ['1. Your video', '2. Review & submit']);
+  assert.equal(await o.locator('[data-step="1"] .order__step-label').innerText(), 'STEP 1 OF 2');
+  assert.equal(await o.locator('#order-name, #order-email, #order-password').count(), 0, 'no account fields on the order page');
+  assert.deepEqual(await o.locator('.order__duration').allInnerTexts(), ['30 seconds', '60 seconds', '90 seconds\nMost popular', '120 seconds']);
+  assert.doesNotMatch(await o.locator('.order__brand').innerText() + await o.locator('[data-step="1"]').innerText(), /\$/, 'no prices before the review');
+  assert.deepEqual(await o.locator('.order__includes li').allInnerTexts(), ['Professional scriptwriting', 'Custom motion design', 'Two revision rounds', 'All source files delivered']);
+  assert.equal(await o.locator('#step-1-title').innerText(), 'Your video');
+  assert.equal(await o.locator('input[name="duration"][value="90"]').isChecked(), true, '?duration pre-selected');
+  await scan(o, 'order step 1');
+  await o.locator('#order-company').fill('');
+  await o.locator('[data-next="2"]').click();
+  assert.equal(await o.locator('#order-type-error').innerText(), 'Choose a video type.');
+  assert.equal(await o.locator('#order-company-error').innerText(), 'Enter your company name.');
+  assert.equal(await o.evaluate(() => document.activeElement.id), 'order-type', 'first problem focused');
+  await o.locator('#order-type').selectOption('Product Demo');
+  await o.locator('#order-company').fill('Northbeam');
+  await o.locator('#order-brief').fill('Too short');
+  await o.locator('[data-next="2"]').click();
+  assert.equal(await o.locator('#order-brief-error').innerText(), 'Please add at least 20 characters about your project.');
+  assert.equal(await o.locator('#order-type-error').innerText(), '', 'fixed fields clear their errors');
+  await o.locator('#order-brief').fill('We need a product demo that walks new trial users through setting up their first dashboard.');
+  await o.locator('[data-next="2"]').click();
+  await o.waitForFunction(() => location.hash === '#step-2' && !document.querySelector('[data-step="2"]').hidden);
+  assert.equal(await o.locator('[data-step="2"] .order__step-label').innerText(), 'STEP 2 OF 2');
+  assert.equal(await o.locator('#step-2-title').innerText(), 'Review & submit');
+  assert.deepEqual(await o.locator('.order__summary-facts dt').allInnerTexts(), ['Video', 'Company', 'Brief', 'Account']);
+  assert.equal(await o.locator('#summary-item').innerText(), 'Product Demo · 90 seconds');
+  assert.equal(await o.locator('#summary-account').innerText(), 'Casey Morgan · ' + qaUsers.client.email);
+  assert.equal(await o.locator('#summary-total').innerText(), '$700', 'the price appears at review');
+  assert.equal(await o.locator('#order-pay').isDisabled(), true, 'Pay is a disabled placeholder');
+  assert.match(await o.locator('#order-pay').innerText(), /Pay\s+\$700/);
+  assert.match(await o.locator('#order-submit').innerText(), /Submit brief/);
+  await scan(o, 'order review');
+  await o.goBack();
+  await o.waitForFunction(() => !document.querySelector('[data-step="1"]').hidden);
+  assert.equal(await o.locator('#order-brief').inputValue(), 'We need a product demo that walks new trial users through setting up their first dashboard.', 'browser Back keeps the data');
+  await o.goForward();
+  await o.waitForFunction(() => !document.querySelector('[data-step="2"]').hidden);
+  await o.locator('[data-back="1"]').click();
+  await o.waitForFunction(() => location.hash === '#step-1' && !document.querySelector('[data-step="1"]').hidden);
+  await o.locator('[data-next="2"]').click();
+  await o.waitForFunction(() => location.hash === '#step-2' && !document.querySelector('[data-step="2"]').hidden);
+  const fresh = watch(await clientCtx.newPage(), 'deep-link');
+  await fresh.goto(base + 'order.html#step-2');
+  await fresh.locator('#order-card[data-state="ready"]').waitFor();
   await fresh.waitForFunction(() => !document.querySelector('[data-step="1"]').hidden);
-  assert.equal(await fresh.evaluate(() => location.hash), '#step-1');
+  assert.equal(await fresh.evaluate(() => location.hash), '#step-1', 'the review needs the video details first');
   await fresh.close();
-  checks.push('Order step 3: summary lists account, then video, company and brief, then the $700 total; disabled Pay placeholder with note; Back keeps data; deep links fall back to the first incomplete step');
+  checks.push('Order page (signed in): account line, company from the workspace, two steps (Your video, Review & submit), no account fields, lengths without prices, included list without prices; validation with focus; review lists video, company, brief and account with the $700 price and a disabled Pay placeholder; Back, browser Back/Forward and deep links behave');
 
-  /* Submit ------------------------------------------------------------------- */
   const before = browser.fijlyDb.orders.length;
-  await p.locator('#order-submit').click();
-  await p.locator('#order-success').waitFor({ state: 'visible' });
-  assert.equal(await p.locator('#order-success-title').innerText(), 'Your order has been received!');
-  assert.match(await p.locator('#order-success-text').innerText(), /email your login details to jane@acme\.example within 24 hours/);
-  assert.match(await p.locator('#order-success-summary').innerText(), /Product Demo · 90 seconds · \$700 for Acme Inc/);
-  assert.equal(await p.locator('#order-form').isVisible(), false);
+  await o.locator('#order-submit').click();
+  await o.locator('#order-success').waitFor({ state: 'visible' });
+  assert.equal(await o.locator('#order-success-title').innerText(), 'Your order has been received!');
+  assert.match(await o.locator('#order-success-text').innerText(), /email casey@northbeam\.example to confirm the details and send your invoice/);
+  assert.match(await o.locator('#order-success-summary').innerText(), /Product Demo · 90 seconds · \$700 for Northbeam/);
+  assert.equal(await o.locator('#order-success a[href="studio.html"]').count(), 1);
   assert.equal(browser.fijlyDb.orders.length, before + 1);
   const order = browser.fijlyDb.orders[browser.fijlyDb.orders.length - 1];
-  assert.deepEqual([order.name, order.email, order.company, order.video_type, order.duration, order.price, order.status], ['Jane Founder', 'jane@acme.example', 'Acme Inc', 'Product Demo', '90 seconds', 700, 'pending']);
-  assert.match(order.brief, /first dashboard/);
-  assert.equal(JSON.stringify(order).includes('correct horse'), false, 'the password is never stored with the order');
-  assert.equal(await p.locator('#order-password').inputValue(), '', 'password cleared after submitting');
-  await scan(p, 'order success');
-  checks.push('Submit saves the order (pending, $700, 90 seconds) anonymously; sign-up is disabled so the manual-account message shows; the password is never stored');
+  assert.deepEqual([order.name, order.email, order.company, order.video_type, order.duration, order.price, order.status], ['Casey Morgan', qaUsers.client.email, 'Northbeam', 'Product Demo', '90 seconds', 700, 'pending']);
+  await scan(o, 'order success');
+  checks.push('Submitting saves the order with the signed-in account (pending, $700, 90 seconds) and links to FIJLY Studio');
 
-  /* Honeypot, failure and responsive ---------------------------------------- */
-  const bot = await guest.newPage();
-  await bot.goto(base + 'order.html?duration=30');
-  await bot.locator('#order-name').fill('Bot'); await bot.locator('#order-email').fill('bot@example.com'); await bot.locator('#order-password').fill('password123'); await bot.locator('[data-next="2"]').click();
-  await bot.locator('#order-type').selectOption('SaaS Explainer'); await bot.locator('#order-company').fill('Spam Co');
-  await bot.locator('#order-brief').fill('Automated spam brief with enough characters.'); await bot.locator('[data-next="3"]').click();
-  await bot.locator('#order-hp').evaluate(e => { e.value = 'https://spam.example'; });
-  await bot.locator('#order-submit').click();
-  await bot.locator('#order-success').waitFor({ state: 'visible' });
-  assert.equal(browser.fijlyDb.orders.some(o => o.name === 'Bot'), false, 'honeypot orders are not saved');
-  await bot.close();
-  const down = await guest.newPage();
+  const down = watch(await clientCtx.newPage(), 'down');
   await down.route('**/rest/v1/orders', r => r.fulfill({ status: 500, contentType: 'application/json', body: JSON.stringify({ code: 'XX000', message: 'QA failure' }) }));
   await down.goto(base + 'order.html?duration=60');
-  await down.locator('#order-name').fill('Sam Down'); await down.locator('#order-email').fill('sam@down.example'); await down.locator('#order-password').fill('password123'); await down.locator('[data-next="2"]').click();
-  await down.locator('#order-type').selectOption('Homepage Video'); await down.locator('#order-company').fill('Down Co');
-  await down.locator('#order-brief').fill('A homepage video for our analytics product.'); await down.locator('[data-next="3"]').click();
-  await down.locator('#order-submit').click();
+  await down.locator('#order-card[data-state="ready"]').waitFor();
+  await down.locator('#order-type').selectOption('Homepage Video');
+  await down.locator('#order-brief').fill('A homepage video for our analytics product.');
+  await down.locator('[data-next="2"]').click(); await down.locator('#order-submit').click();
   await down.locator('#order-error').waitFor({ state: 'visible' });
-  assert.match(await down.locator('#order-error').innerText(), /couldn’t submit your order/);
-  assert.match(decodeURIComponent(await down.locator('#order-error a').getAttribute('href')), /^mailto:hello@fijly\.com\?subject=FIJLY video order — Down Co/);
+  assert.match(decodeURIComponent(await down.locator('#order-error a').getAttribute('href')), /^mailto:hello@fijly\.com\?subject=FIJLY video order — Northbeam/);
   assert.equal(await down.locator('#order-submit').isDisabled(), false, 'a failed submit can be retried');
-  assert.equal(await down.locator('#order-success').isVisible(), false);
   await down.close();
-  // With self sign-up switched on (not yet: it's disabled on the project), the
-  // order also creates the login, sending the name but never a role.
-  const signup = await guest.newPage(), signupBodies = [];
-  await signup.addInitScript(() => { window.FIJLY_SELF_SIGNUP = true; });
-  await signup.route('**/auth/v1/signup**', r => { signupBodies.push(r.request().postDataJSON()); return r.fulfill({ status: 200, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: JSON.stringify({ id: 'qa-new-user', aud: 'authenticated', email: 'lee@new.example', identities: [{ id: 'qa-identity' }], user_metadata: { full_name: 'Lee New' } }) }); });
-  await signup.goto(base + 'order.html?duration=30');
-  await signup.locator('#order-name').fill('Lee New'); await signup.locator('#order-email').fill('lee@new.example'); await signup.locator('#order-password').fill('password123'); await signup.locator('[data-next="2"]').click();
-  await signup.locator('#order-type').selectOption('Product Launch'); await signup.locator('#order-company').fill('New Co');
-  await signup.locator('#order-brief').fill('A launch video for our new scheduling feature.'); await signup.locator('[data-next="3"]').click();
-  await signup.locator('#order-submit').click();
-  await signup.locator('#order-success').waitFor({ state: 'visible' });
-  assert.match(await signup.locator('#order-success-text').innerText(), /Check lee@new\.example for a confirmation link/);
-  assert.equal(signupBodies.length, 1);
-  assert.deepEqual(signupBodies[0].data, { full_name: 'Lee New' }, 'sign-up never sends a role');
-  assert.ok(browser.fijlyDb.orders.some(o => o.email === 'lee@new.example'), 'the order is saved as well');
-  await signup.close();
+  const botOrder = watch(await clientCtx.newPage(), 'bot-order');
+  await botOrder.goto(base + 'order.html?duration=30');
+  await botOrder.locator('#order-card[data-state="ready"]').waitFor();
+  await botOrder.locator('#order-type').selectOption('SaaS Explainer');
+  await botOrder.locator('#order-brief').fill('Automated spam brief with enough characters.');
+  await botOrder.locator('#order-hp').evaluate(e => { e.value = 'https://spam.example'; });
+  await botOrder.locator('[data-next="2"]').click(); await botOrder.locator('#order-submit').click();
+  await botOrder.locator('#order-success').waitFor({ state: 'visible' });
+  assert.equal(browser.fijlyDb.orders.some(x => x.video_type === 'SaaS Explainer'), false, 'honeypot orders are not saved');
+  await botOrder.close();
   for (const width of [375, 768, 1280]) {
-    const r = await guest.newPage();
+    const r = watch(await clientCtx.newPage(), 'responsive');
     await r.setViewportSize({ width, height: 900 });
     await r.goto(base + 'order.html?duration=120');
+    await r.locator('#order-card[data-state="ready"]').waitFor();
     assert.equal(await overflow(r), false, width + ': order page overflow');
     await r.screenshot({ path: `qa/screenshots/order-${width}.png`, fullPage: true });
     if (width === 375) await scan(r, 'order step 1 / 375');
     await r.close();
   }
-  checks.push('Honeypot orders show success but are not saved; with self sign-up enabled the order also creates the login (name only, never a role) and asks for email confirmation; a failed save keeps the brief, offers an email fallback and allows retry; order page has no overflow at 375/768/1280');
+  const leave = watch(await clientCtx.newPage(), 'sign-out');
+  await leave.goto(base + 'order.html');
+  await leave.locator('#order-card[data-state="ready"]').waitFor();
+  await leave.locator('#order-signout').click();
+  await leave.waitForURL('**/index.html');
+  await leave.close();
+  checks.push('A failed save keeps the brief with an email fallback and retry; honeypot orders are not saved; no overflow at 375/768/1280; Sign out returns to fijly.com');
 
   /* Admin Orders screen ----------------------------------------------------- */
-  const adminCtx = await browser.newContext(), a = await adminCtx.newPage();
-  a.setDefaultTimeout(10000);
-  a.on('pageerror', e => errors.push('admin pageerror: ' + e.message));
-  a.on('console', m => { if (m.type() === 'error') errors.push('admin console: ' + m.text()); });
+  const adminCtx = await browser.newContext(), a = watch(await adminCtx.newPage(), 'admin');
   browser.fijlyDb.orders.push({ id: 'qa-order-bad-price', name: 'Price Tamper', email: 'tamper@example.com', company: 'Tamper Ltd', video_type: 'Product Promo', duration: '90 seconds', price: 1, brief: 'Tampered price.', status: 'pending', payment_intent_id: null, created_at: '2026-09-01T10:00:00Z', updated_at: '2026-09-01T10:00:00Z' });
   await a.goto(base + 'admin.html#dashboard');
   const links = await a.locator('.sidebar-link[data-screen]').evaluateAll(l => l.map(x => x.dataset.screen));
@@ -220,9 +272,9 @@ fs.mkdirSync('qa/screenshots', { recursive: true });
   await a.locator('.sidebar-link[data-screen="orders"]').click();
   await a.waitForFunction(n => document.querySelectorAll('#order-rows tr').length === n, total);
   assert.deepEqual(await a.locator('.admin-orders-table th').allInnerTexts(), ['DATE', 'NAME', 'EMAIL', 'COMPANY', 'VIDEO TYPE', 'DURATION', 'PRICE', 'STATUS', 'ACTIONS']);
-  assert.match(await a.locator('#order-rows tr').first().innerText(), /Lee New/, 'newest first');
-  const first = await a.locator('#order-rows tr', { hasText: 'Jane Founder' }).innerText();
-  assert.match(first, /Jane Founder[\s\S]*jane@acme\.example[\s\S]*Acme Inc[\s\S]*Product Demo[\s\S]*90 seconds[\s\S]*\$700[\s\S]*Pending/, 'every column');
+  assert.match(await a.locator('#order-rows tr').first().innerText(), /Casey Morgan/, 'newest first');
+  const first = await a.locator('#order-rows tr', { hasText: 'Casey Morgan' }).innerText();
+  assert.match(first, /Casey Morgan[\s\S]*casey@northbeam\.example[\s\S]*Northbeam[\s\S]*Product Demo[\s\S]*90 seconds[\s\S]*\$700[\s\S]*Pending/, 'every column');
   assert.match(await a.locator('#order-rows tr', { hasText: 'Price Tamper' }).innerText(), /\$1[\s\S]*Check price/, 'price that does not match the list is flagged');
   assert.equal(await a.locator('#order-rows .badge-warning').first().innerText(), 'Pending');
   await scan(a, 'admin orders');
@@ -233,26 +285,26 @@ fs.mkdirSync('qa/screenshots', { recursive: true });
   assert.equal(await a.locator('#order-empty').isVisible(), true);
   await a.locator('#order-empty-action').click();
   assert.equal(await a.locator('#order-rows tr').count(), total, 'Clear filters restores the list');
-  await a.locator('#order-rows button', { hasText: 'Jane Founder' }).click();
+  await a.locator('#order-rows button', { hasText: 'Casey Morgan' }).click();
   await a.locator('#order-detail').waitFor({ state: 'visible' });
   assert.match(await a.locator('#order-detail-body').innerText(), /first dashboard/, 'the full brief is shown');
-  assert.equal(await a.locator('#order-detail-body a[href="mailto:jane@acme.example"]').count(), 1);
+  assert.equal(await a.locator('#order-detail-body a[href="mailto:casey@northbeam.example"]').count(), 1);
   await scan(a, 'admin order detail');
   await a.locator('#order-detail-status').selectOption('processing');
   await a.locator('#order-status-save').click();
   await a.waitForFunction(() => !document.getElementById('order-detail').open);
-  assert.equal(browser.fijlyDb.orders.find(o => o.name === 'Jane Founder').status, 'processing', 'status saved to the database');
+  assert.equal(browser.fijlyDb.orders.find(o => o.name === 'Casey Morgan').status, 'processing', 'status saved to the database');
   assert.match(await a.locator('#order-save-status').innerText(), /marked processing/);
   assert.equal(await a.locator('.sidebar-link[data-screen="orders"] [data-order-badge]').innerText(), pendingCount());
   for (const status of ['completed', 'cancelled']) {
-    await a.locator('#order-rows button', { hasText: 'Jane Founder' }).click();
+    await a.locator('#order-rows button', { hasText: 'Casey Morgan' }).click();
     await a.locator('#order-detail-status').selectOption(status);
     await a.locator('#order-status-save').click();
     await a.waitForFunction(() => !document.getElementById('order-detail').open);
   }
-  assert.match(await a.locator('#order-rows tr', { hasText: 'Jane Founder' }).locator('.badge-danger').innerText(), /Cancelled/);
+  assert.match(await a.locator('#order-rows tr', { hasText: 'Casey Morgan' }).locator('.badge-danger').innerText(), /Cancelled/);
   // Clients and anonymous visitors can't read or change orders (RLS).
-  const emulator = require('./supabase-emulator.cjs'), { qaUsers } = require('./runtime.cjs');
+  const emulator = require('./supabase-emulator.cjs');
   const ordersUrl = new URL('https://x.supabase.co/rest/v1/orders?select=*');
   assert.deepEqual(emulator.handle(browser.fijlyDb, qaUsers.client, 'GET', ordersUrl, {}, null).body, [], 'clients see no orders');
   const anonymous = emulator.handle(browser.fijlyDb, undefined, 'GET', ordersUrl, {}, null).body;

@@ -112,7 +112,7 @@ fs.mkdirSync('qa/screenshots',{recursive:true});
     await ctx.close();}
   checks.push('SDK blocked: overlay stays up with an explanation, Try again and Go to sign in; the portal stays inert');
 
-  // 8. The landing page is public. It loads the pinned SDK for the contact
+  // 8. The landing page is public. It loads the pinned SDK for the sign-up
   // form (Part 3D) but makes no Supabase call until a brief is sent.
   {const {ctx,page}=await fresh();const requests=[];page.on('request',r=>requests.push(r.url()));
     await page.goto(base+'index.html',{waitUntil:'load'});

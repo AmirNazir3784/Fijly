@@ -46,6 +46,11 @@
   ],
   "errors": [],
   "failedRequests": [],
-  "cancelledResourcesChecked": [],
+  "cancelledResourcesChecked": [
+    "http://localhost:8766/assets/concept-taskpilot.svg",
+    "http://localhost:8766/assets/concept-aiflow.svg",
+    "http://localhost:8766/assets/concept-finly.svg",
+    "http://localhost:8766/assets/concept-clouddesk.svg"
+  ],
   "integrity": []
 }

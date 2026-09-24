@@ -45,7 +45,7 @@ and saves screenshots plus `qa/admin-analytics-visual-results.json`.
   the Northbeam client user, so one context can drive both portals against the
   same database; tabs refresh (`FijlyData.load()`) to see each other's writes.
   Older suites' `FijlyMock` refers to `FijlyData` in both portals.
-- `orders`: per-video pricing on the landing page, the three-step order form (validation, `?duration=` pre-selection, hash steps and browser Back, review, disabled Pay placeholder, honeypot, failure fallback, optional self sign-up that never sends a role), the saved order, and the Admin Orders screen (pending count, price-mismatch flag, filters, detail, status changes, RLS).
+- `orders`: per-video pricing and the landing page sign-up form (validation, sign-up disabled → account request, email confirmation, existing account, signed-in redirect, honeypot, Google once enabled, `login.html?next=order.html`), the signed-in two-step order page (redirect when signed out, workspace pre-fill, no prices before review, validation, hash steps and browser Back, disabled Pay placeholder, failure fallback, honeypot, sign out), and the Admin Orders screen (pending count, price-mismatch flag, filters, detail, status changes, RLS).
 - `round-b`: queue/badge counts, triage, submission feedback, assets, script visibility, deadline links, mobile cards and analytics date boundaries.
 - `studio-polish`: all portal headers, sidebar footer, logo navigation, profile editing/photo handling, shared references, keyboard focus and accessibility at all five widths; protected-file scope guard.
 - `functional`, `accessibility`, `refinement-check`, `final_browser`: current

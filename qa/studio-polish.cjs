@@ -69,15 +69,16 @@ const assert=require('assert/strict'),fs=require('fs'),crypto=require('crypto');
     // Part 3A: the Admin portal reads Supabase; these controllers now await its writes.
     'site/js/admin.js','site/js/workflow.js',
     // Part 3D: the contact form saves briefs to Supabase.
-    'site/js/contact.js','site/js/config.js',
+    'site/js/config.js','site/js/main.js',
     // Pre-deployment fixes: HTTPS/HSTS, live legal pages in the sitemap, Admin-only
     // cleanup, sign-in icon.
     'site/.htaccess','site/privacy.html','site/terms.html','site/robots.txt','site/sitemap.xml','site/login.html','site/js/supabase-client.js',
     // Per-video pricing replaced the plans section; order CTAs link to order.html.
     'site/index.html','site/css/marketing.css'];
   const bytes=file=>fs.readFileSync(file);
-  // Part 3B retired the session mock: these two files must be gone.
-  const retired=['site/js/admin-data.js','site/js/mock-service.js'];
+  // Retired files must be gone (the session mock in Part 3B, then contact.js).
+  // The sign-up form (signup.js) replaced the contact form script.
+  const retired=['site/js/admin-data.js','site/js/mock-service.js','site/js/contact.js'];
   for(const file of retired)assert.equal(fs.existsSync(file),false,file+' retired');
   for(const [file,hash] of Object.entries(baseline))if(!allowed.includes(file)&&!retired.includes(file))assert.equal(crypto.createHash('sha256').update(bytes(file)).digest('hex'),hash,file+' unchanged');
   checks.push('Baseline hash guard: workflow implementation, status logic, fixture data, dashboard renderer, public pages and assets unchanged');

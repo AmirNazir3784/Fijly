@@ -125,4 +125,4 @@ function withAuth(browser) {
 const chromium = Object.create(playwright.chromium);
 chromium.launch = async (...args) => withAuth(await playwright.chromium.launch(...args));
 
-module.exports = {...playwright, chromium, qaUsers, SUPABASE, STORAGE_KEY, base: process.env.QA_BASE_URL || `http://localhost:${process.env.QA_PORT || 8766}/`, widths: [1440,1024,768,390,320], routes: {studio:['overview','projects','requests','assets','scripts','analytics','settings'],admin:['dashboard','orders','clients','requests','videos','revisions','assets','scripts','analytics','settings']}};
+module.exports = {...playwright, chromium, qaUsers, qaSession: session, SUPABASE, STORAGE_KEY, base: process.env.QA_BASE_URL || `http://localhost:${process.env.QA_PORT || 8766}/`, widths: [1440,1024,768,390,320], routes: {studio:['overview','projects','requests','assets','scripts','analytics','settings'],admin:['dashboard','orders','clients','requests','videos','revisions','assets','scripts','analytics','settings']}};

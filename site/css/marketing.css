@@ -1125,6 +1125,63 @@ section[id] {
 .contact-form__status a { font-weight: 700; text-decoration: underline; }
 .contact-form button:disabled { opacity: .65; cursor: wait; }
 
+/* Sign-up (the #contact section): Google, divider and password field. */
+.btn-google {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  width: 100%;
+  min-height: 48px;
+  padding: 12px 14px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  background: var(--surface-white);
+  color: var(--text-primary);
+  font: 600 14px var(--font-body);
+  transition: background-color .15s, border-color .15s;
+}
+.btn-google:hover:not(:disabled) { background: var(--surface-light); border-color: var(--border-dark); }
+.contact-form .btn-google:disabled { opacity: .6; cursor: not-allowed; }
+.signup__note { margin-top: 8px; font-size: 12.5px; line-height: 1.6; color: var(--text-muted); text-align: center; }
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  margin: var(--space-lg) 0;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+.auth-divider::before,
+.auth-divider::after { content: ''; flex: 1; height: 1px; background: var(--border-default); }
+.password-field { position: relative; }
+.password-field input { padding-right: 48px; }
+.password-toggle {
+  position: absolute;
+  top: 50%;
+  right: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--text-muted);
+  transform: translateY(-50%);
+}
+.password-toggle:hover { background: var(--primary-tint); color: var(--primary); }
+.password-toggle .password-toggle__hide,
+.password-toggle[aria-pressed="true"] .password-toggle__show { display: none; }
+.password-toggle[aria-pressed="true"] .password-toggle__hide { display: block; }
+.form-hint { margin-top: 6px; font-size: 12px; color: var(--text-muted); }
+.signup__footer, .signup__question { margin-top: 14px; font-size: 13px; line-height: 1.6; text-align: center; color: var(--text-muted); }
+.signup__footer a, .signup__question a { font-weight: 700; color: var(--primary); text-decoration: underline; text-underline-offset: 2px; }
+.signup__question { margin-top: 8px; padding-top: 14px; border-top: 1px solid var(--border-light); }
+/* The long sign-up label wraps on narrow screens instead of clipping. */
+#signup-submit { height: auto; min-height: 48px; padding-block: 12px; white-space: normal; text-wrap: balance; line-height: 1.35; }
+
 .footer__brand { grid-column: auto; }
 
 .footer__email { display: inline-block; font-size: 14px; font-weight: 600; padding-block: 12px; margin-top: 10px; }
