@@ -345,7 +345,7 @@
     }
 
     .order__summary-title { font-size: var(--text-meta); font-weight: var(--weight-semibold); color: var(--text-muted); }
-    .order__summary-item { margin-top: var(--space-sm); font-size: var(--text-card-title); font-weight: var(--weight-bold); }
+    .order__summary-item { font-weight: var(--weight-semibold); }
 
     .order__summary-facts { display: grid; gap: var(--space-sm); margin-top: var(--space-md); font-size: var(--text-meta); }
     .order__summary-facts div { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: var(--space-md); }
@@ -439,7 +439,7 @@
       <div class="order__pitch">
         <p class="order__eyebrow">NEW PROJECT</p>
         <p class="order__tagline">Start your video project</p>
-        <p class="order__intro">Pick a format and length, tell us about your product, and we’ll take it from script to final delivery.</p>
+        <p class="order__intro">Set up your FIJLY Studio login, pick a format and length, and tell us about your product. We’ll take it from script to final delivery.</p>
         <ul class="order__prices" aria-label="Prices by video length">
           <li data-duration="30"><span>30 seconds</span><strong>$300</strong></li>
           <li data-duration="60"><span>60 seconds</span><strong>$500</strong></li>
@@ -457,8 +457,8 @@
         <noscript><p class="order__error">JavaScript is required to place an order. You can also email <a href="mailto:hello@fijly.com">hello@fijly.com</a>.</p></noscript>
 
         <ol class="order__progress" id="order-progress" aria-label="Order progress">
-          <li data-progress="1" aria-current="step">1. Your video</li>
-          <li data-progress="2">2. Your account</li>
+          <li data-progress="1" aria-current="step">1. Your account</li>
+          <li data-progress="2">2. Your video</li>
           <li data-progress="3">3. Review &amp; pay</li>
         </ol>
 
@@ -466,7 +466,39 @@
           <!-- Step 1 -->
           <section class="order__step" data-step="1" aria-labelledby="step-1-title">
             <p class="order__step-label">STEP 1 OF 3</p>
-            <h2 class="order__step-title" id="step-1-title" tabindex="-1">Your video</h2>
+            <h2 class="order__step-title" id="step-1-title" tabindex="-1">Create your account</h2>
+            <p class="order__step-intro">This will be your FIJLY Studio login, where you’ll review drafts and approve your video.</p>
+            <div class="order__fields">
+              <div>
+                <label class="order__label" for="order-name">Full name</label>
+                <input class="order__input" id="order-name" name="name" autocomplete="name" required maxlength="200" aria-describedby="order-name-error">
+                <p class="order__field-error" id="order-name-error"></p>
+              </div>
+              <div>
+                <label class="order__label" for="order-email">Work email</label>
+                <input class="order__input" id="order-email" name="email" type="email" autocomplete="email" inputmode="email" autocapitalize="none" spellcheck="false" required maxlength="320" placeholder="you@company.com" aria-describedby="order-email-error">
+                <p class="order__field-error" id="order-email-error"></p>
+              </div>
+              <div>
+                <label class="order__label" for="order-password">Password</label>
+                <div class="order__field">
+                  <input class="order__input" id="order-password" name="password" type="password" autocomplete="new-password" required minlength="8" maxlength="72" aria-describedby="order-password-hint order-password-error">
+                  <button class="order__toggle" id="order-toggle" type="button" aria-controls="order-password" aria-pressed="false" aria-label="Show password">Show</button>
+                </div>
+                <p class="order__hint" id="order-password-hint">At least 8 characters.</p>
+                <p class="order__field-error" id="order-password-error"></p>
+              </div>
+            </div>
+            <div class="visually-hidden" aria-hidden="true"><label for="order-hp">Website</label><input type="text" name="website" id="order-hp" tabindex="-1" autocomplete="off"></div>
+            <div class="order__actions">
+              <button class="order__button" type="button" data-next="2">Continue <span aria-hidden="true">→</span></button>
+            </div>
+          </section>
+
+          <!-- Step 2 -->
+          <section class="order__step" data-step="2" aria-labelledby="step-2-title" hidden>
+            <p class="order__step-label">STEP 2 OF 3</p>
+            <h2 class="order__step-title" id="step-2-title" tabindex="-1">Your video</h2>
             <div class="order__fields">
               <div>
                 <label class="order__label" for="order-type">Video type</label>
@@ -504,40 +536,8 @@
               </div>
             </div>
             <div class="order__actions">
-              <button class="order__button" type="button" data-next="2">Continue <span aria-hidden="true">→</span></button>
-            </div>
-          </section>
-
-          <!-- Step 2 -->
-          <section class="order__step" data-step="2" aria-labelledby="step-2-title" hidden>
-            <p class="order__step-label">STEP 2 OF 3</p>
-            <h2 class="order__step-title" id="step-2-title" tabindex="-1">Create your account</h2>
-            <p class="order__step-intro">This will be your FIJLY Studio login, where you’ll review drafts and approve your video.</p>
-            <div class="order__fields">
-              <div>
-                <label class="order__label" for="order-name">Full name</label>
-                <input class="order__input" id="order-name" name="name" autocomplete="name" required maxlength="200" aria-describedby="order-name-error">
-                <p class="order__field-error" id="order-name-error"></p>
-              </div>
-              <div>
-                <label class="order__label" for="order-email">Work email</label>
-                <input class="order__input" id="order-email" name="email" type="email" autocomplete="email" inputmode="email" autocapitalize="none" spellcheck="false" required maxlength="320" placeholder="you@company.com" aria-describedby="order-email-error">
-                <p class="order__field-error" id="order-email-error"></p>
-              </div>
-              <div>
-                <label class="order__label" for="order-password">Password</label>
-                <div class="order__field">
-                  <input class="order__input" id="order-password" name="password" type="password" autocomplete="new-password" required minlength="8" maxlength="72" aria-describedby="order-password-hint order-password-error">
-                  <button class="order__toggle" id="order-toggle" type="button" aria-controls="order-password" aria-pressed="false" aria-label="Show password">Show</button>
-                </div>
-                <p class="order__hint" id="order-password-hint">At least 8 characters.</p>
-                <p class="order__field-error" id="order-password-error"></p>
-              </div>
-            </div>
-            <div class="visually-hidden" aria-hidden="true"><label for="order-hp">Website</label><input type="text" name="website" id="order-hp" tabindex="-1" autocomplete="off"></div>
-            <div class="order__actions">
               <button class="order__button" type="button" data-next="3">Continue <span aria-hidden="true">→</span></button>
-              <button class="order__link-button" type="button" data-back="1">← Back to your video</button>
+              <button class="order__link-button" type="button" data-back="1">← Back to your account</button>
             </div>
           </section>
 
@@ -547,10 +547,10 @@
             <h2 class="order__step-title" id="step-3-title" tabindex="-1">Review &amp; pay</h2>
             <div class="order__summary">
               <h3 class="order__summary-title">Order summary</h3>
-              <p class="order__summary-item" id="summary-item"></p>
               <dl class="order__summary-facts">
-                <div><dt>Company</dt><dd id="summary-company"></dd></div>
                 <div><dt>Account</dt><dd id="summary-account"></dd></div>
+                <div><dt>Video</dt><dd class="order__summary-item" id="summary-item"></dd></div>
+                <div><dt>Company</dt><dd id="summary-company"></dd></div>
                 <div><dt>Brief</dt><dd id="summary-brief"></dd></div>
               </dl>
               <p class="order__total"><span>Total</span><strong id="summary-total"></strong></p>
@@ -563,7 +563,7 @@
             </div>
             <p class="order__legal">By submitting, you agree to our <a href="terms.html">Terms</a> and <a href="privacy.html">Privacy Notice</a>. Nothing is charged until we confirm your order.</p>
             <div class="order__actions">
-              <button class="order__link-button" type="button" data-back="2">← Back to details</button>
+              <button class="order__link-button" type="button" data-back="2">← Back to your video</button>
             </div>
           </section>
         </form>

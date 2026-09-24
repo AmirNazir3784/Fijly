@@ -1,4 +1,4 @@
-/* Order configurator (order.html): video, account, review. Orders are saved
+/* Order configurator (order.html): account, video, review. Orders are saved
    to the Supabase `orders` table for the studio to process. Payment is not
    connected yet; the Pay button is a placeholder.
 
@@ -228,7 +228,7 @@
     } finally { setBusy(false); }
   });
 
-  /* Start: pre-select ?duration= and open the step in the URL. ----------- */
+  /* Start: pre-select ?duration= (shown in step 2) and open the step in the URL. */
   var params = new URLSearchParams(location.search);
   var preset = form.querySelector('input[name="duration"][value="' + (PRICES[params.get('duration')] ? params.get('duration') : '') + '"]');
   if (preset) preset.checked = true;
