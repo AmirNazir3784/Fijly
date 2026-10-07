@@ -92,7 +92,7 @@
       padding: var(--space-2xl) var(--space-lg);
     }
 
-    .order__card { width: 100%; max-width: 520px; }
+    .order__card { width: 100%; max-width: 720px; }
 
     .order__title {
       font-size: var(--text-page-title);
@@ -154,31 +154,53 @@
 
     .order__step-intro { margin-top: var(--space-sm); font-size: var(--text-body); line-height: var(--leading-normal); color: var(--text-muted); }
 
-    .order__fields { display: grid; gap: var(--space-lg); margin-top: var(--space-lg); }
+    .order__fields { display: grid; gap: 24px; margin-top: var(--space-lg); }
+
+    /* Related fields sit under a small section title inside a step. */
+    .order__group { margin-top: 32px; }
+    .order__group:first-child { margin-top: var(--space-lg); }
+    .order__group > .order__fields { margin-top: 0; }
+
+    .order__group-title {
+      margin-bottom: var(--space-md);
+      padding-bottom: var(--space-sm);
+      border-bottom: 1px solid var(--border-default);
+      font-size: var(--text-meta);
+      font-weight: var(--weight-semibold);
+      color: var(--text-primary);
+    }
 
     .order__label {
       display: block;
       margin-bottom: var(--space-sm);
-      font-size: var(--text-meta);
+      font-size: 15px;
       font-weight: var(--weight-semibold);
+      line-height: var(--leading-normal);
+      color: var(--text-primary);
     }
 
-    .order__hint { margin-top: 6px; font-size: var(--text-small); line-height: var(--leading-normal); color: var(--text-light); }
+    .order__required { color: var(--danger); }
+
+    .order__hint { margin-top: 6px; font-size: 14px; line-height: var(--leading-normal); color: var(--text-muted); }
 
     .order__input {
       width: 100%;
-      height: 48px;
-      padding: 0 14px;
+      min-height: 48px;
+      padding: 14px 16px;
       border: 1px solid var(--border-dark);
       border-radius: var(--radius-md);
       background: var(--surface-white);
-      font-size: var(--text-body);
+      font-size: 16px;
+      line-height: var(--leading-normal);
       color: var(--text-primary);
       transition: border-color .15s ease, box-shadow .15s ease;
     }
 
-    select.order__input { padding-right: 36px; }
-    textarea.order__input { height: auto; min-height: 132px; padding: 12px 14px; line-height: var(--leading-normal); resize: vertical; }
+    select.order__input { height: 48px; padding: 0 36px 0 16px; }
+    input.order__input { height: 48px; padding: 0 16px; }
+    textarea.order__input { min-height: 96px; resize: vertical; }
+    /* One link per line needs less room than a paragraph. */
+    #order-references { min-height: 80px; }
     .order__input::placeholder { color: var(--text-placeholder); }
     .order__input:hover { border-color: var(--border-hover); }
     .order__input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-tint); }
@@ -329,19 +351,70 @@
     .order__upload { margin-top: var(--space-md); }
     .order__upload[hidden] { display: none; }
 
-    .order__file {
+    .order__drop { position: relative; display: block; }
+
+    .order__drop-input {
+      position: absolute;
+      z-index: 1;
+      inset: 0;
       width: 100%;
-      padding: 11px 13px;
+      height: 100%;
+      opacity: 0;
+      cursor: pointer;
+    }
+
+    .order__drop-body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      padding: 22px 16px;
       border: 1px dashed var(--border-dark);
       border-radius: var(--radius-md);
       background: var(--surface-light);
-      font-size: var(--text-meta);
-      color: var(--text-primary);
+      text-align: center;
+      transition: border-color .15s ease, background-color .15s ease;
     }
 
-    .order__file:hover { border-color: var(--border-hover); }
-    .order__file:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-tint); }
-    .order__file[aria-invalid="true"] { border-color: var(--danger); }
+    .order__drop:hover .order__drop-body,
+    .order__drop.is-dragging .order__drop-body { border-color: var(--primary); background: var(--primary-tint); }
+    .order__drop-input:focus-visible + .order__drop-body { outline: 2px solid var(--primary); outline-offset: 2px; }
+    .order__drop-input[aria-invalid="true"] + .order__drop-body { border-color: var(--danger); }
+    .order__drop-icon { color: var(--text-muted); }
+    .order__drop-title { font-size: var(--text-meta); font-weight: var(--weight-semibold); color: var(--text-primary); }
+    .order__drop-note { font-size: 13px; line-height: var(--leading-normal); color: var(--text-muted); }
+
+    /* What was picked, with a way to take each one back out. */
+    .order__files { display: grid; gap: 6px; margin-top: var(--space-sm); padding: 0; list-style: none; }
+    .order__files:empty { display: none; }
+
+    .order__files li {
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+      padding: 9px 12px;
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-sm);
+      background: var(--surface-white);
+      font-size: var(--text-meta);
+    }
+
+    .order__file-name { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+    .order__file-size { flex: none; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+
+    .order__file-remove {
+      flex: none;
+      width: 28px;
+      height: 28px;
+      border: 0;
+      border-radius: var(--radius-sm);
+      background: none;
+      color: var(--text-muted);
+      font-size: 18px;
+      line-height: 1;
+    }
+
+    .order__file-remove:hover { background: var(--red-soft); color: var(--danger); }
 
     .order__uploading { display: flex; align-items: center; gap: var(--space-sm); margin-top: 6px; font-size: var(--text-small); color: var(--text-muted); }
     .order__uploading[hidden] { display: none; }
@@ -461,6 +534,12 @@
     @media (max-width: 559px) {
       .order__duration-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .order__choice-grid { grid-template-columns: minmax(0, 1fr); }
+      /* One column, and nothing that can push the page sideways. */
+      .order__group { margin-top: 28px; }
+      .order__drop-body { padding: 18px 12px; }
+      .order__files li { flex-wrap: wrap; }
+      .order__file-size { order: 3; }
+      .order__link-button { width: 100%; text-align: center; }
       .order__actions .order__button { width: 100%; }
       .order__summary { padding: var(--space-md); }
       .order__summary-facts div { grid-template-columns: minmax(0, 1fr); gap: 2px; }
@@ -517,13 +596,14 @@
             <p class="order__step-intro">The essentials, so we can set up your workspace and scope the video.</p>
             <div class="order__fields">
               <div>
-                <label class="order__label" for="order-title">Project name</label>
+                <label class="order__label" for="order-title">Project name <span class="order__required" aria-hidden="true">*</span></label>
                 <input class="order__input" id="order-title" name="title" required maxlength="200" placeholder="e.g. Homepage explainer" aria-describedby="order-title-error">
                 <p class="order__field-error" id="order-title-error"></p>
               </div>
               <div>
                 <label class="order__label" for="order-company">Company / brand name</label>
-                <input class="order__input" id="order-company" name="company" autocomplete="organization" required maxlength="200" aria-describedby="order-company-error">
+                <input class="order__input" id="order-company" name="company" autocomplete="organization" maxlength="200" aria-describedby="order-company-hint order-company-error">
+                <p class="order__hint" id="order-company-hint">Optional. Leave empty to use your name.</p>
                 <p class="order__field-error" id="order-company-error"></p>
               </div>
               <div>
@@ -533,7 +613,7 @@
                 <p class="order__field-error" id="order-website-error"></p>
               </div>
               <div>
-                <label class="order__label" for="order-type">Video type</label>
+                <label class="order__label" for="order-type">Video type <span class="order__required" aria-hidden="true">*</span></label>
                 <select class="order__input" id="order-type" name="videoType" required aria-describedby="order-type-error">
                   <option value="">Choose a video type</option>
                   <option>Product Launch</option>
@@ -546,7 +626,7 @@
                 <p class="order__field-error" id="order-type-error"></p>
               </div>
               <fieldset class="order__durations" aria-describedby="order-duration-error">
-                <legend class="order__label">Video length</legend>
+                <legend class="order__label">Video length <span class="order__required" aria-hidden="true">*</span></legend>
                 <div class="order__duration-grid">
                   <label class="order__duration"><input type="radio" name="duration" value="30" required><span class="order__duration-length">30 seconds</span></label>
                   <label class="order__duration"><input type="radio" name="duration" value="60"><span class="order__duration-length">60 seconds</span></label>
@@ -574,49 +654,111 @@
             <p class="order__step-label">STEP 2 OF 4</p>
             <h2 class="order__step-title" id="step-2-title" tabindex="-1">Creative details</h2>
             <p class="order__step-intro">What the video has to achieve, and anything we should work from.</p>
-            <div class="order__fields">
-              <div>
-                <label class="order__label" for="order-purpose">Video purpose</label>
-                <textarea class="order__input" id="order-purpose" name="purpose" required minlength="10" maxlength="2000" placeholder="What should this video achieve?" aria-describedby="order-purpose-error"></textarea>
-                <p class="order__field-error" id="order-purpose-error"></p>
-              </div>
-              <div>
-                <label class="order__label" for="order-audience">Target audience</label>
-                <textarea class="order__input" id="order-audience" name="targetAudience" required minlength="5" maxlength="2000" placeholder="Who is watching, and what do they already know?" aria-describedby="order-audience-error"></textarea>
-                <p class="order__field-error" id="order-audience-error"></p>
-              </div>
-              <div>
-                <label class="order__label" for="order-style">Video style</label>
-                <textarea class="order__input" id="order-style" name="videoStyle" maxlength="2000" placeholder="Motion graphics, screen recording, live action&hellip;" aria-describedby="order-style-hint order-style-error"></textarea>
-                <p class="order__hint" id="order-style-hint">Optional. Share the look and feel you have in mind.</p>
-                <p class="order__field-error" id="order-style-error"></p>
-              </div>
-              <div>
-                <label class="order__label" for="order-colors">Brand colors</label>
-                <input class="order__input" id="order-colors" name="brandColors" maxlength="500" placeholder="#5B4BF5, #0C0E13" aria-describedby="order-colors-hint order-colors-error">
-                <p class="order__hint" id="order-colors-hint">Optional. Hex codes or a short description.</p>
-                <p class="order__field-error" id="order-colors-error"></p>
-              </div>
-              <div>
-                <label class="order__label" for="order-references">Reference links</label>
-                <textarea class="order__input" id="order-references" name="references" maxlength="2000" placeholder="https://example.com/video-we-like" aria-describedby="order-references-hint order-references-error"></textarea>
-                <p class="order__hint" id="order-references-hint">Optional. One complete http(s) link per line.</p>
-                <p class="order__field-error" id="order-references-error"></p>
-              </div>
-              <div>
-                <label class="order__label" for="order-attachments">Logo, product screenshots and recordings</label>
-                <input class="order__file" id="order-attachments" name="attachments" type="file" multiple aria-describedby="order-attachments-hint order-attachments-error">
-                <p class="order__hint" id="order-attachments-hint">Optional. Images, PDF, video or ZIP &middot; up to 50MB each. Uploaded to your private workspace.</p>
-                <p class="order__field-error" id="order-attachments-error"></p>
-                <p class="order__uploading" id="order-attachments-progress" role="status" hidden><span class="order__spinner" aria-hidden="true"></span><span id="order-attachments-progress-text"></span></p>
-              </div>
-              <div>
-                <label class="order__label" for="order-brief">Additional instructions</label>
-                <textarea class="order__input" id="order-brief" name="brief" required minlength="20" maxlength="5000" placeholder="Tell us what your product does and anything else we should know" aria-describedby="order-brief-hint order-brief-error"></textarea>
-                <p class="order__hint" id="order-brief-hint">Scenes you have in mind, must-have messages, things to avoid.</p>
-                <p class="order__field-error" id="order-brief-error"></p>
+
+            <div class="order__group">
+              <h3 class="order__group-title">About the video</h3>
+              <div class="order__fields">
+                <div>
+                  <label class="order__label" for="order-purpose">Video purpose <span class="order__required" aria-hidden="true">*</span></label>
+                  <textarea class="order__input" id="order-purpose" name="purpose" required minlength="10" maxlength="2000" placeholder="e.g. Explain our new feature and drive trial sign-ups" aria-describedby="order-purpose-error"></textarea>
+                  <p class="order__field-error" id="order-purpose-error"></p>
+                </div>
+                <div>
+                  <label class="order__label" for="order-audience">Target audience</label>
+                  <textarea class="order__input" id="order-audience" name="targetAudience" maxlength="2000" placeholder="e.g. Marketing managers at B2B SaaS companies" aria-describedby="order-audience-hint order-audience-error"></textarea>
+                  <p class="order__hint" id="order-audience-hint">Optional. Who is this video for?</p>
+                  <p class="order__field-error" id="order-audience-error"></p>
+                </div>
+                <div>
+                  <label class="order__label" for="order-style">Video style</label>
+                  <textarea class="order__input" id="order-style" name="videoStyle" maxlength="2000" placeholder="e.g. Clean, modern motion graphics like Linear or Stripe" aria-describedby="order-style-hint order-style-error"></textarea>
+                  <p class="order__hint" id="order-style-hint">Optional. Share the look and feel you have in mind.</p>
+                  <p class="order__field-error" id="order-style-error"></p>
+                </div>
               </div>
             </div>
+
+            <div class="order__group">
+              <h3 class="order__group-title">Brand</h3>
+              <div class="order__fields">
+                <div>
+                  <label class="order__label" for="order-colors">Brand colors</label>
+                  <input class="order__input" id="order-colors" name="brandColors" maxlength="500" placeholder="e.g. #5B4BF5, #0E1116 or &quot;deep purple and black&quot;" aria-describedby="order-colors-hint order-colors-error">
+                  <p class="order__hint" id="order-colors-hint">Optional. Hex codes or a short description.</p>
+                  <p class="order__field-error" id="order-colors-error"></p>
+                </div>
+                <div>
+                  <label class="order__label" for="order-attachments">Logo, product screenshots and recordings</label>
+                  <div class="order__drop" data-drop>
+                    <input class="order__drop-input" id="order-attachments" name="attachments" type="file" multiple aria-describedby="order-attachments-hint order-attachments-error">
+                    <span class="order__drop-body" aria-hidden="true">
+                      <svg class="order__drop-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4m0 0L8 8m4-4l4 4"/><path d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg>
+                      <span class="order__drop-title">Choose files or drag them here</span>
+                      <span class="order__drop-note">Images, PDF, video or ZIP &middot; up to 50MB each</span>
+                    </span>
+                  </div>
+                  <ul class="order__files" id="order-attachments-files"></ul>
+                  <p class="order__hint" id="order-attachments-hint">Optional. Uploaded to your private workspace, where only you and the FIJLY team can open them.</p>
+                  <p class="order__field-error" id="order-attachments-error"></p>
+                  <p class="order__uploading" id="order-attachments-progress" role="status" hidden><span class="order__spinner" aria-hidden="true"></span><span id="order-attachments-progress-text"></span></p>
+                </div>
+              </div>
+            </div>
+
+            <div class="order__group">
+              <h3 class="order__group-title">Brief</h3>
+              <div class="order__fields">
+                <fieldset class="order__choices" aria-describedby="order-brief-doc-hint order-brief-doc-error">
+                  <legend class="order__label">Project brief <span class="order__required" aria-hidden="true">*</span></legend>
+                  <p class="order__hint" id="order-brief-doc-hint">Share a document with everything we should know: product, goals, key messages, scenes you have in mind.</p>
+                  <div class="order__choice-grid">
+                    <label class="order__choice"><input type="radio" name="briefChoice" value="link" checked><span class="order__choice-title">Link to a document</span><span class="order__choice-note">Google Docs, Notion, Dropbox and the like.</span></label>
+                    <label class="order__choice"><input type="radio" name="briefChoice" value="upload"><span class="order__choice-title">Upload a PDF</span><span class="order__choice-note">PDF, DOC or DOCX.</span></label>
+                  </div>
+                  <p class="order__field-error" id="order-brief-doc-error"></p>
+                  <div class="order__upload" id="order-brief-link-wrap">
+                    <label class="order__label" for="order-brief-link">Link to your brief</label>
+                    <input class="order__input" id="order-brief-link" name="briefLink" type="url" maxlength="2000" placeholder="https://docs.google.com/document/d/..." aria-describedby="order-brief-link-hint order-brief-link-error">
+                    <p class="order__hint" id="order-brief-link-hint">Make sure anyone with the link can open it.</p>
+                    <p class="order__field-error" id="order-brief-link-error"></p>
+                  </div>
+                  <div class="order__upload" id="order-brief-file-wrap" hidden>
+                    <label class="order__label" for="order-brief-file">Your brief document</label>
+                    <div class="order__drop" data-drop>
+                      <input class="order__drop-input" id="order-brief-file" name="briefFile" type="file" accept=".pdf,.doc,.docx" aria-describedby="order-brief-file-hint order-brief-file-error">
+                      <span class="order__drop-body" aria-hidden="true">
+                        <svg class="order__drop-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4m0 0L8 8m4-4l4 4"/><path d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg>
+                        <span class="order__drop-title">Choose a file or drag it here</span>
+                        <span class="order__drop-note">PDF, DOC or DOCX &middot; up to 50MB</span>
+                      </span>
+                    </div>
+                    <ul class="order__files" id="order-brief-file-files"></ul>
+                    <p class="order__hint" id="order-brief-file-hint">PDF, DOC or DOCX &middot; up to 50MB.</p>
+                    <p class="order__field-error" id="order-brief-file-error"></p>
+                    <p class="order__uploading" id="order-brief-progress" role="status" hidden><span class="order__spinner" aria-hidden="true"></span><span id="order-brief-progress-text"></span></p>
+                  </div>
+                </fieldset>
+                <div>
+                  <label class="order__label" for="order-brief">Notes</label>
+                  <textarea class="order__input" id="order-brief" name="brief" maxlength="5000" placeholder="e.g. Please avoid stock footage, and keep the logo on screen at the end" aria-describedby="order-brief-hint order-brief-error"></textarea>
+                  <p class="order__hint" id="order-brief-hint">Optional. Anything to add on top of your brief document.</p>
+                  <p class="order__field-error" id="order-brief-error"></p>
+                </div>
+              </div>
+            </div>
+
+            <div class="order__group">
+              <h3 class="order__group-title">References</h3>
+              <div class="order__fields">
+                <div>
+                  <label class="order__label" for="order-references">Reference links</label>
+                  <textarea class="order__input" id="order-references" name="references" maxlength="2000" placeholder="One link per line, e.g. https://example.com/video" aria-describedby="order-references-hint order-references-error"></textarea>
+                  <p class="order__hint" id="order-references-hint">Optional. One complete http(s) link per line.</p>
+                  <p class="order__field-error" id="order-references-error"></p>
+                </div>
+              </div>
+            </div>
+
             <p class="order__error" id="order-step-2-error" role="alert" hidden></p>
             <div class="order__actions">
               <button class="order__button" type="button" data-next="3" aria-busy="false"><span class="order__spinner" aria-hidden="true"></span><span data-next-label="3">Continue</span> <span aria-hidden="true">&rarr;</span></button>
@@ -639,7 +781,15 @@
                 <p class="order__field-error" id="order-script-error"></p>
                 <div class="order__upload" id="order-script-upload" hidden>
                   <label class="order__label" for="order-script-file">Your script file</label>
-                  <input class="order__file" id="order-script-file" name="scriptFile" type="file" accept=".pdf,.doc,.docx,.txt" aria-describedby="order-script-file-hint order-script-file-error">
+                  <div class="order__drop" data-drop>
+                    <input class="order__drop-input" id="order-script-file" name="scriptFile" type="file" accept=".pdf,.doc,.docx,.txt" aria-describedby="order-script-file-hint order-script-file-error">
+                    <span class="order__drop-body" aria-hidden="true">
+                      <svg class="order__drop-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4m0 0L8 8m4-4l4 4"/><path d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg>
+                      <span class="order__drop-title">Choose a file or drag it here</span>
+                      <span class="order__drop-note">PDF, DOC, DOCX or TXT &middot; up to 50MB</span>
+                    </span>
+                  </div>
+                  <ul class="order__files" id="order-script-file-files"></ul>
                   <p class="order__hint" id="order-script-file-hint">PDF, DOC, DOCX or TXT &middot; up to 50MB.</p>
                   <p class="order__field-error" id="order-script-file-error"></p>
                   <p class="order__uploading" id="order-script-progress" role="status" hidden><span class="order__spinner" aria-hidden="true"></span><span id="order-script-progress-text"></span></p>
@@ -654,7 +804,15 @@
                 <p class="order__field-error" id="order-voice-error"></p>
                 <div class="order__upload" id="order-voice-upload" hidden>
                   <label class="order__label" for="order-voice-file">Your voice over file</label>
-                  <input class="order__file" id="order-voice-file" name="voiceFile" type="file" accept=".mp3,.wav,.m4a" aria-describedby="order-voice-file-hint order-voice-file-error">
+                  <div class="order__drop" data-drop>
+                    <input class="order__drop-input" id="order-voice-file" name="voiceFile" type="file" accept=".mp3,.wav,.m4a" aria-describedby="order-voice-file-hint order-voice-file-error">
+                    <span class="order__drop-body" aria-hidden="true">
+                      <svg class="order__drop-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4m0 0L8 8m4-4l4 4"/><path d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg>
+                      <span class="order__drop-title">Choose a file or drag it here</span>
+                      <span class="order__drop-note">MP3, WAV or M4A &middot; up to 50MB</span>
+                    </span>
+                  </div>
+                  <ul class="order__files" id="order-voice-file-files"></ul>
                   <p class="order__hint" id="order-voice-file-hint">MP3, WAV or M4A &middot; up to 50MB.</p>
                   <p class="order__field-error" id="order-voice-file-error"></p>
                   <p class="order__uploading" id="order-voice-progress" role="status" hidden><span class="order__spinner" aria-hidden="true"></span><span id="order-voice-progress-text"></span></p>
@@ -699,7 +857,8 @@
                 <div><dt>Files</dt><dd id="summary-attachments"></dd></div>
                 <div><dt>Script</dt><dd id="summary-script"></dd></div>
                 <div><dt>Voice over</dt><dd id="summary-voice"></dd></div>
-                <div><dt>Instructions</dt><dd id="summary-brief"></dd></div>
+                <div><dt>Brief</dt><dd id="summary-brief-doc"></dd></div>
+                <div><dt>Notes</dt><dd id="summary-brief"></dd></div>
                 <div><dt>Account</dt><dd id="summary-account"></dd></div>
               </dl>
             </div>

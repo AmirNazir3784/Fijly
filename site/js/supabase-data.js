@@ -440,6 +440,9 @@
         stage: stages.includes(r.stage) ? r.stage : 'Project Submitted',
         durationSeconds: r.duration_seconds || null, website: r.website || '', purpose: r.purpose || '', targetAudience: r.target_audience || '',
         videoStyle: r.video_style || '', brandColors: r.brand_colors || '',
+        // The brief document: a link, an uploaded file, or both. `instructions`
+        // (brief) is now the optional note beside it.
+        briefLink: r.brief_link || '', briefFilePath: r.brief_file_path || '',
         hasScript: !!r.has_script, hasVoiceOver: !!r.has_voice_over,
         scriptFilePath: r.script_file_path || '', voiceOverFilePath: r.voice_over_file_path || '',
         prices: { base: amount(r.base_price), script: amount(r.script_price), voiceOver: amount(r.voice_over_price), total: amount(r.total_price) } };
