@@ -52,6 +52,26 @@
   // Which milestone a project owes right now, from its stage. Everything else
   // means nothing is payable yet.
   var dueMilestoneForStage = { 'Awaiting Payment': 'start', 'Storyboard Approved': 'storyboard', 'Video Approved': 'final' };
+  var storyboardStatuses = ['Ready', 'Approved', 'Changes Requested'];
+  var storyboardTones = { Ready: 'badge-info', Approved: 'badge-success', 'Changes Requested': 'badge-warning' };
+  // Stages at which the studio may send a storyboard for review.
+  var storyboardUploadStages = ['Project Submitted', 'Requirements Under Review', 'Storyboard In Progress', 'Storyboard Changes Requested'];
+  // Stages at which the studio may send a preview cut, and the client may review one.
+  var previewUploadStages = ['Video In Production', 'Video Revision Requested'];
+  var finalUploadStages = ['Video Approved', 'Completed'];
+  // The activity_log actions review_video() writes. Their details are
+  // '<request_id> | <feedback>', which is how the feedback is read back.
+  var VIDEO_FEEDBACK = 'Video changes requested', VIDEO_APPROVED = 'Video approved';
+  // The ordered stepper both portals show on a project. Every stage maps onto
+  // one of these steps, so a project always has a current position.
+  var progressSteps = [
+    { key: 'deposit', label: 'Deposit', stages: ['Awaiting Payment'] },
+    { key: 'requirements', label: 'Requirements', stages: ['Project Submitted', 'Requirements Under Review', 'Information Requested'] },
+    { key: 'storyboard', label: 'Storyboard', stages: ['Storyboard In Progress', 'Storyboard Ready', 'Storyboard Changes Requested', 'Storyboard Approved'] },
+    { key: 'production', label: 'Production', stages: ['Video In Production', 'Video Revision Requested'] },
+    { key: 'review', label: 'Your review', stages: ['Video Ready for Preview', 'Video Approved'] },
+    { key: 'delivery', label: 'Delivery', stages: ['Completed'] }
+  ];
 
   /* Formatting (same output as the mock) --------------------------------- */
   function toDate(value) {
@@ -161,8 +181,30 @@
       var result = await db().storage.from(BUCKET).remove([path]);
       if (result.error) throw friendly(result.error);
       signedUrls.delete(path);
+    },
+    // A storyboard round, at {client_id}/storyboards/{request_id}/{uuid}.{ext}.
+    // Preview and final videos do NOT come through here: they are the one kind
+    // of file we expect to move to another host, so they go through
+    // FijlyVideoStore (js/video-store.js) and nothing else.
+    async uploadStoryboardFile(clientId, requestId, file) {
+      var problem = storyboardFileProblem(file);
+      if (problem) fail(problem);
+      var fileExt = extensionOf(file.name), fileName = crypto.randomUUID() + '.' + fileExt;
+      var filePath = clientId + '/storyboards/' + requestId + '/' + fileName;
+      var body = new Blob([file], { type: fileTypes[fileExt] });
+      var result = await db().storage.from(BUCKET).upload(filePath, body, { contentType: fileTypes[fileExt], upsert: false });
+      if (result.error) throw friendly(result.error);
+      return { path: result.data.path, fileName: file.name };
     }
   };
+  // Storyboards are sent as a PDF, a still or a short animated pass.
+  var storyboardTypes = ['pdf', 'png', 'jpg', 'jpeg', 'mp4'];
+  function storyboardFileProblem(file) {
+    if (!file || !String(file.name || '').trim()) return 'Please select a storyboard file.';
+    if (file.size > MAX_FILE_SIZE) return 'File too large. Maximum size is 50MB.';
+    if (!storyboardTypes.includes(extensionOf(file.name))) return 'Storyboards must be a PDF, PNG, JPG or MP4 file.';
+    return '';
+  }
 
   /* ======================================================================
      Query layer: FijlyData.admin (raw rows, live column names)
@@ -278,6 +320,32 @@
       return rows[0];
     },
 
+    // --- Storyboards ---
+    // Admins manage every round; a client may only read its own and review
+    // one through review_storyboard().
+    getStoryboards() { return admin.all('storyboards', 'round'); },
+    uploadStoryboardFile: storage.uploadStoryboardFile,
+    async createStoryboard(values) { return data(await db().from('storyboards').insert(values).select().single()); },
+    async deleteStoryboard(id) { data(await db().from('storyboards').delete().eq('id', id)); },
+    // The client's verdict on a storyboard round. The function advances the
+    // project's stage and enforces the included revision limit.
+    async reviewStoryboard(id, approve, feedback) {
+      var result = await db().rpc('review_storyboard', { p_storyboard_id: id, p_approve: !!approve, p_feedback: feedback || null });
+      if (result.error) throw friendly(result.error);
+      return result.data;
+    },
+    // The client's verdict on a preview cut, by project.
+    async reviewVideo(requestId, approve, feedback) {
+      var result = await db().rpc('review_video', { p_request_id: requestId, p_approve: !!approve, p_feedback: feedback || null });
+      if (result.error) throw friendly(result.error);
+      return result.data;
+    },
+    async updateVersion(id, updates) {
+      var rows = data(await db().from('versions').update(updates).eq('id', id).select());
+      if (!rows.length) fail('This version is no longer available. Refresh the page and try again.');
+      return rows[0];
+    },
+
     // --- Payments and pricing (milestone workflow) ---
     // Clients may read their own payments; only an admin may change one, and
     // only through admin_set_payment_status (which also advances the stage).
@@ -345,7 +413,7 @@
   /* ======================================================================
      State in the mock's shapes
      ====================================================================== */
-  var state = { clients: [], requests: [], videos: [], revisions: [], assets: [], scripts: [], payments: [], pricing: {}, activity: [], settings: {}, clientSettings: {} };
+  var state = { clients: [], requests: [], videos: [], revisions: [], assets: [], scripts: [], storyboards: [], videoFeedback: [], payments: [], pricing: {}, activity: [], settings: {}, clientSettings: {} };
   var profile = null, loaded = false;
   Object.defineProperty(state, 'projects', { configurable: true, get: function () {
     return state.videos.map(function (video) { var request = requestFor(video); return { id: video.id, client: request.client, title: request.title, format: request.videoType, status: video.status, due: request.deadline }; });
@@ -361,7 +429,12 @@
     var requests = rows.requests.map(function (r) {
       var video = videoByRequest.get(r.id);
       return { id: r.id, client: r.client_id, title: r.title || '', platform: r.platform || '', videoType: r.video_type || '', instructions: r.brief || '', references: r.reference_urls || [],
-        attachments: (r.attachment_names || []).map(function (name) { return { name: name, size: null, type: '' }; }),
+        // Older projects have names only; the wizard now stores a path for each
+        // file as well, so they can be downloaded.
+        attachments: (r.attachment_names || []).map(function (name, index) {
+          return { name: name, size: null, type: '', path: (r.attachment_paths || [])[index] || '' };
+        }),
+        attachmentPaths: r.attachment_paths || [],
         requestedAt: r.created_at || '', deadline: r.deadline || '', priority: r.priority || 'Normal', assignedEditor: (video && video.assigned_editor) || '', length: r.length || '', status: r.status,
         // The milestone workflow and the project details the wizard collects.
         stage: stages.includes(r.stage) ? r.stage : 'Project Submitted',
@@ -373,7 +446,9 @@
     });
     var versionsByVideo = new Map(), versionById = new Map();
     rows.versions.forEach(function (v) {
-      var version = { id: v.id, number: v.version_number, filename: v.filename || 'draft-v' + v.version_number + '.mp4', notes: v.notes || '', createdAt: v.created_at || '', revisionId: v.revision_id || null, fileUrl: v.file_url || '' };
+      var version = { id: v.id, number: v.version_number, filename: v.filename || 'draft-v' + v.version_number + '.mp4', notes: v.notes || '', createdAt: v.created_at || '', revisionId: v.revision_id || null, fileUrl: v.file_url || '',
+        // Both are storage paths; read them only through FijlyVideoStore.
+        previewPath: v.preview_file_path || '', finalPath: v.final_file_path || '' };
       versionById.set(v.id, version);
       if (!versionsByVideo.has(v.video_id)) versionsByVideo.set(v.video_id, []);
       versionsByVideo.get(v.video_id).push(version);
@@ -430,6 +505,23 @@
       return { id: s.id, client: s.client_id, videoId: s.video_id, title: s.title || '', status: status, version: 1 + feedback.length - (status === 'Revision Requested' && feedback.length ? 1 : 0), createdAt: s.created_at || '', updatedAt: s.updated_at || s.created_at || '',
         scenes: (scenesByScript.get(s.id) || []).sort(function (a, b) { return a.order - b.order; }), feedback: feedback };
     });
+    // Storyboards: every round sent to a client, newest last.
+    var storyboards = (rows.storyboards || []).map(function (sb) {
+      return { id: sb.id, requestId: sb.request_id, client: sb.client_id, round: Number(sb.round) || 0,
+        filePath: sb.file_path || '', notes: sb.notes || '',
+        status: storyboardStatuses.includes(sb.status) ? sb.status : 'Ready',
+        clientFeedback: sb.client_feedback || '', reviewedAt: sb.reviewed_at || null, createdAt: sb.created_at || '' };
+    }).sort(function (a, b) { return a.round - b.round; });
+    // review_video() records each outcome in the activity log as
+    // '<request_id> | <feedback>'. That is where a client's video notes live.
+    var videoFeedback = rows.activity.filter(function (a) {
+      return (a.action === VIDEO_FEEDBACK || a.action === VIDEO_APPROVED) && a.details;
+    }).map(function (a) {
+      var split = String(a.details).indexOf(' | ');
+      var requestId = split < 0 ? String(a.details).trim() : String(a.details).slice(0, split).trim();
+      return { id: a.id, requestId: requestId, approved: a.action === VIDEO_APPROVED,
+        text: split < 0 ? '' : String(a.details).slice(split + 3).trim(), at: a.created_at || '' };
+    }).reverse();
     // Payments: the three milestones per project, with the project and client
     // they belong to, so every screen can label a row without another query.
     var requestById = new Map(requests.map(function (r) { return [r.id, r]; }));
@@ -463,12 +555,12 @@
       storyboardRevisions: Number.isInteger(st.storyboard_revisions_included) ? st.storyboard_revisions_included : 2,
       videoRevisions: Number.isInteger(st.video_revisions_included) ? st.video_revisions_included : 2
     };
-    return { clients: clients, requests: requests, videos: videos, revisions: revisions, assets: assets, scripts: scripts, payments: payments, pricing: pricing, settings: settings, clientSettings: clientSettings, me: me, settingsRow: st };
+    return { clients: clients, requests: requests, videos: videos, revisions: revisions, assets: assets, scripts: scripts, storyboards: storyboards, videoFeedback: videoFeedback, payments: payments, pricing: pricing, settings: settings, clientSettings: clientSettings, me: me, settingsRow: st };
   }
 
   var listeners = [], loading = null, settingsRow = null, lastLoaded = 0, me = {};
   function notify(changed) {
-    var keys = changed || ['clients', 'requests', 'videos', 'revisions', 'assets', 'scripts', 'payments', 'pricing', 'settings', 'clientSettings'];
+    var keys = changed || ['clients', 'requests', 'videos', 'revisions', 'assets', 'scripts', 'storyboards', 'videoFeedback', 'payments', 'pricing', 'settings', 'clientSettings'];
     listeners.forEach(function (listener) {
       try { listener(keys); } catch (error) { console.error('Render failed after a data update', error); }
     });
@@ -482,10 +574,10 @@
       if (!profile) fail('Your session has ended. Sign in again.');
       // RLS returns only what this account may see: everything for an admin,
       // the client's own workspace for a client. Studio settings are admin-only.
-      var results = await Promise.all([admin.getClients(), admin.getRequests(), admin.getVideos(), admin.getVersions(), admin.getFeedback(), admin.getRevisions(), admin.getAssets(), admin.getScripts(), admin.getScriptScenes(), admin.getActivity(), admin.getProfiles(), profile.role === 'admin' ? admin.getSettings() : null, admin.all('client_settings'), admin.getPayments(), admin.getPricing()]);
-      var next = mapState({ clients: results[0], requests: results[1], videos: results[2], versions: results[3], feedback: results[4], revisions: results[5], assets: results[6], scripts: results[7], scenes: results[8], activity: results[9], profiles: results[10], settings: results[11], clientSettings: results[12], payments: results[13], pricing: results[14] });
+      var results = await Promise.all([admin.getClients(), admin.getRequests(), admin.getVideos(), admin.getVersions(), admin.getFeedback(), admin.getRevisions(), admin.getAssets(), admin.getScripts(), admin.getScriptScenes(), admin.getActivity(), admin.getProfiles(), profile.role === 'admin' ? admin.getSettings() : null, admin.all('client_settings'), admin.getPayments(), admin.getPricing(), admin.getStoryboards()]);
+      var next = mapState({ clients: results[0], requests: results[1], videos: results[2], versions: results[3], feedback: results[4], revisions: results[5], assets: results[6], scripts: results[7], scenes: results[8], activity: results[9], profiles: results[10], settings: results[11], clientSettings: results[12], payments: results[13], pricing: results[14], storyboards: results[15] });
       settingsRow = next.settingsRow; me = next.me;
-      ['clients', 'requests', 'videos', 'revisions', 'assets', 'scripts', 'payments', 'pricing', 'settings', 'clientSettings'].forEach(function (key) { state[key] = next[key]; });
+      ['clients', 'requests', 'videos', 'revisions', 'assets', 'scripts', 'storyboards', 'videoFeedback', 'payments', 'pricing', 'settings', 'clientSettings'].forEach(function (key) { state[key] = next[key]; });
       loaded = true; lastLoaded = Date.now();
       notify();
     })();
@@ -680,6 +772,49 @@
       return workspacePayments().filter(function (p) { return p.status === 'due' && p.required; });
     },
 
+    /* Storyboards and preview videos: read, then review through the RPCs. */
+    storyboardsFor: function (requestId) {
+      owned('requests', requestId);
+      return FijlyData.storyboardsFor(requestId);
+    },
+    // The round waiting on this client, if any.
+    storyboardAwaitingReview: function (requestId) {
+      var latest = FijlyData.latestStoryboard(requestId);
+      return latest && latest.status === 'Ready' ? latest : null;
+    },
+    storyboardUrl: function (storyboard) { return storage.getAssetUrl(storyboard && storyboard.filePath); },
+    // Approve a storyboard round, or send it back with notes. The database
+    // moves the project's stage and enforces the included revision limit.
+    reviewStoryboard: function (identifier, approve, feedback) {
+      var storyboard = state.storyboards.find(function (sb) { return sb.id === identifier; });
+      if (!storyboard || storyboard.client !== clientId()) fail('This storyboard is not available in your workspace.');
+      if (storyboard.status !== 'Ready') fail('This storyboard has already been reviewed.');
+      var text = approve ? String(feedback || '').trim() : requireValue(feedback, 'Feedback');
+      return mutate(async function () { await admin.reviewStoryboard(identifier, approve, text); });
+    },
+    // Approve the preview cut, or ask for changes.
+    reviewVideo: function (requestId, approve, feedback) {
+      var request = owned('requests', requestId);
+      if (request.stage !== 'Video Ready for Preview') fail('This video is not awaiting your review.');
+      var text = approve ? String(feedback || '').trim() : requireValue(feedback, 'Feedback');
+      return mutate(async function () { await admin.reviewVideo(requestId, approve, text); });
+    },
+    // A playback URL for this project's preview cut.
+    previewUrl: function (requestId) {
+      owned('requests', requestId);
+      var version = FijlyData.latestPreview(requestId);
+      if (!version) fail('No preview has been shared yet.');
+      return window.FijlyVideoStore.getUrl('preview', version.previewPath);
+    },
+    // A download URL for the delivered file. Storage refuses this while the
+    // final payment is outstanding, which the portal shows as a locked card.
+    finalUrl: function (requestId) {
+      owned('requests', requestId);
+      var version = FijlyData.latestFinal(requestId);
+      if (!version) fail('The final video has not been delivered yet.');
+      return window.FijlyVideoStore.getUrl('final', version.finalPath);
+    },
+
     /* Writes. Each validates first, then persists, reloads and notifies. */
     // Clients can no longer insert into requests: every project is created by
     // the wizard on order.html, which calls submit_project() so the price and
@@ -786,6 +921,172 @@
       var row = state.pricing[item];
       return row && row[seconds] !== undefined ? row[seconds] : null;
     },
+    /* Storyboards ----------------------------------------------------------- */
+    storyboardStatuses: storyboardStatuses,
+    storyboardClass: function (status) { return 'badge ' + (storyboardTones[status] || ''); },
+    storyboardFileTypes: storyboardTypes,
+    storyboardAccept: storyboardTypes.map(function (extension) { return '.' + extension; }).join(','),
+    validateStoryboardFile: storyboardFileProblem,
+    // Every round for one project, oldest first.
+    storyboardsFor: function (requestId) {
+      return state.storyboards.filter(function (sb) { return sb.requestId === requestId; })
+        .sort(function (a, b) { return a.round - b.round; });
+    },
+    latestStoryboard: function (requestId) { return FijlyData.storyboardsFor(requestId).slice(-1)[0] || null; },
+    // Rounds the client sent back for changes, against the included allowance.
+    storyboardRevisions: function (requestId) {
+      return { used: FijlyData.storyboardsFor(requestId).filter(function (sb) { return sb.status === 'Changes Requested'; }).length,
+        included: state.settings.storyboardRevisions || 0 };
+    },
+    canUploadStoryboard: function (request) { return storyboardUploadStages.includes(request.stage); },
+    // A signed URL for a storyboard file (valid for one hour).
+    storyboardUrl: function (storyboard) { return storage.getAssetUrl(storyboard && storyboard.filePath); },
+    // Sends a new round to the client: the file, then the row, then the stage.
+    addStoryboard: function (identifier, file, notes) {
+      var request = get('requests', identifier);
+      if (!storyboardUploadStages.includes(request.stage)) fail('A storyboard can only be sent while the project is in requirements or storyboard work.');
+      var problem = storyboardFileProblem(file);
+      if (problem) fail(problem);
+      var round = FijlyData.storyboardsFor(identifier).reduce(function (most, sb) { return Math.max(most, sb.round); }, 0) + 1;
+      return mutate(async function () {
+        var stored = await storage.uploadStoryboardFile(request.client, identifier, file);
+        var row;
+        try {
+          row = await admin.createStoryboard({ request_id: identifier, client_id: request.client, round: round,
+            file_path: stored.path, notes: String(notes || '').trim() || null, status: 'Ready' });
+        } catch (error) {
+          // Don't leave the file behind if the row could not be written.
+          try { await storage.deleteAssetFile(stored.path); } catch (_) { /* Keep the original error. */ }
+          throw error;
+        }
+        try {
+          await admin.setStage(identifier, 'Storyboard Ready');
+        } catch (error) {
+          // The round is saved; only the stage move failed. Undo it so the
+          // project cannot sit at a stage that contradicts its storyboards.
+          try { await admin.deleteStoryboard(row.id); await storage.deleteAssetFile(stored.path); } catch (_) { /* Keep the original error. */ }
+          throw error;
+        }
+        await admin.logActivity(request.client, null, 'Storyboard round ' + round + ' sent for review', request.title);
+        return function () { return FijlyData.storyboardsFor(identifier).find(function (sb) { return sb.id === row.id; }); };
+      });
+    },
+
+    /* Preview and final video ----------------------------------------------- */
+    // Both files are stored through FijlyVideoStore, never Storage directly,
+    // so switching provider is one line in js/config.js.
+    canUploadPreview: function (request) { return previewUploadStages.includes(request.stage); },
+    canUploadFinal: function (request) { return finalUploadStages.includes(request.stage); },
+    // The project's production record, if the studio has created one yet.
+    videoForRequest: function (requestId) {
+      return state.videos.find(function (video) { return video.requestId === requestId; }) || null;
+    },
+    versionsFor: function (requestId) {
+      var video = FijlyData.videoForRequest(requestId);
+      return video ? video.versions.slice().sort(function (a, b) { return a.number - b.number; }) : [];
+    },
+    latestVersion: function (requestId) { return FijlyData.versionsFor(requestId).slice(-1)[0] || null; },
+    // The newest version that actually has a preview cut attached.
+    latestPreview: function (requestId) {
+      return FijlyData.versionsFor(requestId).filter(function (v) { return v.previewPath; }).slice(-1)[0] || null;
+    },
+    latestFinal: function (requestId) {
+      return FijlyData.versionsFor(requestId).filter(function (v) { return v.finalPath; }).slice(-1)[0] || null;
+    },
+    // A playback URL for a stored video. A final video refuses until that
+    // project's final payment is settled, which callers treat as "locked".
+    videoUrl: function (kind, path) { return window.FijlyVideoStore.getUrl(kind, path); },
+    // The client's notes on each preview cut, oldest first.
+    videoFeedbackFor: function (requestId) {
+      return state.videoFeedback.filter(function (entry) { return entry.requestId === requestId; });
+    },
+    videoRevisions: function (requestId) {
+      return { used: FijlyData.videoFeedbackFor(requestId).filter(function (entry) { return !entry.approved && entry.text; }).length,
+        included: state.settings.videoRevisions || 0 };
+    },
+    // Uploads a preview cut and sends it for review. The project needs a
+    // production record and a version row for the file to hang off, so both
+    // are created here when this is the first cut.
+    addPreviewVideo: function (identifier, file, notes) {
+      var request = get('requests', identifier);
+      if (!previewUploadStages.includes(request.stage)) fail('A preview can only be sent while the video is in production.');
+      var problem = window.FijlyVideoStore.validate(file);
+      if (problem) fail(problem);
+      return mutate(async function () {
+        var stored = await window.FijlyVideoStore.upload('preview', request.client, identifier, file);
+        var video = FijlyData.videoForRequest(identifier), videoId = video && video.id, created = null;
+        try {
+          if (!videoId) {
+            created = await admin.createVideo({ client_id: request.client, request_id: identifier, title: request.title,
+              video_type: request.videoType, status: 'In Production', deadline: request.deadline || null });
+            videoId = created.id;
+          }
+          var rows = data(await db().from('versions').select('version_number').eq('video_id', videoId));
+          var number = rows.reduce(function (most, row) { return Math.max(most, Number(row.version_number) || 0); }, 0) + 1;
+          var version = await admin.addVersion({ video_id: videoId, version_number: number, filename: stored.fileName,
+            notes: String(notes || '').trim() || 'Preview cut.', preview_file_path: stored.path });
+          await admin.setStage(identifier, 'Video Ready for Preview');
+          await admin.logActivity(request.client, videoId, 'Preview V' + number + ' sent for review', request.title);
+          return function () { return FijlyData.versionsFor(identifier).find(function (v) { return v.id === version.id; }); };
+        } catch (error) {
+          // Nothing half-made: drop the file, and the production record if this
+          // call is what created it.
+          try { await window.FijlyVideoStore.remove(stored.path); } catch (_) { /* Keep the original error. */ }
+          if (created) { try { await db().from('videos').delete().eq('id', created.id); } catch (_) { /* Keep the original error. */ } }
+          throw error;
+        }
+      });
+    },
+    // Attaches the delivered file to the newest version. It stays locked to the
+    // client until the final payment is paid or waived (a storage rule).
+    addFinalVideo: function (identifier, file) {
+      var request = get('requests', identifier);
+      if (!finalUploadStages.includes(request.stage)) fail('The final video can only be uploaded once the client has approved it.');
+      var problem = window.FijlyVideoStore.validate(file);
+      if (problem) fail(problem);
+      var version = FijlyData.latestVersion(identifier);
+      if (!version) fail('Send a preview cut first, so the final file has a version to attach to.');
+      return mutate(async function () {
+        var stored = await window.FijlyVideoStore.upload('final', request.client, identifier, file);
+        try {
+          await admin.updateVersion(version.id, { final_file_path: stored.path, filename: stored.fileName });
+        } catch (error) {
+          try { await window.FijlyVideoStore.remove(stored.path); } catch (_) { /* Keep the original error. */ }
+          throw error;
+        }
+        await admin.logActivity(request.client, FijlyData.videoForRequest(identifier).id, 'Final video uploaded', request.title);
+        return function () { return FijlyData.versionsFor(identifier).find(function (v) { return v.id === version.id; }); };
+      });
+    },
+    // True once the 40% milestone is settled, which is what unlocks the
+    // final file for the client in Storage.
+    finalUnlocked: function (requestId) {
+      return FijlyData.paymentsFor(requestId).some(function (payment) {
+        return payment.milestone === 'final' && ['paid', 'waived'].includes(payment.status);
+      });
+    },
+
+    /* Progress stepper ------------------------------------------------------ */
+    progressSteps: progressSteps,
+    // Where a project stands: each step marked done, current or upcoming. A
+    // cancelled project keeps its position but is flagged, so the stepper can
+    // say so rather than claim progress.
+    progressFor: function (request) {
+      var at = progressSteps.findIndex(function (step) { return step.stages.includes(request.stage); });
+      var cancelled = request.stage === 'Cancelled';
+      // Cancelled has no step of its own; show it against the last step reached.
+      if (at < 0) at = cancelled ? 0 : progressSteps.length - 1;
+      return {
+        cancelled: cancelled,
+        current: progressSteps[at].key,
+        steps: progressSteps.map(function (step, index) {
+          return { key: step.key, label: step.label,
+            state: cancelled ? (index === at ? 'current' : 'upcoming')
+              : index < at ? 'done' : index === at ? 'current' : 'upcoming' };
+        })
+      };
+    },
+
     /* Payments (admin only; the RPC advances the project's stage) ----------- */
     setPaymentStatus: function (identifier, status, method, reference) {
       var record = state.payments.find(function (p) { return p.id === identifier; });
