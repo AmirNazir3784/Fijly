@@ -27,6 +27,31 @@
   var TABLE_LIMIT = 1000; // PostgREST's default page size; ample for one studio.
   var SCRIPT_FEEDBACK = 'Script revision requested'; // activity action carrying a client's script feedback
   var platforms = ['Website', 'YouTube', 'LinkedIn', 'Instagram', 'Paid ads'];
+  // requests.stage: the milestone workflow the client and the studio both see.
+  // The payment steps are driven by admin_set_payment_status and review_storyboard,
+  // so an admin may only set the stages in adminStages by hand.
+  var stages = ['Awaiting Payment', 'Project Submitted', 'Requirements Under Review', 'Information Requested',
+    'Storyboard In Progress', 'Storyboard Ready', 'Storyboard Changes Requested', 'Storyboard Approved',
+    'Video In Production', 'Video Ready for Preview', 'Video Revision Requested', 'Video Approved', 'Completed', 'Cancelled'];
+  // Stages an admin can move a project to directly (the rest follow a payment
+  // or a storyboard review, which the database advances for us).
+  var adminStages = ['Project Submitted', 'Requirements Under Review', 'Information Requested', 'Storyboard In Progress',
+    'Storyboard Ready', 'Video Ready for Preview', 'Video Approved', 'Cancelled'];
+  var stageTones = { 'Awaiting Payment': 'badge-warning', 'Project Submitted': 'badge-info', 'Requirements Under Review': 'badge-info',
+    'Information Requested': 'badge-warning', 'Storyboard In Progress': 'badge-warning', 'Storyboard Ready': 'badge-info',
+    'Storyboard Changes Requested': 'badge-warning', 'Storyboard Approved': 'badge-success', 'Video In Production': 'badge-warning',
+    'Video Ready for Preview': 'badge-info', 'Video Revision Requested': 'badge-warning', 'Video Approved': 'badge-success',
+    Completed: 'badge-success', Cancelled: 'badge-danger' };
+  // The three milestone payments every project is created with.
+  var milestones = ['start', 'storyboard', 'final'];
+  var milestoneLabels = { start: 'Project start', storyboard: 'Storyboard approval', final: 'Final delivery' };
+  var milestonePercents = { start: 15, storyboard: 45, final: 40 };
+  var paymentStatuses = ['due', 'paid', 'waived', 'refunded'];
+  var paymentLabels = { due: 'Due', paid: 'Paid', waived: 'Waived', refunded: 'Refunded' };
+  var paymentTones = { due: 'badge-warning', paid: 'badge-success', waived: 'badge-info', refunded: 'badge-danger' };
+  // Which milestone a project owes right now, from its stage. Everything else
+  // means nothing is payable yet.
+  var dueMilestoneForStage = { 'Awaiting Payment': 'start', 'Storyboard Approved': 'storyboard', 'Video Approved': 'final' };
 
   /* Formatting (same output as the mock) --------------------------------- */
   function toDate(value) {
@@ -48,6 +73,13 @@
     var size = value / 1024, unit = 'KB';
     if (size >= 1024) { size /= 1024; unit = 'MB'; }
     return (size >= 10 ? Math.round(size) : Math.max(0.1, size).toFixed(1)) + ' ' + unit;
+  }
+  // Postgres numeric columns arrive as strings; null stays null.
+  function amount(value) { var number = Number(value); return value === null || value === undefined || value === '' || !Number.isFinite(number) ? null : number; }
+  function formatMoney(value, fallback) {
+    var number = amount(value);
+    if (number === null) return fallback === undefined ? 'Not set' : fallback;
+    return '$' + number.toLocaleString('en-US', { minimumFractionDigits: number % 1 ? 2 : 0, maximumFractionDigits: 2 });
   }
   var stamp = function () { return new Date().toISOString(); };
 
@@ -80,7 +112,9 @@
   var BUCKET = 'client-assets', MAX_FILE_SIZE = 50 * 1024 * 1024, SIGNED_URL_SECONDS = 3600;
   // Allowed extensions and the MIME type each is stored as (the bucket's list).
   var fileTypes = { png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', gif: 'image/gif', svg: 'image/svg+xml', webp: 'image/webp', pdf: 'application/pdf',
-    mp4: 'video/mp4', webm: 'video/webm', mov: 'video/quicktime', woff2: 'font/woff2', woff: 'font/woff', ttf: 'font/ttf', otf: 'font/otf', zip: 'application/zip' };
+    mp4: 'video/mp4', webm: 'video/webm', mov: 'video/quicktime', woff2: 'font/woff2', woff: 'font/woff', ttf: 'font/ttf', otf: 'font/otf', zip: 'application/zip',
+    mp3: 'audio/mpeg', wav: 'audio/wav', m4a: 'audio/mp4', doc: 'application/msword',
+    docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', txt: 'text/plain' };
   var imageTypes = ['png', 'jpg', 'jpeg', 'gif', 'svg', 'webp'];
   function extensionOf(name) { var match = /\.([a-z0-9]+)$/i.exec(String(name || '')); return match ? match[1].toLowerCase() : ''; }
   // Returns the problem with a picked file as a sentence, or '' when it can be uploaded.
@@ -244,6 +278,31 @@
       return rows[0];
     },
 
+    // --- Payments and pricing (milestone workflow) ---
+    // Clients may read their own payments; only an admin may change one, and
+    // only through admin_set_payment_status (which also advances the stage).
+    getPayments() { return admin.all('payments'); },
+    async setPaymentStatus(id, status, method, reference) {
+      if (!paymentStatuses.includes(status)) fail('Choose a valid payment status.');
+      var result = await db().rpc('admin_set_payment_status', { p_payment_id: id, p_status: status,
+        p_method: status === 'paid' ? String(method || '').trim().slice(0, 50) || 'PayPal' : null,
+        p_reference: status === 'paid' ? String(reference || '').trim().slice(0, 200) || null : null });
+      if (result.error) throw friendly(result.error);
+      return result.data;
+    },
+    // Readable by anyone; the wizard reads the same rows to show its breakdown.
+    async getPricing() { return data(await db().from('pricing').select('*').order('duration_seconds', { ascending: true }).limit(TABLE_LIMIT)); },
+    async updatePricing(item, seconds, value) {
+      return data(await db().from('pricing').update({ amount: value, updated_at: stamp() }).eq('item', item).eq('duration_seconds', seconds).select());
+    },
+    // The admin moves a project through the stages that no payment or
+    // storyboard review drives.
+    async setStage(id, stage) {
+      var rows = data(await db().from('requests').update({ stage: stage }).eq('id', id).select());
+      if (!rows.length) fail('This project is no longer available. Refresh the list and try again.');
+      return rows[0];
+    },
+
     // --- Activity ---
     async getActivity() {
       return data(await db().from('activity_log').select('*').order('created_at', { ascending: false }).limit(TABLE_LIMIT));
@@ -277,7 +336,8 @@
         activeClients: rows[0].filter(function (c) { return c.status === 'Active'; }).length,
         inProduction: rows[1].filter(function (v) { return v.status === 'In Production'; }).length,
         awaitingReview: rows[1].filter(function (v) { return v.status === 'Client Review'; }).length,
-        pendingRequests: rows[2].filter(function (r) { return ['Submitted', 'Under Review'].includes(r.status) && !videoRequests.has(r.id); }).length
+        pendingRequests: rows[2].filter(function (r) { return ['Submitted', 'Under Review'].includes(r.status) && r.stage !== 'Awaiting Payment' && !videoRequests.has(r.id); }).length,
+        awaitingDeposit: rows[2].filter(function (r) { return r.stage === 'Awaiting Payment'; }).length
       };
     }
   };
@@ -285,7 +345,7 @@
   /* ======================================================================
      State in the mock's shapes
      ====================================================================== */
-  var state = { clients: [], requests: [], videos: [], revisions: [], assets: [], scripts: [], activity: [], settings: {}, clientSettings: {} };
+  var state = { clients: [], requests: [], videos: [], revisions: [], assets: [], scripts: [], payments: [], pricing: {}, activity: [], settings: {}, clientSettings: {} };
   var profile = null, loaded = false;
   Object.defineProperty(state, 'projects', { configurable: true, get: function () {
     return state.videos.map(function (video) { var request = requestFor(video); return { id: video.id, client: request.client, title: request.title, format: request.videoType, status: video.status, due: request.deadline }; });
@@ -302,7 +362,14 @@
       var video = videoByRequest.get(r.id);
       return { id: r.id, client: r.client_id, title: r.title || '', platform: r.platform || '', videoType: r.video_type || '', instructions: r.brief || '', references: r.reference_urls || [],
         attachments: (r.attachment_names || []).map(function (name) { return { name: name, size: null, type: '' }; }),
-        requestedAt: r.created_at || '', deadline: r.deadline || '', priority: r.priority || 'Normal', assignedEditor: (video && video.assigned_editor) || '', length: r.length || '', status: r.status };
+        requestedAt: r.created_at || '', deadline: r.deadline || '', priority: r.priority || 'Normal', assignedEditor: (video && video.assigned_editor) || '', length: r.length || '', status: r.status,
+        // The milestone workflow and the project details the wizard collects.
+        stage: stages.includes(r.stage) ? r.stage : 'Project Submitted',
+        durationSeconds: r.duration_seconds || null, website: r.website || '', purpose: r.purpose || '', targetAudience: r.target_audience || '',
+        videoStyle: r.video_style || '', brandColors: r.brand_colors || '',
+        hasScript: !!r.has_script, hasVoiceOver: !!r.has_voice_over,
+        scriptFilePath: r.script_file_path || '', voiceOverFilePath: r.voice_over_file_path || '',
+        prices: { base: amount(r.base_price), script: amount(r.script_price), voiceOver: amount(r.voice_over_price), total: amount(r.total_price) } };
     });
     var versionsByVideo = new Map(), versionById = new Map();
     rows.versions.forEach(function (v) {
@@ -363,6 +430,24 @@
       return { id: s.id, client: s.client_id, videoId: s.video_id, title: s.title || '', status: status, version: 1 + feedback.length - (status === 'Revision Requested' && feedback.length ? 1 : 0), createdAt: s.created_at || '', updatedAt: s.updated_at || s.created_at || '',
         scenes: (scenesByScript.get(s.id) || []).sort(function (a, b) { return a.order - b.order; }), feedback: feedback };
     });
+    // Payments: the three milestones per project, with the project and client
+    // they belong to, so every screen can label a row without another query.
+    var requestById = new Map(requests.map(function (r) { return [r.id, r]; }));
+    var payments = (rows.payments || []).map(function (p) {
+      var request = requestById.get(p.request_id);
+      return { id: p.id, requestId: p.request_id, client: p.client_id, project: request ? request.title : 'Project not available',
+        stage: request ? request.stage : '', milestone: p.milestone, percent: Number(p.percent) || milestonePercents[p.milestone] || 0,
+        amount: amount(p.amount), status: paymentStatuses.includes(p.status) ? p.status : 'due',
+        method: p.method || '', reference: p.reference || '', paidAt: p.paid_at || null, createdAt: p.created_at || '',
+        // True when this is the milestone the project owes at its current stage.
+        required: !!request && dueMilestoneForStage[request.stage] === p.milestone };
+    }).sort(function (a, b) { return a.project.localeCompare(b.project) || milestones.indexOf(a.milestone) - milestones.indexOf(b.milestone); });
+    // The price list, as { base: { 30: 300, … }, script: {…}, voice_over: {…} }.
+    var pricing = {};
+    (rows.pricing || []).forEach(function (row) {
+      if (!pricing[row.item]) pricing[row.item] = {};
+      pricing[row.item][row.duration_seconds] = amount(row.amount);
+    });
     var clientSettings = {};
     (rows.clientSettings || []).forEach(function (cs) { clientSettings[cs.client_id] = { defaultLength: lengths.includes(cs.default_length) ? cs.default_length : '', platform: cs.default_platform || '' }; });
     var me = profiles.get(profile && profile.id) || profile || {};
@@ -373,14 +458,17 @@
       notifyNewRequest: !!st.notify_new_request, notifyRevision: !!st.notify_revision, notifyApproval: !!st.notify_approval, notifyWeeklyDigest: false,
       defaultPriority: priorities.includes(st.default_priority) ? st.default_priority : 'Normal',
       defaultLeadDays: Number.isInteger(st.default_lead_days) ? st.default_lead_days : 10,
-      defaultLength: lengths.includes(st.default_length) ? st.default_length : '60–90 sec'
+      defaultLength: lengths.includes(st.default_length) ? st.default_length : '60–90 sec',
+      // Included revision rounds; review_storyboard enforces the storyboard one.
+      storyboardRevisions: Number.isInteger(st.storyboard_revisions_included) ? st.storyboard_revisions_included : 2,
+      videoRevisions: Number.isInteger(st.video_revisions_included) ? st.video_revisions_included : 2
     };
-    return { clients: clients, requests: requests, videos: videos, revisions: revisions, assets: assets, scripts: scripts, settings: settings, clientSettings: clientSettings, me: me, settingsRow: st };
+    return { clients: clients, requests: requests, videos: videos, revisions: revisions, assets: assets, scripts: scripts, payments: payments, pricing: pricing, settings: settings, clientSettings: clientSettings, me: me, settingsRow: st };
   }
 
   var listeners = [], loading = null, settingsRow = null, lastLoaded = 0, me = {};
   function notify(changed) {
-    var keys = changed || ['clients', 'requests', 'videos', 'revisions', 'assets', 'scripts', 'settings', 'clientSettings'];
+    var keys = changed || ['clients', 'requests', 'videos', 'revisions', 'assets', 'scripts', 'payments', 'pricing', 'settings', 'clientSettings'];
     listeners.forEach(function (listener) {
       try { listener(keys); } catch (error) { console.error('Render failed after a data update', error); }
     });
@@ -394,10 +482,10 @@
       if (!profile) fail('Your session has ended. Sign in again.');
       // RLS returns only what this account may see: everything for an admin,
       // the client's own workspace for a client. Studio settings are admin-only.
-      var results = await Promise.all([admin.getClients(), admin.getRequests(), admin.getVideos(), admin.getVersions(), admin.getFeedback(), admin.getRevisions(), admin.getAssets(), admin.getScripts(), admin.getScriptScenes(), admin.getActivity(), admin.getProfiles(), profile.role === 'admin' ? admin.getSettings() : null, admin.all('client_settings')]);
-      var next = mapState({ clients: results[0], requests: results[1], videos: results[2], versions: results[3], feedback: results[4], revisions: results[5], assets: results[6], scripts: results[7], scenes: results[8], activity: results[9], profiles: results[10], settings: results[11], clientSettings: results[12] });
+      var results = await Promise.all([admin.getClients(), admin.getRequests(), admin.getVideos(), admin.getVersions(), admin.getFeedback(), admin.getRevisions(), admin.getAssets(), admin.getScripts(), admin.getScriptScenes(), admin.getActivity(), admin.getProfiles(), profile.role === 'admin' ? admin.getSettings() : null, admin.all('client_settings'), admin.getPayments(), admin.getPricing()]);
+      var next = mapState({ clients: results[0], requests: results[1], videos: results[2], versions: results[3], feedback: results[4], revisions: results[5], assets: results[6], scripts: results[7], scenes: results[8], activity: results[9], profiles: results[10], settings: results[11], clientSettings: results[12], payments: results[13], pricing: results[14] });
       settingsRow = next.settingsRow; me = next.me;
-      ['clients', 'requests', 'videos', 'revisions', 'assets', 'scripts', 'settings', 'clientSettings'].forEach(function (key) { state[key] = next[key]; });
+      ['clients', 'requests', 'videos', 'revisions', 'assets', 'scripts', 'payments', 'pricing', 'settings', 'clientSettings'].forEach(function (key) { state[key] = next[key]; });
       loaded = true; lastLoaded = Date.now();
       notify();
     })();
@@ -440,7 +528,12 @@
   function rounds(video) { return state.revisions.filter(function (item) { return item.videoId === video.id; }); }
   function activeRevision(video) { return rounds(video).find(function (item) { return item.status !== 'Resolved'; }); }
   function pendingRequests(clientId) {
-    return state.requests.filter(function (r) { return ['Submitted', 'Under Review'].includes(r.status) && (!clientId || r.client === clientId) && !state.videos.some(function (v) { return v.requestId === r.id; }); });
+    // A project whose deposit has not been paid is not in the queue yet; it
+    // shows under "Awaiting deposit" instead.
+    return state.requests.filter(function (r) { return ['Submitted', 'Under Review'].includes(r.status) && r.stage !== 'Awaiting Payment' && (!clientId || r.client === clientId) && !state.videos.some(function (v) { return v.requestId === r.id; }); });
+  }
+  function awaitingDeposit(clientId) {
+    return state.requests.filter(function (r) { return r.stage === 'Awaiting Payment' && (!clientId || r.client === clientId); });
   }
   function videoTransitions(video) {
     var revision = activeRevision(video);
@@ -520,6 +613,11 @@
     if (!id) return [];
     return state[collection].filter(function (record) { try { return ownerOf(collection, record) === id; } catch (_) { return false; } });
   }
+  function workspacePayments() {
+    var id = clientId();
+    if (!id) return [];
+    return state.payments.filter(function (p) { return p.client === id; });
+  }
   function requireWorkspace() {
     var workspace = client.current();
     if (!workspace) fail('No client workspace is linked to this account. Contact the FIJLY team.');
@@ -570,16 +668,24 @@
     },
     getSettings: async function () { await ready(); return { workspace: requireWorkspace(), settings: client.preferences() }; },
 
+    /* Payments: read-only for a client (RLS allows SELECT only). */
+    getPayments: async function () { await ready(); return workspacePayments(); },
+    paymentsFor: function (requestId) {
+      return workspacePayments().filter(function (p) { return p.requestId === requestId; })
+        .sort(function (a, b) { return milestones.indexOf(a.milestone) - milestones.indexOf(b.milestone); });
+    },
+    // Every milestone this workspace owes right now (due and required by the
+    // project's stage), so the Overview can show one banner per project.
+    duePayments: function () {
+      return workspacePayments().filter(function (p) { return p.status === 'due' && p.required; });
+    },
+
     /* Writes. Each validates first, then persists, reloads and notifies. */
-    createRequest: function (input, attachments) {
-      var workspace = requireWorkspace(), values = normalize(input);
-      var names = (attachments || []).map(function (file) { return String((file && file.name) || '').trim(); }).filter(Boolean);
-      return mutate(async function () {
-        var me = await admin.me();
-        var row = data(await db().from('requests').insert({ client_id: workspace.id, submitted_by: me.id, title: values.title, platform: values.platform, video_type: values.videoType, brief: values.instructions, deadline: values.deadline, priority: values.priority, reference_urls: values.references, length: values.length, attachment_names: names, status: 'Submitted' }).select().single());
-        await admin.logActivity(workspace.id, null, 'Request submitted', values.title);
-        return function () { return get('requests', row.id); };
-      });
+    // Clients can no longer insert into requests: every project is created by
+    // the wizard on order.html, which calls submit_project() so the price and
+    // the milestone payments are set by the database.
+    createRequest: function () {
+      return Promise.reject(friendly(new Error('Projects now start on the order page, where we price them and set up your payment schedule. Open "Start a new project" to begin.')));
     },
     approve: function (identifier) {
       var video = owned('videos', identifier);
@@ -657,9 +763,80 @@
     // hides these controls rather than accepting edits it cannot save.
     capabilities: { clientIndustry: false, studioLocation: false, weeklyDigest: false, adminRole: false, adminPhone: false, adminEmailEditable: false, scriptVersion: true, scriptFeedback: true, requestEditorBeforeProduction: false, attachmentSizes: false },
     videoStatuses: videoStatuses, revisionStatuses: revisionStatuses, requestStatuses: requestStatuses, scriptStatuses: scriptStatuses, assetCategories: assetCategories,
-    formatDate: formatDate, formatDateTime: formatDateTime, formatBytes: formatBytes,
+    stages: stages, adminStages: adminStages, milestones: milestones, milestoneLabels: milestoneLabels, milestonePercents: milestonePercents,
+    paymentStatuses: paymentStatuses, paymentLabels: paymentLabels,
+    formatDate: formatDate, formatDateTime: formatDateTime, formatBytes: formatBytes, formatMoney: formatMoney,
     statusClass: function (status) { return 'badge ' + (statusTones[status] || ''); },
-    adminActions: adminActions, pendingRequests: pendingRequests,
+    stageClass: function (stage) { return 'badge ' + (stageTones[stage] || ''); },
+    paymentClass: function (status) { return 'badge ' + (paymentTones[status] || ''); },
+    paymentLabel: function (status) { return paymentLabels[status] || 'Due'; },
+    milestoneLabel: function (milestone) { return milestoneLabels[milestone] || milestone; },
+    // The milestone a project owes at its current stage, or null.
+    dueMilestone: function (stage) { return dueMilestoneForStage[stage] || null; },
+    // Every payment row for one project, in milestone order.
+    paymentsFor: function (requestId) {
+      return state.payments.filter(function (p) { return p.requestId === requestId; })
+        .sort(function (a, b) { return milestones.indexOf(a.milestone) - milestones.indexOf(b.milestone); });
+    },
+    // Payments that are due AND required by their project's stage: what the
+    // studio should be invoicing right now.
+    duePayments: function () { return state.payments.filter(function (p) { return p.status === 'due' && p.required; }); },
+    // The price list, for the Admin pricing grid and any breakdown on screen.
+    priceFor: function (item, seconds) {
+      var row = state.pricing[item];
+      return row && row[seconds] !== undefined ? row[seconds] : null;
+    },
+    /* Payments (admin only; the RPC advances the project's stage) ----------- */
+    setPaymentStatus: function (identifier, status, method, reference) {
+      var record = state.payments.find(function (p) { return p.id === identifier; });
+      if (!record) fail('This payment is no longer available. Refresh the list and try again.');
+      if (!paymentStatuses.includes(status)) fail('Choose a valid payment status.');
+      if (record.status === status) return Promise.resolve(record);
+      return mutate(async function () {
+        await admin.setPaymentStatus(identifier, status, method, reference);
+        return function () { return state.payments.find(function (p) { return p.id === identifier; }) || record; };
+      });
+    },
+    /* Pricing (admin only) -------------------------------------------------- */
+    // `values` is { base: { 30: 300, … }, script: {…}, voice_over: {…} }. Only
+    // changed cells are written. Nothing here prices a project: submit_project
+    // reads these rows server-side.
+    savePricing: function (values) {
+      var changes = [];
+      Object.keys(values || {}).forEach(function (item) {
+        if (!['base', 'script', 'voice_over'].includes(item)) fail('Unknown price list item.');
+        Object.keys(values[item]).forEach(function (seconds) {
+          if (![30, 60, 90, 120].includes(Number(seconds))) fail('Prices are set for 30, 60, 90 and 120 second videos.');
+          var next = Number(values[item][seconds]);
+          if (!Number.isFinite(next) || next < 0) fail('Every price must be zero or more.');
+          if (next > 1000000) fail('That price is higher than this screen supports.');
+          var current = FijlyData.priceFor(item, Number(seconds));
+          if (current !== next) changes.push([item, Number(seconds), next]);
+        });
+      });
+      if (!changes.length) return Promise.resolve(state.pricing);
+      return mutate(async function () {
+        for (var i = 0; i < changes.length; i += 1) await admin.updatePricing(changes[i][0], changes[i][1], changes[i][2]);
+        return function () { return state.pricing; };
+      });
+    },
+    /* Project stage (admin only) ------------------------------------------- */
+    // Only the stages a payment or a storyboard review doesn't drive.
+    setProjectStage: function (identifier, stage) {
+      var request = get('requests', identifier);
+      if (!adminStages.includes(stage)) fail('That stage is set by a payment or a storyboard review, not by hand.');
+      if (request.stage === stage) return Promise.resolve(request);
+      if (request.stage === 'Awaiting Payment') fail('This project is waiting for its deposit. Mark the project-start payment paid to begin.');
+      return mutate(async function () {
+        await admin.setStage(identifier, stage);
+        await admin.logActivity(request.client, null, 'Stage changed to ' + stage, request.title);
+        return function () { return get('requests', identifier); };
+      });
+    },
+    // A signed URL (valid for one hour) for a script or voice over the client
+    // uploaded with their project.
+    projectFileUrl: function (path) { return storage.getAssetUrl(path); },
+    adminActions: adminActions, pendingRequests: pendingRequests, awaitingDeposit: awaitingDeposit,
     subscribe: function (listener) { listeners.push(listener); return function () { listeners = listeners.filter(function (entry) { return entry !== listener; }); }; },
     get: get, requestFor: requestFor, latest: latest, rounds: rounds, activeRevision: activeRevision, videoTransitions: videoTransitions, revisionTransitions: revisionTransitions,
     completedAt: function (video) { return video.completedAt || null; },
@@ -858,6 +1035,13 @@
       if (!priorities.includes(next.defaultPriority)) fail('Choose a valid default priority.');
       var lead = Number(next.defaultLeadDays);
       if (!Number.isInteger(lead) || lead < 1 || lead > 90) fail('Default turnaround must be a whole number between 1 and 90 days.');
+      // Included revision rounds. review_storyboard() reads the storyboard one,
+      // so it has to stay a sensible whole number.
+      var limits = { storyboardRevisions: 'storyboard_revisions_included', videoRevisions: 'video_revisions_included' };
+      Object.keys(limits).forEach(function (key) {
+        next[key] = Number(next[key]);
+        if (!Number.isInteger(next[key]) || next[key] < 0 || next[key] > 20) fail('Included revisions must be a whole number between 0 and 20.');
+      });
       var current = state.settings, profilePatch = {}, settingsPatch = {};
       if (next.adminName !== current.adminName) profilePatch.full_name = next.adminName;
       if ((next.adminPhoto || '') !== (current.adminPhoto || '')) profilePatch.avatar_url = next.adminPhoto || null;
@@ -865,6 +1049,7 @@
         if (next[pair[0]] !== current[pair[0]]) settingsPatch[pair[1]] = typeof next[pair[0]] === 'string' ? next[pair[0]] || null : next[pair[0]];
       });
       if (lead !== current.defaultLeadDays) settingsPatch.default_lead_days = lead;
+      Object.keys(limits).forEach(function (key) { if (next[key] !== current[key]) settingsPatch[limits[key]] = next[key]; });
       if (!Object.keys(profilePatch).length && !Object.keys(settingsPatch).length) return Promise.resolve(current);
       return mutate(async function () {
         if (Object.keys(profilePatch).length) { var me = await admin.me(); await admin.updateProfile(me.id, profilePatch); }

@@ -777,6 +777,8 @@
   // another tab cannot overwrite what is being typed here.
   var settingsDirty = false;
   var TOGGLE_KEYS = ['notifyNewRequest', 'notifyRevision', 'notifyApproval', 'notifyWeeklyDigest'];
+  // Whole-number settings, including the included revision rounds.
+  var NUMBER_KEYS = ['defaultLeadDays', 'storyboardRevisions', 'videoRevisions'];
 
   // The sidebar shows the saved Admin profile, so it matches Settings.
   function renderIdentity() {
@@ -790,7 +792,10 @@
     TEXT_KEYS.forEach(function (key) {
       if (settingsForm.elements[key]) settingsForm.elements[key].value = values[key] || '';
     });
-    settingsForm.elements.defaultLeadDays.value = values.defaultLeadDays || 10;
+    NUMBER_KEYS.forEach(function (key) {
+      var input = settingsForm.elements[key];
+      if (input) input.value = values[key] === undefined || values[key] === null ? '' : String(values[key]);
+    });
     TOGGLE_KEYS.forEach(function (key) {
       var input = settingsForm.elements[key];
       if (!input) return;
@@ -821,7 +826,9 @@
     TEXT_KEYS.forEach(function (key) {
       if (settingsForm.elements[key]) values[key] = settingsForm.elements[key].value.trim();
     });
-    values.defaultLeadDays = settingsForm.elements.defaultLeadDays.value;
+    NUMBER_KEYS.forEach(function (key) {
+      if (settingsForm.elements[key]) values[key] = settingsForm.elements[key].value;
+    });
     TOGGLE_KEYS.forEach(function (key) {
       if (settingsForm.elements[key]) values[key] = settingsForm.elements[key].checked;
     });

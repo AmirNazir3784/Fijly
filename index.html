@@ -336,29 +336,33 @@
     <!-- RESULTS -->
     <section class="results" aria-labelledby="results-title" aria-describedby="results-note">
       <div class="container">
+        <header class="results__head">
+          <p class="results__eyebrow">THE IMPACT, AT A GLANCE</p>
+          <h2 id="results-title">The impact <span>great video</span> can create.</h2>
+          <p class="results__note" id="results-note">Illustrative results · Sample data</p>
+        </header>
         <div class="results__panel">
-          <header class="results__head">
-            <p class="results__eyebrow">THE IMPACT, AT A GLANCE</p>
-            <h2 id="results-title">The impact great video can create.</h2>
-            <p class="results__note" id="results-note">Illustrative results · Sample data</p>
-          </header>
           <div class="results__grid">
             <div class="result">
+              <span class="result__icon"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
               <p class="result__value">3.2<span class="result__unit">d</span></p>
               <h3 class="result__label">Avg. turnaround</h3>
               <p class="result__detail">Keep your next launch moving.</p>
             </div>
             <div class="result">
+              <span class="result__icon"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4v16h16M7 14l5-5 4 3 5-7M16 5h5v5"/></svg></span>
               <p class="result__value">+38<span class="result__unit">%</span></p>
               <h3 class="result__label">Avg. conversion lift</h3>
               <p class="result__detail">Turn attention into action.</p>
             </div>
             <div class="result">
+              <span class="result__icon"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="m10 9 5 3-5 3V9Z"/></svg></span>
               <p class="result__value">240<span class="result__unit">+</span></p>
               <h3 class="result__label">Videos shipped</h3>
               <p class="result__detail">Product stories brought to life.</p>
             </div>
             <div class="result">
+              <span class="result__icon"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 2.8 5.7 6.3.9-4.5 4.4 1 6.3-5.6-3-5.6 3 1-6.3L1.9 9.6l6.3-.9L12 3Z"/></svg></span>
               <p class="result__value">4.9<span class="result__unit">★</span></p>
               <h3 class="result__label">Client rating</h3>
               <p class="result__detail">A smooth process, start to finish.</p>
@@ -374,7 +378,7 @@
         <p class="sample-label">SAMPLE CLIENT STORY</p>
         <svg class="testimonial__mark" width="40" height="40" viewBox="0 0 24 24" fill="#5B4BF5" aria-hidden="true"><path d="M10 7L7 12h3v5H4v-5l3-5zM20 7l-3 5h3v5h-6v-5l3-5z"/></svg>
         <blockquote class="testimonial__quote">
-          <p>"Our homepage video from Fijly lifted trial signups 38% in the first month. It finally explains what took us three paragraphs to say."</p>
+          <p>"Our homepage video from Fijly <span>lifted trial signups 38%</span> in the first month. It finally explains what took us three paragraphs to say."</p>
         </blockquote>
         <figcaption class="testimonial__author">
           <span class="testimonial__avatar" aria-hidden="true">A</span>
@@ -423,19 +427,8 @@
           </article>
         </div>
 
-        <div class="pricing__includes">
-          <h3 class="pricing__includes-title">Every video includes</h3>
-          <ul class="pricing__features">
-            <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>Professional scriptwriting</li>
-            <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>Custom motion design</li>
-            <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>Two revision rounds included</li>
-            <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>All source files delivered</li>
-            <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>3.2 day average turnaround</li>
-          </ul>
-        </div>
+        <p class="pricing__note">Prices shown are for the video. Script writing and voice over are optional add-ons. Pay in three parts: 15% to start, 45% at storyboard approval, 40% on final delivery.</p>
 
-        <p class="pricing__formats">All six video formats at the same price — Product Launch, Homepage, Demo, Promo, Explainer, Tutorial.</p>
-        <p class="pricing__custom">Need something custom? <a href="mailto:hello@fijly.com">Talk to us</a></p>
       </div>
     </section>
 
@@ -466,15 +459,35 @@
     <section class="contact" id="contact" aria-labelledby="contact-title">
       <div class="container contact__grid">
         <div class="contact__intro">
+          <div class="contact__brand" aria-label="FIJLY Studio">
+            <span class="contact__brand-mark"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg></span>
+            <span>FIJLY <span class="contact__brand-studio">Studio</span></span>
+          </div>
           <span class="eyebrow">GET STARTED</span>
-          <h2 id="contact-title">Create your FIJLY Studio account</h2>
-          <p>Sign up to start your first video project. Pick your format and length on the next screen.</p>
-          <div class="contact__next"><span class="contact__step">01</span><div><h3>Start with your product and goal</h3><p>Next, choose your video type and length and share a short brief. We take it from script to final delivery.</p></div></div>
-          <a class="contact__email" href="mailto:hello@fijly.com">hello@fijly.com <span aria-hidden="true">↗</span></a>
+          <h2 id="contact-title">Turn your ideas into <span>stunning videos.</span></h2>
+          <p>Create your FIJLY Studio account and bring your ideas to life. We take your video from the first brief to final delivery.</p>
+          <ol class="contact__features" aria-label="Your next steps">
+            <li>
+              <span class="contact__feature-icon"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="4" width="14" height="17" rx="3"/><path d="M9 4V3h6v1M9 9h6M9 13h6M9 17h3"/></svg></span>
+              <div><h3>Start with your product and goal</h3><p>A short brief. A clear direction.</p></div>
+            </li>
+            <li>
+              <span class="contact__feature-icon"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="m10 9 5 3-5 3V9Z"/></svg></span>
+              <div><h3>Choose your video type and length</h3><p>The right format for your next big idea.</p></div>
+            </li>
+            <li>
+              <span class="contact__feature-icon"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 2.4 6.6L21 12l-6.6 2.4L12 21l-2.4-6.6L3 12l6.6-2.4L12 3Z"/></svg></span>
+              <div><h3>Get a polished video, fast</h3><p>From script to a final cut, taken care of.</p></div>
+            </li>
+          </ol>
+          <div class="contact__support">
+            <p>Need help? Contact us</p>
+            <a class="contact__email" href="mailto:hello@fijly.com">hello@fijly.com <span aria-hidden="true">↗</span></a>
+          </div>
         </div>
         <div class="contact-form signup" aria-labelledby="form-title">
           <h3 id="form-title">Create your account</h3>
-          <p class="contact-form__help">Set up your FIJLY Studio login to get started.</p>
+          <p class="contact-form__help">Set up your FIJLY Studio account to get started.</p>
           <button class="btn-google" type="button" id="google-signin" aria-describedby="google-signin-note"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.27-4.74 3.27-8.1z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84A11 11 0 0 0 12 23z"/><path fill="#FBBC05" d="M5.84 14.1A6.6 6.6 0 0 1 5.5 12c0-.73.13-1.44.34-2.1V7.06H2.18A11 11 0 0 0 1 12c0 1.78.43 3.45 1.18 4.94l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1A11 11 0 0 0 2.18 7.06l3.66 2.84C6.71 7.31 9.14 5.38 12 5.38z"/></svg><span>Continue with Google</span></button>
           <p class="signup__note" id="google-signin-note" hidden></p>
           <div class="auth-divider"><span>or</span></div>
@@ -494,9 +507,6 @@
             <div class="visually-hidden" aria-hidden="true"><label for="fijly-hp">Website</label><input type="text" name="website" id="fijly-hp" tabindex="-1" autocomplete="off"></div>
             <button class="btn btn-primary btn--block" type="submit" id="signup-submit" disabled>Create account &amp; choose your video <span aria-hidden="true">→</span></button>
             <div class="contact-form__status" id="signup-status" role="status" tabindex="-1" hidden></div>
-            <p class="signup__footer">Already have an account? <a href="login.html?next=order.html">Sign in</a></p>
-            <p class="contact-form__privacy">By creating an account you agree to our <a href="terms.html">Terms</a> and <a href="privacy.html">Privacy Notice</a>.</p>
-            <p class="signup__question">Just have a question? <a href="mailto:hello@fijly.com">Email us directly</a></p>
             <noscript><p>Creating an account requires JavaScript. You can also email <a href="mailto:hello@fijly.com">hello@fijly.com</a>.</p></noscript>
           </form>
         </div>
@@ -514,7 +524,6 @@
           <span class="logo__word">FIJLY</span>
         </a>
         <p class="footer__about">Video production for SaaS. We make software easier to understand, trust, and buy.</p>
-        <a class="footer__email" href="mailto:hello@fijly.com">hello@fijly.com ↗</a>
       </div>
       <nav aria-labelledby="footer-services">
         <h2 class="footer__heading" id="footer-services">SERVICES</h2>

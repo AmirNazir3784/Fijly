@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Start Your Video — FIJLY Studio</title>
-  <meta name="description" content="Order a SaaS video from FIJLY Studio: choose your format and length, share your brief, and get one transparent price.">
+  <title>Start Your Project — FIJLY Studio</title>
+  <meta name="description" content="Start a SaaS video project with FIJLY Studio: your brief, your length, an optional script and voice over, and three milestone payments.">
   <meta name="theme-color" content="#0C0E13">
   <link rel="canonical" href="https://fijly.com/order.html">
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
@@ -104,7 +104,7 @@
     /* Progress: Step 1 / 2 / 3 */
     .order__progress {
       display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
+      grid-template-columns: repeat(4, minmax(0, 1fr));
       gap: var(--space-sm);
       margin-top: var(--space-lg);
     }
@@ -289,6 +289,80 @@
     .order__button[aria-busy="true"] .order__spinner { display: block; }
     @keyframes order-spin { to { transform: rotate(360deg); } }
 
+    /* Script / voice over choices: a pair of radio cards each. */
+    .order__choices { min-width: 0; margin: 0; padding: 0; border: 0; }
+    .order__choices legend { padding: 0; }
+
+    .order__choice-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: var(--space-sm);
+    }
+
+    .order__choice {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      padding: 14px;
+      border: 1px solid var(--border-dark);
+      border-radius: var(--radius-md);
+      background: var(--surface-white);
+      cursor: pointer;
+      transition: border-color .15s ease, box-shadow .15s ease, background-color .15s ease;
+    }
+
+    .order__choice input { position: absolute; opacity: 0; pointer-events: none; }
+    .order__choice:hover { border-color: var(--border-hover); }
+    .order__choice-title { font-size: var(--text-body); font-weight: var(--weight-semibold); color: var(--text-primary); }
+    .order__choice-note { font-size: var(--text-small); line-height: var(--leading-normal); color: var(--text-muted); }
+
+    .order__choice:has(input:checked) {
+      border-color: var(--primary);
+      background: var(--primary-tint);
+      box-shadow: 0 0 0 1px var(--primary);
+    }
+
+    .order__choice:has(input:focus-visible) { outline: 2px solid var(--primary); outline-offset: 2px; }
+
+    /* An upload that only applies to the choice above it. */
+    .order__upload { margin-top: var(--space-md); }
+    .order__upload[hidden] { display: none; }
+
+    .order__file {
+      width: 100%;
+      padding: 11px 13px;
+      border: 1px dashed var(--border-dark);
+      border-radius: var(--radius-md);
+      background: var(--surface-light);
+      font-size: var(--text-meta);
+      color: var(--text-primary);
+    }
+
+    .order__file:hover { border-color: var(--border-hover); }
+    .order__file:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-tint); }
+    .order__file[aria-invalid="true"] { border-color: var(--danger); }
+
+    .order__uploading { display: flex; align-items: center; gap: var(--space-sm); margin-top: 6px; font-size: var(--text-small); color: var(--text-muted); }
+    .order__uploading[hidden] { display: none; }
+    .order__uploading .order__spinner { display: block; border-color: var(--primary-tint); border-top-color: var(--primary); }
+
+    /* Price breakdown, read from public.pricing (display only). */
+    .order__breakdown { margin-top: var(--space-lg); padding: var(--space-lg); border: 1px solid var(--border-default); border-radius: var(--radius-panel); background: var(--surface-light); }
+    .order__breakdown-title { font-size: var(--text-meta); font-weight: var(--weight-semibold); color: var(--text-muted); }
+    .order__lines { display: grid; gap: var(--space-sm); margin-top: var(--space-md); font-size: var(--text-meta); }
+    .order__lines div { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-md); }
+    .order__lines dt { color: var(--text-muted); }
+    .order__lines dd { font-weight: var(--weight-semibold); font-variant-numeric: tabular-nums; }
+    .order__lines dd[data-included="true"] { color: var(--success-dark); }
+
+    /* Payment schedule: 15% / 45% / 40%. */
+    .order__schedule { display: grid; gap: var(--space-sm); margin-top: var(--space-md); font-size: var(--text-meta); }
+    .order__schedule li { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-md); padding-bottom: var(--space-sm); border-bottom: 1px solid var(--border-default); }
+    .order__schedule li:last-child { padding-bottom: 0; border-bottom: 0; }
+    .order__schedule-step { color: var(--text-muted); }
+    .order__schedule-amount { font-weight: var(--weight-semibold); font-variant-numeric: tabular-nums; }
+
     /* Review */
     .order__summary {
       margin-top: var(--space-lg);
@@ -332,10 +406,7 @@
     .order__legal { margin-top: var(--space-md); font-size: var(--text-small); line-height: var(--leading-normal); color: var(--text-light); }
     .order__legal a { color: var(--primary); text-decoration: underline; text-underline-offset: 2px; }
 
-    /* Success */
-    .order__success { margin-top: var(--space-xl); }
-    .order__success[hidden] { display: none; }
-
+    /* Confirmation */
     .order__success-icon {
       display: flex;
       align-items: center;
@@ -349,7 +420,6 @@
 
     .order__success-title { margin-top: var(--space-lg); }
     .order__success-title:focus { outline: none; }
-    .order__success p { margin-top: var(--space-md); font-size: var(--text-body); line-height: var(--leading-relaxed); color: var(--text-muted); }
 
     .order__back {
       display: inline-flex;
@@ -378,8 +448,19 @@
       .order__panel { padding: var(--space-xl) var(--gutter) var(--space-2xl); }
     }
 
+    /* Payment step (manual PayPal invoices for now) */
+    .order__payment { margin-top: var(--space-xl); }
+    .order__payment[hidden] { display: none; }
+    .order__payment-note { margin-top: var(--space-md); font-size: var(--text-body); line-height: var(--leading-relaxed); color: var(--text-muted); }
+    .order__payment-actions { display: grid; gap: var(--space-sm); margin-top: var(--space-lg); }
+
+    @media (max-width: 899px) {
+      .order__progress { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+
     @media (max-width: 559px) {
       .order__duration-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .order__choice-grid { grid-template-columns: minmax(0, 1fr); }
       .order__actions .order__button { width: 100%; }
       .order__summary { padding: var(--space-md); }
       .order__summary-facts div { grid-template-columns: minmax(0, 1fr); gap: 2px; }
@@ -393,7 +474,7 @@
   <noscript><style>.order__card[data-state="checking"] .order__checking { display: none; }</style></noscript>
 </head>
 <body>
-  <a class="skip-link" href="#order-main">Skip to the order form</a>
+  <a class="skip-link" href="#order-main">Skip to the project form</a>
   <div class="order">
     <aside class="order__brand" aria-label="FIJLY Studio">
       <a class="order__logo" href="index.html" aria-label="FIJLY home">
@@ -405,33 +486,52 @@
         <p class="order__tagline">Your video project</p>
         <p class="order__intro">Tell us about your product and the video you need. We’ll take it from script to final delivery.</p>
         <ul class="order__includes" aria-label="Every video includes">
-          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>Professional scriptwriting</li>
+          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>Scriptwriting, or bring your own</li>
           <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>Custom motion design</li>
-          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>Two revision rounds</li>
+          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>Storyboard approval before production</li>
           <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>All source files delivered</li>
         </ul>
       </div>
-      <p class="order__foot">ONE VIDEO · ONE PRICE · NO SUBSCRIPTION</p>
+      <p class="order__foot">15% TO START · 45% AT STORYBOARD · 40% ON DELIVERY</p>
     </aside>
 
     <main class="order__panel" id="order-main" tabindex="-1">
       <div class="order__card" id="order-card" data-state="checking">
-        <h1 class="order__title">Start your video</h1>
+        <h1 class="order__title">Start your project</h1>
         <p class="order__account" id="order-account" hidden>Signed in as <strong id="order-account-email"></strong> · <button type="button" id="order-signout">Sign out</button></p>
         <p class="order__checking" role="status"><span class="order__spinner" aria-hidden="true"></span>Checking your account…</p>
-        <noscript><p class="order__error">JavaScript is required to place an order. You can also email <a href="mailto:hello@fijly.com">hello@fijly.com</a>.</p></noscript>
+        <noscript><p class="order__error">JavaScript is required to start a project. You can also email <a href="mailto:hello@fijly.com">hello@fijly.com</a>.</p></noscript>
 
-        <ol class="order__progress" id="order-progress" aria-label="Order progress">
-          <li data-progress="1" aria-current="step">1. Your video</li>
-          <li data-progress="2">2. Review &amp; submit</li>
+        <ol class="order__progress" id="order-progress" aria-label="Project progress">
+          <li data-progress="1" aria-current="step">1. Project basics</li>
+          <li data-progress="2">2. Creative details</li>
+          <li data-progress="3">3. Script &amp; voice over</li>
+          <li data-progress="4">4. Review</li>
         </ol>
 
         <form id="order-form" novalidate>
-          <!-- Step 1 -->
+          <!-- Step 1: project basics -->
           <section class="order__step" data-step="1" aria-labelledby="step-1-title">
-            <p class="order__step-label">STEP 1 OF 2</p>
-            <h2 class="order__step-title" id="step-1-title" tabindex="-1">Your video</h2>
+            <p class="order__step-label">STEP 1 OF 4</p>
+            <h2 class="order__step-title" id="step-1-title" tabindex="-1">Project basics</h2>
+            <p class="order__step-intro">The essentials, so we can set up your workspace and scope the video.</p>
             <div class="order__fields">
+              <div>
+                <label class="order__label" for="order-title">Project name</label>
+                <input class="order__input" id="order-title" name="title" required maxlength="200" placeholder="e.g. Homepage explainer" aria-describedby="order-title-error">
+                <p class="order__field-error" id="order-title-error"></p>
+              </div>
+              <div>
+                <label class="order__label" for="order-company">Company / brand name</label>
+                <input class="order__input" id="order-company" name="company" autocomplete="organization" required maxlength="200" aria-describedby="order-company-error">
+                <p class="order__field-error" id="order-company-error"></p>
+              </div>
+              <div>
+                <label class="order__label" for="order-website">Website</label>
+                <input class="order__input" id="order-website" name="companyWebsite" type="url" maxlength="300" placeholder="https://example.com" autocomplete="url" aria-describedby="order-website-hint order-website-error">
+                <p class="order__hint" id="order-website-hint">Optional. Start with https:// so we can open it.</p>
+                <p class="order__field-error" id="order-website-error"></p>
+              </div>
               <div>
                 <label class="order__label" for="order-type">Video type</label>
                 <select class="order__input" id="order-type" name="videoType" required aria-describedby="order-type-error">
@@ -446,7 +546,7 @@
                 <p class="order__field-error" id="order-type-error"></p>
               </div>
               <fieldset class="order__durations" aria-describedby="order-duration-error">
-                <legend class="order__label">Duration</legend>
+                <legend class="order__label">Video length</legend>
                 <div class="order__duration-grid">
                   <label class="order__duration"><input type="radio" name="duration" value="30" required><span class="order__duration-length">30 seconds</span></label>
                   <label class="order__duration"><input type="radio" name="duration" value="60"><span class="order__duration-length">60 seconds</span></label>
@@ -456,56 +556,199 @@
                 <p class="order__field-error" id="order-duration-error"></p>
               </fieldset>
               <div>
-                <label class="order__label" for="order-company">Company name</label>
-                <input class="order__input" id="order-company" name="company" autocomplete="organization" required maxlength="200" aria-describedby="order-company-error">
-                <p class="order__field-error" id="order-company-error"></p>
-              </div>
-              <div>
-                <label class="order__label" for="order-brief">Project brief</label>
-                <textarea class="order__input" id="order-brief" name="brief" required minlength="20" maxlength="5000" placeholder="Tell us what your product does and what this video should achieve" aria-describedby="order-brief-hint order-brief-error"></textarea>
-                <p class="order__hint" id="order-brief-hint">Who is it for, where will it run, and what should viewers do next?</p>
-                <p class="order__field-error" id="order-brief-error"></p>
+                <label class="order__label" for="order-delivery">Required delivery date</label>
+                <input class="order__input" id="order-delivery" name="deliveryDate" type="date" aria-describedby="order-delivery-hint order-delivery-error">
+                <p class="order__hint" id="order-delivery-hint">Optional. Tell us if you are working to a launch date.</p>
+                <p class="order__field-error" id="order-delivery-error"></p>
               </div>
             </div>
-            <div class="visually-hidden" aria-hidden="true"><label for="order-hp">Website</label><input type="text" name="website" id="order-hp" tabindex="-1" autocomplete="off"></div>
+            <div class="visually-hidden" aria-hidden="true"><label for="order-hp">Nickname</label><input type="text" name="nickname" id="order-hp" tabindex="-1" autocomplete="off"></div>
+            <p class="order__error" id="order-step-1-error" role="alert" hidden></p>
             <div class="order__actions">
-              <button class="order__button" type="button" data-next="2">Continue <span aria-hidden="true">→</span></button>
+              <button class="order__button" type="button" data-next="2" aria-busy="false"><span class="order__spinner" aria-hidden="true"></span><span data-next-label="2">Continue</span> <span aria-hidden="true">&rarr;</span></button>
             </div>
           </section>
 
-          <!-- Step 2 -->
+          <!-- Step 2: creative details -->
           <section class="order__step" data-step="2" aria-labelledby="step-2-title" hidden>
-            <p class="order__step-label">STEP 2 OF 2</p>
-            <h2 class="order__step-title" id="step-2-title" tabindex="-1">Review &amp; submit</h2>
-            <div class="order__summary">
-              <h3 class="order__summary-title">Order summary</h3>
-              <dl class="order__summary-facts">
-                <div><dt>Video</dt><dd class="order__summary-item" id="summary-item"></dd></div>
-                <div><dt>Company</dt><dd id="summary-company"></dd></div>
-                <div><dt>Brief</dt><dd id="summary-brief"></dd></div>
-                <div><dt>Account</dt><dd id="summary-account"></dd></div>
-              </dl>
-              <p class="order__total"><span>Total</span><strong id="summary-total"></strong></p>
-              <div class="order__pay">
-                <button class="order__button order__button--block" id="order-pay" type="button" disabled aria-describedby="order-pay-note">Pay <span id="order-pay-amount"></span> <span aria-hidden="true">→</span></button>
-                <p class="order__pay-note" id="order-pay-note">Online payment is coming soon. Submit your brief now and we’ll invoice you directly.</p>
-                <p class="order__error" id="order-error" role="alert" hidden></p>
-                <button class="order__button order__button--block" id="order-submit" type="submit" aria-busy="false"><span class="order__spinner" aria-hidden="true"></span><span id="order-submit-label">Submit brief</span> <span aria-hidden="true">→</span></button>
+            <p class="order__step-label">STEP 2 OF 4</p>
+            <h2 class="order__step-title" id="step-2-title" tabindex="-1">Creative details</h2>
+            <p class="order__step-intro">What the video has to achieve, and anything we should work from.</p>
+            <div class="order__fields">
+              <div>
+                <label class="order__label" for="order-purpose">Video purpose</label>
+                <textarea class="order__input" id="order-purpose" name="purpose" required minlength="10" maxlength="2000" placeholder="What should this video achieve?" aria-describedby="order-purpose-error"></textarea>
+                <p class="order__field-error" id="order-purpose-error"></p>
+              </div>
+              <div>
+                <label class="order__label" for="order-audience">Target audience</label>
+                <textarea class="order__input" id="order-audience" name="targetAudience" required minlength="5" maxlength="2000" placeholder="Who is watching, and what do they already know?" aria-describedby="order-audience-error"></textarea>
+                <p class="order__field-error" id="order-audience-error"></p>
+              </div>
+              <div>
+                <label class="order__label" for="order-style">Video style</label>
+                <textarea class="order__input" id="order-style" name="videoStyle" maxlength="2000" placeholder="Motion graphics, screen recording, live action&hellip;" aria-describedby="order-style-hint order-style-error"></textarea>
+                <p class="order__hint" id="order-style-hint">Optional. Share the look and feel you have in mind.</p>
+                <p class="order__field-error" id="order-style-error"></p>
+              </div>
+              <div>
+                <label class="order__label" for="order-colors">Brand colors</label>
+                <input class="order__input" id="order-colors" name="brandColors" maxlength="500" placeholder="#5B4BF5, #0C0E13" aria-describedby="order-colors-hint order-colors-error">
+                <p class="order__hint" id="order-colors-hint">Optional. Hex codes or a short description.</p>
+                <p class="order__field-error" id="order-colors-error"></p>
+              </div>
+              <div>
+                <label class="order__label" for="order-references">Reference links</label>
+                <textarea class="order__input" id="order-references" name="references" maxlength="2000" placeholder="https://example.com/video-we-like" aria-describedby="order-references-hint order-references-error"></textarea>
+                <p class="order__hint" id="order-references-hint">Optional. One complete http(s) link per line.</p>
+                <p class="order__field-error" id="order-references-error"></p>
+              </div>
+              <div>
+                <label class="order__label" for="order-attachments">Logo, product screenshots and recordings</label>
+                <input class="order__file" id="order-attachments" name="attachments" type="file" multiple aria-describedby="order-attachments-hint order-attachments-error">
+                <p class="order__hint" id="order-attachments-hint">Optional. Images, PDF, video or ZIP &middot; up to 50MB each. Uploaded to your private workspace.</p>
+                <p class="order__field-error" id="order-attachments-error"></p>
+                <p class="order__uploading" id="order-attachments-progress" role="status" hidden><span class="order__spinner" aria-hidden="true"></span><span id="order-attachments-progress-text"></span></p>
+              </div>
+              <div>
+                <label class="order__label" for="order-brief">Additional instructions</label>
+                <textarea class="order__input" id="order-brief" name="brief" required minlength="20" maxlength="5000" placeholder="Tell us what your product does and anything else we should know" aria-describedby="order-brief-hint order-brief-error"></textarea>
+                <p class="order__hint" id="order-brief-hint">Scenes you have in mind, must-have messages, things to avoid.</p>
+                <p class="order__field-error" id="order-brief-error"></p>
               </div>
             </div>
-            <p class="order__legal">By submitting, you agree to our <a href="terms.html">Terms</a> and <a href="privacy.html">Privacy Notice</a>. Nothing is charged until we confirm your order.</p>
+            <p class="order__error" id="order-step-2-error" role="alert" hidden></p>
             <div class="order__actions">
-              <button class="order__link-button" type="button" data-back="1">← Back to your video</button>
+              <button class="order__button" type="button" data-next="3" aria-busy="false"><span class="order__spinner" aria-hidden="true"></span><span data-next-label="3">Continue</span> <span aria-hidden="true">&rarr;</span></button>
+              <button class="order__link-button" type="button" data-back="1">&larr; Back to project basics</button>
+            </div>
+          </section>
+
+          <!-- Step 3: script and voice over -->
+          <section class="order__step" data-step="3" aria-labelledby="step-3-title" hidden>
+            <p class="order__step-label">STEP 3 OF 4</p>
+            <h2 class="order__step-title" id="step-3-title" tabindex="-1">Script &amp; voice over</h2>
+            <p class="order__step-intro">Bring your own, or let us write and record it for you.</p>
+            <div class="order__fields">
+              <fieldset class="order__choices" aria-describedby="order-script-error">
+                <legend class="order__label">Script</legend>
+                <div class="order__choice-grid">
+                  <label class="order__choice"><input type="radio" name="scriptChoice" value="own"><span class="order__choice-title">I have my own script</span><span class="order__choice-note">Upload it below.</span></label>
+                  <label class="order__choice"><input type="radio" name="scriptChoice" value="need" checked><span class="order__choice-title">I need a script written</span><span class="order__choice-note">We write it from your brief.</span></label>
+                </div>
+                <p class="order__field-error" id="order-script-error"></p>
+                <div class="order__upload" id="order-script-upload" hidden>
+                  <label class="order__label" for="order-script-file">Your script file</label>
+                  <input class="order__file" id="order-script-file" name="scriptFile" type="file" accept=".pdf,.doc,.docx,.txt" aria-describedby="order-script-file-hint order-script-file-error">
+                  <p class="order__hint" id="order-script-file-hint">PDF, DOC, DOCX or TXT &middot; up to 50MB.</p>
+                  <p class="order__field-error" id="order-script-file-error"></p>
+                  <p class="order__uploading" id="order-script-progress" role="status" hidden><span class="order__spinner" aria-hidden="true"></span><span id="order-script-progress-text"></span></p>
+                </div>
+              </fieldset>
+              <fieldset class="order__choices" aria-describedby="order-voice-error">
+                <legend class="order__label">Voice over</legend>
+                <div class="order__choice-grid">
+                  <label class="order__choice"><input type="radio" name="voiceChoice" value="own"><span class="order__choice-title">I have my own voice over</span><span class="order__choice-note">Upload the audio below.</span></label>
+                  <label class="order__choice"><input type="radio" name="voiceChoice" value="need" checked><span class="order__choice-title">I need a voice over</span><span class="order__choice-note">We cast and record it.</span></label>
+                </div>
+                <p class="order__field-error" id="order-voice-error"></p>
+                <div class="order__upload" id="order-voice-upload" hidden>
+                  <label class="order__label" for="order-voice-file">Your voice over file</label>
+                  <input class="order__file" id="order-voice-file" name="voiceFile" type="file" accept=".mp3,.wav,.m4a" aria-describedby="order-voice-file-hint order-voice-file-error">
+                  <p class="order__hint" id="order-voice-file-hint">MP3, WAV or M4A &middot; up to 50MB.</p>
+                  <p class="order__field-error" id="order-voice-file-error"></p>
+                  <p class="order__uploading" id="order-voice-progress" role="status" hidden><span class="order__spinner" aria-hidden="true"></span><span id="order-voice-progress-text"></span></p>
+                </div>
+              </fieldset>
+            </div>
+            <section class="order__breakdown" aria-labelledby="order-breakdown-title">
+              <h3 class="order__breakdown-title" id="order-breakdown-title">Your price</h3>
+              <dl class="order__lines" id="order-lines">
+                <div><dt>Base video</dt><dd id="line-base">&mdash;</dd></div>
+                <div><dt>Script writing</dt><dd id="line-script">&mdash;</dd></div>
+                <div><dt>Voice over</dt><dd id="line-voice">&mdash;</dd></div>
+              </dl>
+              <p class="order__total"><span>Total</span><strong id="line-total">&mdash;</strong></p>
+              <p class="order__hint" id="order-pricing-note">Prices come from the FIJLY price list. The amount you are invoiced is confirmed when your project is saved.</p>
+            </section>
+            <p class="order__error" id="order-step-3-error" role="alert" hidden></p>
+            <div class="order__actions">
+              <button class="order__button" type="button" data-next="4" aria-busy="false"><span class="order__spinner" aria-hidden="true"></span><span data-next-label="4">Continue</span> <span aria-hidden="true">&rarr;</span></button>
+              <button class="order__link-button" type="button" data-back="2">&larr; Back to creative details</button>
+            </div>
+          </section>
+
+          <!-- Step 4: review and submit -->
+          <section class="order__step" data-step="4" aria-labelledby="step-4-title" hidden>
+            <p class="order__step-label">STEP 4 OF 4</p>
+            <h2 class="order__step-title" id="step-4-title" tabindex="-1">Review &amp; submit</h2>
+            <p class="order__step-intro">Check everything over. You can go back to change any answer.</p>
+            <div class="order__summary">
+              <h3 class="order__summary-title">Project summary</h3>
+              <dl class="order__summary-facts">
+                <div><dt>Project</dt><dd class="order__summary-item" id="summary-title"></dd></div>
+                <div><dt>Company</dt><dd id="summary-company"></dd></div>
+                <div><dt>Website</dt><dd id="summary-website"></dd></div>
+                <div><dt>Video</dt><dd id="summary-item"></dd></div>
+                <div><dt>Delivery</dt><dd id="summary-delivery"></dd></div>
+                <div><dt>Purpose</dt><dd id="summary-purpose"></dd></div>
+                <div><dt>Audience</dt><dd id="summary-audience"></dd></div>
+                <div><dt>Style</dt><dd id="summary-style"></dd></div>
+                <div><dt>Brand colors</dt><dd id="summary-colors"></dd></div>
+                <div><dt>References</dt><dd id="summary-references"></dd></div>
+                <div><dt>Files</dt><dd id="summary-attachments"></dd></div>
+                <div><dt>Script</dt><dd id="summary-script"></dd></div>
+                <div><dt>Voice over</dt><dd id="summary-voice"></dd></div>
+                <div><dt>Instructions</dt><dd id="summary-brief"></dd></div>
+                <div><dt>Account</dt><dd id="summary-account"></dd></div>
+              </dl>
+            </div>
+            <section class="order__breakdown" aria-labelledby="order-review-price-title">
+              <h3 class="order__breakdown-title" id="order-review-price-title">Price breakdown</h3>
+              <dl class="order__lines">
+                <div><dt>Base video</dt><dd id="review-base">&mdash;</dd></div>
+                <div><dt>Script writing</dt><dd id="review-script">&mdash;</dd></div>
+                <div><dt>Voice over</dt><dd id="review-voice">&mdash;</dd></div>
+              </dl>
+              <p class="order__total"><span>Total</span><strong id="review-total">&mdash;</strong></p>
+            </section>
+            <section class="order__breakdown" aria-labelledby="order-schedule-title">
+              <h3 class="order__breakdown-title" id="order-schedule-title">Payment schedule</h3>
+              <ul class="order__schedule" id="order-schedule">
+                <li><span class="order__schedule-step">Project start &middot; 15%</span><span class="order__schedule-amount" id="schedule-start">&mdash;</span></li>
+                <li><span class="order__schedule-step">Storyboard approval &middot; 45%</span><span class="order__schedule-amount" id="schedule-storyboard">&mdash;</span></li>
+                <li><span class="order__schedule-step">Final delivery &middot; 40%</span><span class="order__schedule-amount" id="schedule-final">&mdash;</span></li>
+              </ul>
+              <p class="order__pay-note">Payments are invoiced through PayPal. Nothing is charged on this page.</p>
+            </section>
+            <p class="order__error" id="order-error" role="alert" hidden></p>
+            <div class="order__pay">
+              <button class="order__button order__button--block" id="order-submit" type="submit" aria-busy="false"><span class="order__spinner" aria-hidden="true"></span><span id="order-submit-label">Submit project</span> <span aria-hidden="true">&rarr;</span></button>
+            </div>
+            <p class="order__legal">By submitting, you agree to our <a href="terms.html">Terms</a> and <a href="privacy.html">Privacy Notice</a>. Nothing is charged until we confirm your invoice.</p>
+            <div class="order__actions">
+              <button class="order__link-button" type="button" data-back="3">&larr; Back to script &amp; voice over</button>
             </div>
           </section>
         </form>
 
-        <section class="order__success" id="order-success" aria-labelledby="order-success-title" hidden>
+        <section class="order__payment" id="order-payment" aria-labelledby="order-payment-title" hidden>
           <span class="order__success-icon" aria-hidden="true"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span>
-          <h2 class="order__step-title order__success-title" id="order-success-title" tabindex="-1">Your order has been received!</h2>
-          <p id="order-success-text"></p>
-          <p id="order-success-summary"></p>
-          <p><a class="order__button" href="studio.html">Go to FIJLY Studio <span aria-hidden="true">→</span></a></p>
+          <h2 class="order__step-title order__success-title" id="order-payment-title" tabindex="-1">Your project is saved</h2>
+          <p class="order__payment-note" id="order-payment-text"></p>
+          <section class="order__breakdown" aria-labelledby="order-payment-schedule-title">
+            <h3 class="order__breakdown-title" id="order-payment-schedule-title">Payment schedule</h3>
+            <ul class="order__schedule">
+              <li><span class="order__schedule-step">Project start &middot; 15%</span><span class="order__schedule-amount" id="paid-start">&mdash;</span></li>
+              <li><span class="order__schedule-step">Storyboard approval &middot; 45%</span><span class="order__schedule-amount" id="paid-storyboard">&mdash;</span></li>
+              <li><span class="order__schedule-step">Final delivery &middot; 40%</span><span class="order__schedule-amount" id="paid-final">&mdash;</span></li>
+            </ul>
+          </section>
+          <div class="order__payment-actions">
+            <button class="order__button order__button--block" id="order-paypal" type="button" disabled aria-describedby="order-paypal-note">Pay with PayPal</button>
+            <p class="order__pay-note" id="order-paypal-note">Online payment coming soon.</p>
+            <a class="order__button order__button--block" href="studio.html">Go to FIJLY Studio <span aria-hidden="true">&rarr;</span></a>
+          </div>
         </section>
 
         <a class="order__back" href="index.html">← Back to fijly.com</a>
@@ -515,6 +758,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.116.0/dist/umd/supabase.js" integrity="sha384-iLddHTLokph6Omwoyid4XKxHaWa6w41BnoEj0q5oOrzmYPpHIKt1wyjReA7s//pP" crossorigin="anonymous"></script>
   <script src="js/supabase-client.js"></script>
+  <script src="js/config.js"></script>
   <script src="js/order.js"></script>
 </body>
 </html>

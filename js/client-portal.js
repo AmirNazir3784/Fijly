@@ -15,6 +15,21 @@
   function completedAt(v) { return api.completedAt(v); }
   // Marks a control busy while an async save runs; returns a release function.
   function busy(control) { control.disabled = true; control.setAttribute('aria-busy', 'true'); return function () { control.disabled = false; control.removeAttribute('aria-busy'); }; }
+  // Overview: one banner per project that owes a milestone at its stage.
+  // Payments are invoiced by hand for now, so the banner only informs.
+  function paymentBanners() {
+    var host = $('#client-payment-banners');
+    if (!host) return;
+    host.replaceChildren();
+    client.duePayments().forEach(function (payment) {
+      var banner = node('div', undefined, 'payment-banner');
+      banner.setAttribute('role', 'status');
+      banner.append(node('span', 'Payment due: ' + api.milestoneLabel(payment.milestone) + ' — '
+        + api.formatMoney(payment.amount) + ' for ' + payment.project + '.', 'payment-banner__title'),
+        node('span', 'We’ll send a PayPal invoice.', 'payment-banner__note'));
+      host.append(banner);
+    });
+  }
   function metric(card, label, value, note) { card.querySelector('.stat-card__label').textContent = label; card.querySelector('.stat-card__value').textContent = value; card.querySelector('.stat-card__delta').textContent = note; }
   function overview() {
     var profile = client.current(), videos = client.records('videos');
@@ -35,7 +50,7 @@
       var v = recent[index]; card.hidden = !v; if (!v) return;
       var r = api.requestFor(v); card.querySelector('.project-card__name').textContent = r.title;
       card.querySelector('.project-card__sub').textContent = r.videoType;
-      card.querySelector('.project-card__badges').replaceChildren(badge(v.status));
+      card.querySelector('.project-card__badges').replaceChildren(node('span', r.stage, api.stageClass(r.stage)), badge(v.status));
       card.querySelector('.project-card__updated').textContent = v.status === 'Completed' && completedAt(v) ? 'Delivered ' + date(completedAt(v)) : 'Due ' + date(r.deadline);
       card.querySelector('.progress-row__label').textContent = 'Latest version';
       card.querySelector('.progress-row__value').textContent = api.latest(v) ? 'V' + api.latest(v).number : 'Awaiting draft';
@@ -58,7 +73,7 @@
       $('.storyboard .version-pill').textContent = latest ? 'V' + latest.number : 'Outline';
       var scenes = document.querySelectorAll('.scene'); scenes.forEach(function (scene, i) { scene.querySelector('.scene__title').textContent = ['Opening', 'Context', 'Product', 'Benefits', 'Closing'][i]; scene.querySelector('.scene__dur').textContent = 'Scene ' + (i + 1); var tag = scene.querySelector('.badge'); tag.textContent = 'Outline'; tag.className = 'badge'; });
     }
-    var empty = $('#client-overview-empty'); if (!empty) { empty = node('p', 'No videos yet. Submit a request to start your first project.', 'panel__sub'); empty.id = 'client-overview-empty'; $('.project-grid').append(empty); } empty.hidden = !!videos.length;
+    var empty = $('#client-overview-empty'); if (!empty) { empty = node('p', 'No videos yet. Start a project on the order page to get going.', 'panel__sub'); empty.id = 'client-overview-empty'; $('.project-grid').append(empty); } empty.hidden = !!videos.length;
   }
 
   var modal = node('dialog', undefined, 'admin-dialog workflow-detail'); modal.id = 'client-asset-detail'; modal.setAttribute('aria-labelledby', 'client-dialog-title');
@@ -179,6 +194,7 @@
     document.querySelectorAll('.screen').forEach(function(screen){var note=screen.querySelector('.client-workspace-empty');if(!note){note=node('p','Your workspace is not available right now. Refresh the page or contact the FIJLY team.','panel client-workspace-empty');screen.append(note);}note.hidden=available;});
     if(!available){$('#studio-demo-note').firstChild.textContent='No client workspace. ';return;}
     if(!changed || changed.some(function(k){return ['clients','requests','videos','revisions'].includes(k);}))overview();
+    if(!changed || changed.some(function(k){return ['payments','requests'].includes(k);}))paymentBanners();
     if(!changed || changed.includes('assets'))assets();
     if(!changed || changed.some(function(k){return ['scripts','clients'].includes(k);}))scripts();
     if(!changed || changed.some(function(k){return ['requests','videos','revisions'].includes(k);}))analytics();

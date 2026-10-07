@@ -56,3 +56,60 @@
    (it was squeezed into a narrow column beside the hint). */
 .studio-body #client-script-actions > .field-hint,
 .studio-body #client-script-actions form { flex-basis: 100%; }
+
+/* ===== Milestone payments (Part A) ===================================== */
+/* Overview: one banner per project that owes a milestone right now. */
+.payment-banners { display: grid; gap: var(--space-sm); }
+.payment-banners:empty { display: none; }
+
+.payment-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-sm) var(--space-md);
+  margin-bottom: var(--space-md);
+  padding: 14px 16px;
+  border-left: 3px solid var(--warning);
+  border-radius: var(--radius-md);
+  background: var(--amber-soft);
+  color: var(--text-primary);
+  font-size: var(--text-meta);
+  line-height: var(--leading-normal);
+}
+
+.payment-banner__title { font-weight: var(--weight-semibold); }
+.payment-banner__note { color: var(--text-muted); }
+
+/* Requests screen: the panel that sends clients to the order wizard. */
+.request-start__list { display: grid; gap: var(--space-sm); margin: var(--space-md) 0 var(--space-lg); padding: 0; list-style: none; font-size: var(--text-meta); color: var(--text-muted); }
+.request-start__list li { padding-left: 18px; background: none; text-indent: -18px; }
+.request-start__list li::before { content: "\2713"; margin-right: 8px; color: var(--success-dark); font-weight: var(--weight-semibold); }
+
+/* The payments card and price breakdown inside a project's detail dialog. */
+.payment-rows { display: grid; gap: var(--space-sm); margin-top: var(--space-sm); }
+
+.payment-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 4px var(--space-md);
+  padding-bottom: var(--space-sm);
+  border-bottom: 1px solid var(--border-default);
+  font-size: var(--text-meta);
+}
+
+.payment-row:last-child { padding-bottom: 0; border-bottom: 0; }
+.payment-row__name { font-weight: var(--weight-semibold); }
+.payment-row__amount { font-variant-numeric: tabular-nums; font-weight: var(--weight-semibold); text-align: right; }
+.payment-row__meta { grid-column: 1 / -1; color: var(--text-muted); }
+.payment-row--required .payment-row__name::after { content: " · due now"; color: var(--warning-dark); font-weight: var(--weight-semibold); }
+
+.price-lines { display: grid; gap: var(--space-sm); margin-top: var(--space-sm); font-size: var(--text-meta); }
+.price-lines > div { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-md); }
+.price-lines dt { color: var(--text-muted); }
+.price-lines dd { font-weight: var(--weight-semibold); font-variant-numeric: tabular-nums; }
+.price-lines__total { padding-top: var(--space-sm); border-top: 1px solid var(--border-default); }
+
+@media (max-width: 559px) {
+  .payment-row { grid-template-columns: minmax(0, 1fr); }
+  .payment-row__amount { text-align: left; }
+}
