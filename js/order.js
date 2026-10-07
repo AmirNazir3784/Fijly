@@ -29,6 +29,7 @@
   // so every upload is retyped from its extension.
   var attachmentTypes = { png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', gif: 'image/gif', svg: 'image/svg+xml', webp: 'image/webp',
     pdf: 'application/pdf', mp4: 'video/mp4', webm: 'video/webm', mov: 'video/quicktime', zip: 'application/zip' };
+  var briefTypes = { pdf: 'application/pdf', doc: 'application/msword', docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' };
   var scriptTypes = { pdf: 'application/pdf', doc: 'application/msword', docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', txt: 'text/plain' };
   var voiceTypes = { mp3: 'audio/mpeg', wav: 'audio/wav', m4a: 'audio/mp4' };
 
@@ -48,7 +49,7 @@
   // Pricing from public.pricing: { base: { 30: 300, … }, script: {…}, voice_over: {…} }.
   var pricing = null;
   // Files already in Storage, keyed by the picked file so Back never re-uploads.
-  var uploaded = { attachments: null, script: null, voice: null };
+  var uploaded = { attachments: null, brief: null, script: null, voice: null };
 
   /* Helpers ---------------------------------------------------------------- */
   function money(amount) {
@@ -64,6 +65,8 @@
   function duration() { var picked = form.querySelector('input[name="duration"]:checked'); return picked ? Number(picked.value) : null; }
   function hasScript() { return (form.querySelector('input[name="scriptChoice"]:checked') || {}).value === 'own'; }
   function hasVoice() { return (form.querySelector('input[name="voiceChoice"]:checked') || {}).value === 'own'; }
+  // 'link' or 'upload': the brief document arrives one way or the other.
+  function briefIsLink() { return (form.querySelector('input[name="briefChoice"]:checked') || {}).value !== 'upload'; }
   function references() {
     return text('references').split(/\n/).map(function (line) { return line.trim(); }).filter(Boolean);
   }
@@ -126,30 +129,33 @@
   /* Validation: messages show under each field, not as browser bubbles. ---- */
   var messages = {
     title: { valueMissing: 'Enter a name for this project.' },
-    company: { valueMissing: 'Enter your company or brand name.' },
     companyWebsite: { invalid: 'Enter the website as a full address, starting with https://' },
     videoType: { valueMissing: 'Choose a video type.' },
     duration: { valueMissing: 'Choose a video length.' },
     deliveryDate: { invalid: 'Choose a valid delivery date.' },
     purpose: { valueMissing: 'Tell us what this video should achieve.', tooShort: 'Please add at least 10 characters.' },
-    targetAudience: { valueMissing: 'Tell us who this video is for.', tooShort: 'Please add at least 5 characters.' },
     references: { invalid: 'Enter complete http(s) links, one per line.' },
-    brief: { valueMissing: 'Tell us about your project.', tooShort: 'Please add at least 20 characters about your project.' },
+    // The brief document is required as a link or a file; which one is missing
+    // depends on the card that is selected.
+    briefDoc: { valueMissing: 'Add a link to your brief document or upload it.' },
+    briefLink: { invalid: 'Enter the brief link as a full address, starting with https://' },
+    briefFile: { invalid: 'The brief must be a PDF, DOC or DOCX file under 50MB.' },
     scriptFile: { valueMissing: 'Upload your script file.', invalid: 'Scripts must be a PDF, DOC, DOCX or TXT file under 50MB.' },
     voiceFile: { valueMissing: 'Upload your voice over file.', invalid: 'Voice overs must be an MP3, WAV or M4A file under 50MB.' },
     attachments: { invalid: 'Images, PDF, video or ZIP files under 50MB each, please.' }
   };
   // The fields each step validates, in the order their problems are reported.
   var stepFields = {
-    1: ['title', 'company', 'companyWebsite', 'videoType', 'duration', 'deliveryDate'],
-    2: ['purpose', 'targetAudience', 'references', 'attachments', 'brief'],
+    1: ['title', 'companyWebsite', 'videoType', 'duration', 'deliveryDate'],
+    2: ['purpose', 'references', 'attachments', 'briefDoc'],
     3: ['scriptFile', 'voiceFile'],
     4: []
   };
   function errorFor(name) {
     var ids = { duration: 'order-duration-error', companyWebsite: 'order-website-error', targetAudience: 'order-audience-error',
       videoType: 'order-type-error', deliveryDate: 'order-delivery-error', brandColors: 'order-colors-error', videoStyle: 'order-style-error',
-      scriptFile: 'order-script-file-error', voiceFile: 'order-voice-file-error' };
+      scriptFile: 'order-script-file-error', voiceFile: 'order-voice-file-error',
+      briefDoc: 'order-brief-doc-error', briefLink: 'order-brief-link-error', briefFile: 'order-brief-file-error' };
     return document.getElementById(ids[name] || 'order-' + name + '-error');
   }
   function fileProblem(file, types) {
@@ -162,6 +168,17 @@
     if (name === 'duration') return duration() ? '' : note.valueMissing;
     if (name === 'references') return references().some(badLink) ? note.invalid : '';
     if (name === 'attachments') return Array.from(control.files).some(function (file) { return fileProblem(file, attachmentTypes); }) ? note.invalid : '';
+    // Checked as one field, so a missing brief reports once rather than twice.
+    if (name === 'briefDoc') {
+      if (briefIsLink()) {
+        var link = text('briefLink');
+        if (!link) return (messages.briefDoc || {}).valueMissing;
+        return badLink(link) ? messages.briefLink.invalid : '';
+      }
+      var picked = field('briefFile').files[0];
+      if (!picked) return uploaded.brief ? '' : (messages.briefDoc || {}).valueMissing;
+      return fileProblem(picked, briefTypes) ? messages.briefFile.invalid : '';
+    }
     if (name === 'scriptFile' || name === 'voiceFile') {
       var wanted = name === 'scriptFile' ? hasScript() : hasVoice();
       if (!wanted) return '';
@@ -184,6 +201,8 @@
   function firstControl(control) { return isGroup(control) ? control[0] : control; }
   function mark(name, message) {
     var control = field(name), note = errorFor(name);
+    // The brief is one field with two controls; flag the one being used.
+    if (name === 'briefDoc') control = field(briefIsLink() ? 'briefLink' : 'briefFile');
     // Problems with a group of radios belong on the fieldset that owns them.
     var target = isGroup(control) ? (firstControl(control).closest('fieldset') || firstControl(control)) : control;
     if (note) note.textContent = message;
@@ -198,11 +217,15 @@
       if (show) mark(name, message);
       if (message && !first) first = name;
     });
-    if (first && show) firstControl(field(first)).focus();
+    if (first && show) firstControl(field(first === 'briefDoc' ? (briefIsLink() ? 'briefLink' : 'briefFile') : first)).focus();
     return !first;
   }
-  form.addEventListener('input', function (event) { if (event.target.name) mark(event.target.name, ''); });
-  form.addEventListener('change', function (event) { if (event.target.name) mark(event.target.name, ''); });
+  function clearField(name) {
+    mark(name, '');
+    if (['briefLink', 'briefFile', 'briefChoice'].includes(name)) mark('briefDoc', '');
+  }
+  form.addEventListener('input', function (event) { if (event.target.name) clearField(event.target.name); });
+  form.addEventListener('change', function (event) { if (event.target.name) clearField(event.target.name); });
 
   /* Script and voice over choices ----------------------------------------- */
   function syncChoices() {
@@ -210,13 +233,69 @@
     document.getElementById('order-voice-upload').hidden = !hasVoice();
     renderPrices();
   }
+  function syncBrief() {
+    var link = briefIsLink();
+    document.getElementById('order-brief-link-wrap').hidden = !link;
+    document.getElementById('order-brief-file-wrap').hidden = link;
+  }
   form.addEventListener('change', function (event) {
     if (['scriptChoice', 'voiceChoice'].includes(event.target.name)) syncChoices();
+    if (event.target.name === 'briefChoice') syncBrief();
+    if (event.target.name === 'briefFile') uploaded.brief = null;
     if (event.target.name === 'duration') renderPrices();
     // A different file replaces whatever was uploaded for that slot.
     if (event.target.name === 'scriptFile') uploaded.script = null;
     if (event.target.name === 'voiceFile') uploaded.voice = null;
     if (event.target.name === 'attachments') uploaded.attachments = null;
+  });
+
+  /* File pickers: a drop zone, plus the list of what was chosen ----------- */
+  function fileSize(bytes) {
+    var size = bytes / 1024;
+    if (size < 1024) return Math.max(1, Math.round(size)) + ' KB';
+    size /= 1024;
+    return (size >= 10 ? Math.round(size) : size.toFixed(1)) + ' MB';
+  }
+  // Rebuilds the input's FileList without the file at `index`.
+  function dropFile(input, index) {
+    var transfer = new DataTransfer();
+    Array.from(input.files).forEach(function (file, at) { if (at !== index) transfer.items.add(file); });
+    input.files = transfer.files;
+    input.dispatchEvent(new Event('change', { bubbles: true }));
+  }
+  function renderFileList(input) {
+    var list = document.getElementById(input.id + '-files');
+    if (!list) return;
+    list.replaceChildren();
+    Array.from(input.files).forEach(function (file, index) {
+      var row = document.createElement('li');
+      var name = document.createElement('span');
+      name.className = 'order__file-name';
+      name.textContent = file.name;
+      var size = document.createElement('span');
+      size.className = 'order__file-size';
+      size.textContent = fileSize(file.size);
+      var remove = document.createElement('button');
+      remove.type = 'button';
+      remove.className = 'order__file-remove';
+      remove.textContent = '\u00D7';
+      remove.setAttribute('aria-label', 'Remove ' + file.name);
+      remove.addEventListener('click', function () { dropFile(input, index); });
+      row.append(name, size, remove);
+      list.append(row);
+    });
+  }
+  // Drag feedback. The input lies over the whole zone, so the browser handles
+  // the drop itself and sets input.files for us.
+  document.querySelectorAll('[data-drop]').forEach(function (zone) {
+    var input = zone.querySelector('.order__drop-input');
+    ['dragenter', 'dragover'].forEach(function (name) {
+      zone.addEventListener(name, function (event) { event.preventDefault(); zone.classList.add('is-dragging'); });
+    });
+    ['dragleave', 'dragend', 'drop'].forEach(function (name) {
+      zone.addEventListener(name, function () { zone.classList.remove('is-dragging'); });
+    });
+    if (input) input.addEventListener('change', function () { renderFileList(input); });
   });
 
   /* Uploads: {client_id}/project-files/{uuid}.{ext} ------------------------ */
@@ -237,6 +316,14 @@
   // Uploads this step's files, reusing anything already stored for them.
   async function uploadStep(step) {
     if (step === 2) {
+      // The brief document, when it was uploaded rather than linked.
+      var briefFile = briefIsLink() ? null : field('briefFile').files[0];
+      if (!briefFile) { if (briefIsLink()) uploaded.brief = null; }
+      else if (!uploaded.brief || uploaded.brief.key !== signature(briefFile)) {
+        busyUpload('order-brief-progress', 'Uploading ' + briefFile.name + '…');
+        try { uploaded.brief = { key: signature(briefFile), name: briefFile.name, path: await upload(briefFile, briefTypes) }; }
+        finally { busyUpload('order-brief-progress', ''); }
+      }
       var files = Array.from(field('attachments').files), key = files.map(signature).join(',');
       if (!files.length) { uploaded.attachments = null; return; }
       if (uploaded.attachments && uploaded.attachments.key === key) return;
@@ -359,7 +446,10 @@
     set('summary-attachments', attachments.length ? attachments.join(', ') : 'None');
     set('summary-script', hasScript() ? 'Provided by you' + (uploaded.script ? ' · ' + uploaded.script.name : '') : 'FIJLY writes the script');
     set('summary-voice', hasVoice() ? 'Provided by you' + (uploaded.voice ? ' · ' + uploaded.voice.name : '') : 'FIJLY records the voice over');
-    set('summary-brief', '“' + clip(text('brief'), 240) + '”');
+    set('summary-brief-doc', briefIsLink() ? (text('briefLink') || 'Not provided')
+      : (uploaded.brief ? uploaded.brief.name : (field('briefFile').files[0] || {}).name || 'Not provided'));
+    var notes = text('brief');
+    set('summary-brief', notes ? '“' + clip(notes, 240) + '”' : 'None');
     set('summary-account', (account.name ? account.name + ' · ' : '') + account.email);
     renderPrices();
   }
@@ -373,7 +463,7 @@
   }
   function fail(message) {
     var link = document.createElement('a');
-    link.href = 'mailto:' + CONTACT_EMAIL + '?subject=' + encodeURIComponent('FIJLY project — ' + text('company'));
+    link.href = 'mailto:' + CONTACT_EMAIL + '?subject=' + encodeURIComponent('FIJLY project — ' + (text('company') || text('title')));
     link.textContent = 'email us at ' + CONTACT_EMAIL;
     errorBox.replaceChildren(document.createTextNode(message + ' You can try again, or '), link, document.createTextNode('.'));
     errorBox.hidden = false;
@@ -421,9 +511,11 @@
         p_title: text('title'),
         p_video_type: text('videoType'),
         p_duration: duration(),
-        p_brief: text('brief'),
+        p_brief: text('brief') || null,
+        p_brief_link: briefIsLink() ? text('briefLink') : null,
+        p_brief_file_path: briefIsLink() ? null : (uploaded.brief ? uploaded.brief.path : null),
         p_purpose: text('purpose'),
-        p_target_audience: text('targetAudience'),
+        p_target_audience: text('targetAudience') || null,
         p_video_style: text('videoStyle') || null,
         p_brand_colors: text('brandColors') || null,
         p_website: text('companyWebsite') || null,
@@ -489,6 +581,7 @@
     var preset = form.querySelector('input[name="duration"][value="' + String(wanted || '').replace(/[^0-9]/g, '') + '"]');
     if (preset) preset.checked = true;
     syncChoices();
+    syncBrief();
     card.dataset.state = 'ready';
     show(stepFromHash(), false);
   }

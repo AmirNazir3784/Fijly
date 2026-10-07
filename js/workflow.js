@@ -516,7 +516,20 @@
         if(request.voiceOverFilePath)downloads.append(fileButton(admin?'Download client voice over':'Download your voice over',request.voiceOverFilePath));
         body.append(el('h3','Supplied files'),downloads);
       }
-      body.append(el('h3','Instructions'),el('p',request.instructions,'workflow-feedback'),el('h3','Reference links'));
+      // The brief document the client shared, and their notes beside it.
+      body.append(el('h3','Project brief'));
+      if(request.briefLink||request.briefFilePath){
+        var briefBox=el('div',undefined,'workflow-version-line');
+        if(request.briefLink){
+          var briefLink=el('a',request.briefLink,'btn btn-outline btn--md');
+          briefLink.href=request.briefLink;briefLink.target='_blank';briefLink.rel='noopener noreferrer';
+          briefLink.setAttribute('aria-label','Open the brief document (opens in a new tab)');
+          briefBox.append(briefLink);
+        }
+        if(request.briefFilePath)briefBox.append(fileButton(admin?'Download brief document':'Download your brief',request.briefFilePath));
+        body.append(briefBox);
+      } else body.append(el('p','No brief document was shared. This project was submitted before a brief document was required.','admin-muted'));
+      body.append(el('h3','Notes'),el('p',request.instructions||'No additional notes.','workflow-feedback'),el('h3','Reference links'));
       if(!request.references.length)body.append(el('p','No reference links provided.','admin-muted'));
       request.references.forEach(function(url){var p=el('p'),a=el('a',url);a.href=url;a.target='_blank';a.rel='noopener noreferrer';p.append(a);body.append(p);});
       body.append(el('h3','Attachments'));
