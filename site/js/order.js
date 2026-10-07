@@ -429,6 +429,7 @@
         p_website: text('companyWebsite') || null,
         p_reference_urls: references(),
         p_attachment_names: uploaded.attachments ? uploaded.attachments.names : [],
+        p_attachment_paths: uploaded.attachments ? uploaded.attachments.paths : [],
         p_delivery_date: text('deliveryDate') || null,
         p_has_script: hasScript(),
         p_has_voice_over: hasVoice(),

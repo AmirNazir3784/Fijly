@@ -1,1 +1,11 @@
-[{"portal":"studio","samples":[{"domReadyMs":615.5999999940395,"loadMs":615.7999999821186,"domNodes":734,"resources":42},{"domReadyMs":620,"loadMs":620.2999999821186,"domNodes":734,"resources":42},{"domReadyMs":603.3999999761581,"loadMs":603.8999999761581,"domNodes":734,"resources":42,"noopUpdates":{"tenNoopSavesMs":0.7000000178813934,"domMutations":0}}]},{"portal":"admin","samples":[{"domReadyMs":604,"loadMs":604.5,"domNodes":2045,"resources":41},{"domReadyMs":559.1999999880791,"loadMs":559.2999999821186,"domNodes":2045,"resources":41},{"domReadyMs":527,"loadMs":527.0999999940395,"domNodes":2045,"resources":41,"noopUpdates":{"tenNoopSavesMs":1.4000000059604645,"domMutations":0}}]}]
+page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:8766/studio.html
+Call log:
+[2m  - navigating to "http://localhost:8766/studio.html", waiting until "load"[22m
+
+    at page.<computed> (C:\Users\Mister Naveed\OneDrive\Desktop\FIJLY\qa\runtime.cjs:104:30)
+    at C:\Users\Mister Naveed\OneDrive\Desktop\FIJLY\qa\performance.cjs:9:18 {
+  log: [
+    '  - navigating to "http://localhost:8766/studio.html", waiting until "load"'
+  ],
+  name: 'Error'
+}

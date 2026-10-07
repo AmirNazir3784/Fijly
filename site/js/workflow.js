@@ -166,6 +166,336 @@
     api.rounds(video).slice().reverse().forEach(function(r){var row=el('div',undefined,'workflow-entry');row.append(button('Round '+r.round+' · '+r.status,function(){show('revisions',r.id);}),el('p',r.resolution || 'Feedback on V'+r.baseVersion+(r.submittedVersion?' · Returned as V'+r.submittedVersion:''),'admin-muted'));body.append(row);});
     body.append(el('h3','Activity timeline'));video.activity.slice().reverse().forEach(function(a){var row=el('div',undefined,'workflow-entry');row.append(el('p',a.text),el('small',api.formatDateTime(a.at),'admin-muted'));body.append(row);});
   }
+
+  /* ======================================================================
+     Milestone sections: the progress stepper, the storyboard rounds and the
+     preview / final video. Both portals render the same blocks; what differs
+     is who may act on them.
+     ====================================================================== */
+
+  // Where the project stands, as a row of steps. The state is in the text as
+  // well as the colour, so it reads the same to a screen reader.
+  function progressStepper(request) {
+    var progress = api.progressFor(request);
+    var list = el('ol', undefined, 'progress-steps');
+    list.setAttribute('aria-label', 'Project progress');
+    progress.steps.forEach(function (step) {
+      var item = el('li', undefined, 'progress-step is-' + step.state);
+      var dot = el('span', undefined, 'progress-step__dot');
+      dot.setAttribute('aria-hidden', 'true');
+      var label = el('span', step.label, 'progress-step__label');
+      var state = el('span', step.state === 'done' ? ' (done)' : step.state === 'current' ? ' (current step)' : ' (not started)', 'visually-hidden');
+      if (step.state === 'current') item.setAttribute('aria-current', 'step');
+      item.append(dot, label, state);
+      list.append(item);
+    });
+    var wrap = el('div', undefined, 'progress-tracker' + (progress.cancelled ? ' progress-tracker--cancelled' : ''));
+    wrap.append(list, el('p', progress.cancelled ? 'This project was cancelled.' : 'Current stage: ' + request.stage, 'progress-tracker__now'));
+    return wrap;
+  }
+
+  // An inline action bar with its own error line, so an RPC refusal (a revision
+  // limit, a stage that moved on) is shown next to the button that caused it.
+  function actionBar() {
+    var bar = el('div', undefined, 'review-actions'), row = el('div', undefined, 'review-actions__row');
+    var error = el('p', undefined, 'workflow-error');
+    error.setAttribute('role', 'alert');
+    bar.append(row, error);
+    bar.row = row;
+    bar.fail = function (message) { error.textContent = message; };
+    // Runs an async action, keeping the control busy and reporting inline.
+    bar.run = function (control, work) {
+      if (control.disabled) return;
+      error.textContent = '';
+      control.disabled = true; control.setAttribute('aria-busy', 'true');
+      Promise.resolve().then(work).catch(function (problem) { error.textContent = problem.message; })
+        .finally(function () { control.disabled = false; control.removeAttribute('aria-busy'); });
+    };
+    return bar;
+  }
+  // A plain button for an action bar (no shared error handling).
+  function barButton(text, style) {
+    var node = el('button', text, 'btn btn--md ' + (style || 'btn-outline'));
+    node.type = 'button';
+    return node;
+  }
+  // A required feedback box that only appears once "Request changes" is chosen.
+  function feedbackBox(id, label) {
+    var wrap = el('div', undefined, 'review-feedback'), field = el('label', label, 'field-label');
+    var input = el('textarea', undefined, 'input');
+    input.id = id; input.maxLength = 4000; input.rows = 3; field.htmlFor = input.id;
+    wrap.hidden = true;
+    wrap.append(field, input);
+    wrap.input = input;
+    return wrap;
+  }
+
+  /* Storyboards ----------------------------------------------------------- */
+  function extensionOf(path) { var match = /\.([a-z0-9]+)$/i.exec(String(path || '')); return match ? match[1].toLowerCase() : ''; }
+
+  // Shows the storyboard itself: a still inline, an MP4 in a player, a PDF as
+  // a link. The signed URL arrives after the dialog has rendered.
+  function storyboardPreview(storyboard) {
+    var box = el('div', undefined, 'sb-preview'), extension = extensionOf(storyboard.filePath);
+    box.append(el('p', 'Loading the storyboard…', 'admin-muted'));
+    var url = admin ? api.storyboardUrl(storyboard) : api.client.storyboardUrl(storyboard);
+    url.then(function (href) {
+      if (['png', 'jpg', 'jpeg'].includes(extension)) {
+        var image = el('img', undefined, 'sb-preview__image');
+        image.src = href; image.alt = 'Storyboard round ' + storyboard.round;
+        image.onerror = function () { box.replaceChildren(el('p', 'This storyboard image could not be displayed.', 'admin-muted')); };
+        box.replaceChildren(image);
+        return;
+      }
+      if (extension === 'mp4') {
+        var player = document.createElement('video');
+        player.className = 'sb-preview__video'; player.src = href; player.controls = true;
+        player.setAttribute('controlsList', 'nodownload'); player.setAttribute('playsinline', '');
+        box.replaceChildren(player);
+        return;
+      }
+      var link = el('a', 'Open the storyboard (PDF)', 'btn btn-outline btn--md');
+      link.href = href; link.target = '_blank'; link.rel = 'noopener noreferrer';
+      box.replaceChildren(link);
+    }).catch(function (problem) {
+      box.replaceChildren(el('p', 'Couldn’t load the storyboard. ' + problem.message, 'workflow-error'));
+    });
+    return box;
+  }
+
+  // One round, read-only: who sent what, and what came back.
+  function storyboardRound(storyboard, withPreview) {
+    var card = el('div', undefined, 'sb-round'), head = el('div', undefined, 'sb-round__head');
+    head.append(el('strong', 'Round ' + storyboard.round), el('span', storyboard.status, api.storyboardClass(storyboard.status)),
+      el('span', date(storyboard.createdAt), 'admin-muted'));
+    card.append(head);
+    if (withPreview && storyboard.filePath) card.append(storyboardPreview(storyboard));
+    if (storyboard.notes) card.append(el('p', storyboard.notes, 'workflow-feedback'));
+    if (admin && storyboard.filePath) card.append(fileButton('Download round ' + storyboard.round, storyboard.filePath));
+    if (storyboard.clientFeedback) {
+      card.append(el('h4', 'Client feedback'), el('blockquote', storyboard.clientFeedback, 'workflow-feedback'));
+    }
+    if (storyboard.reviewedAt) card.append(el('p', 'Reviewed ' + date(storyboard.reviewedAt), 'admin-muted'));
+    return card;
+  }
+
+  // The studio sends a round: upload the file, write the row, move the stage.
+  function uploadStoryboard(request) {
+    formEditor('Upload storyboard', function (form) {
+      form.append(el('p', 'The client is asked to approve this round. PDF, PNG, JPG or MP4, up to 50MB.', 'admin-muted'));
+      var picker = field(form, 'file', 'Storyboard file', '', 'file');
+      picker.multiple = false; picker.accept = api.storyboardAccept; picker.required = true;
+      field(form, 'notes', 'Notes for the client', '', 'textarea');
+    }, async function (form) {
+      var file = form.elements.file.files[0];
+      var problem = api.validateStoryboardFile(file);
+      if (problem) throw new Error(problem);
+      var saved = await api.addStoryboard(request.id, file, form.elements.notes.value);
+      flash('Storyboard round ' + saved.round + ' sent for review.');
+    }, 'Send for review');
+  }
+
+  function storyboardSection(body, request, secondary) {
+    var rounds = admin ? api.storyboardsFor(request.id) : api.client.storyboardsFor(request.id);
+    var canUpload = admin && api.canUploadStoryboard(request);
+    if (!rounds.length && !canUpload) return;
+    var limits = api.storyboardRevisions(request.id);
+    body.append(el('h3', 'Storyboard'));
+    body.append(el('p', 'Storyboard revisions used: ' + limits.used + ' of ' + limits.included, 'admin-muted'));
+    if (canUpload) secondary.push(button(rounds.length ? 'Upload new storyboard' : 'Upload storyboard', function () { uploadStoryboard(request); }));
+    if (!rounds.length) { body.append(el('p', 'No storyboard has been sent yet.', 'admin-muted')); return; }
+
+    var latest = rounds[rounds.length - 1], earlier = rounds.slice(0, -1);
+    // The client reviews the latest round while it is waiting on them.
+    if (!admin && latest.status === 'Ready') {
+      var card = el('div', undefined, 'sb-current');
+      card.append(el('p', 'This storyboard is waiting for your approval.', 'workflow-notice'), storyboardRound(latest, true));
+      var bar = actionBar(), notes = feedbackBox('sb-feedback-' + latest.id, 'What should we change?');
+      var approve = barButton('Approve storyboard', 'btn-success'), changes = barButton('Request changes');
+      approve.onclick = function () {
+        bar.run(approve, async function () {
+          await api.client.reviewStoryboard(latest.id, true);
+          flash('Storyboard approved. We will invoice the 45% storyboard milestone next.');
+        });
+      };
+      changes.onclick = function () {
+        // First click reveals the box; the second sends what is in it.
+        if (notes.hidden) { notes.hidden = false; notes.input.focus(); changes.textContent = 'Send change request'; return; }
+        bar.run(changes, async function () {
+          await api.client.reviewStoryboard(latest.id, false, notes.input.value);
+          flash('Thanks — your notes are with the studio.');
+        });
+      };
+      bar.row.append(changes, approve);
+      card.append(notes, bar);
+      body.append(card);
+    } else {
+      body.append(storyboardRound(latest, true));
+      // Once approved, say plainly what the client owes before production.
+      if (!admin && latest.status === 'Approved' && request.stage === 'Storyboard Approved') {
+        var owed = api.paymentsFor(request.id).find(function (payment) { return payment.milestone === 'storyboard'; });
+        body.append(el('p', 'Storyboard approved. Next: 45% payment of ' + api.formatMoney(owed && owed.amount, 'the storyboard milestone')
+          + ' to start production. We’ll send a PayPal invoice.', 'workflow-notice'));
+      }
+    }
+    if (earlier.length) {
+      body.append(el('h4', 'Earlier rounds'));
+      earlier.slice().reverse().forEach(function (round) { body.append(storyboardRound(round, false)); });
+    }
+  }
+
+  /* Preview and final video ------------------------------------------------ */
+  // The preview always plays inline and is never offered as a download.
+  function previewPlayer(request, version) {
+    var box = el('div', undefined, 'video-preview');
+    box.append(el('p', 'Loading the preview…', 'admin-muted'));
+    var url = admin ? api.videoUrl('preview', version.previewPath) : api.client.previewUrl(request.id);
+    url.then(function (href) {
+      var player = document.createElement('video');
+      player.className = 'video-preview__player'; player.src = href; player.controls = true;
+      player.setAttribute('controlsList', 'nodownload'); player.setAttribute('playsinline', '');
+      player.setAttribute('aria-label', 'Preview of ' + request.title);
+      var caption = el('p', 'Preview (watermarked) · V' + version.number, 'video-preview__caption');
+      box.replaceChildren(player, caption);
+    }).catch(function (problem) {
+      box.replaceChildren(el('p', 'Couldn’t load the preview. ' + problem.message, 'workflow-error'));
+    });
+    return box;
+  }
+
+  // The studio's upload dialogs. Both go through FijlyVideoStore.
+  function uploadVideo(request, kind) {
+    var preview = kind === 'preview';
+    formEditor(preview ? 'Upload preview video' : 'Upload final video', function (form) {
+      form.append(el('p', preview
+        ? 'The client is asked to approve this cut. MP4, WEBM or MOV, up to 50MB.'
+        : 'The delivered file. It stays locked to the client until the final 40% payment is settled. MP4, WEBM or MOV, up to 50MB.', 'admin-muted'));
+      var picker = field(form, 'file', preview ? 'Preview file' : 'Final file', '', 'file');
+      picker.multiple = false; picker.accept = window.FijlyVideoStore.accept; picker.required = true;
+      if (preview) field(form, 'notes', 'Notes for the client', '', 'textarea');
+    }, async function (form) {
+      var file = form.elements.file.files[0];
+      var problem = window.FijlyVideoStore.validate(file);
+      if (problem) throw new Error(problem);
+      if (preview) {
+        var version = await api.addPreviewVideo(request.id, file, form.elements.notes.value);
+        flash('Preview V' + version.number + ' sent for review.');
+      } else {
+        await api.addFinalVideo(request.id, file);
+        flash('Final video uploaded. It unlocks for the client when the final payment is settled.');
+      }
+    }, preview ? 'Send for review' : 'Upload final video');
+  }
+
+  // The client's locked / unlocked delivery card.
+  function deliveryCard(request) {
+    var unlocked = api.finalUnlocked(request.id), finalVersion = api.latestFinal(request.id);
+    var owed = api.paymentsFor(request.id).find(function (payment) { return payment.milestone === 'final'; });
+    var card = el('div', undefined, 'delivery-card');
+    function locked() {
+      card.replaceChildren(el('p', '🔒 Final download unlocks after the final 40% payment ('
+        + api.formatMoney(owed && owed.amount, 'the final milestone') + '). We’ll send a PayPal invoice.', 'delivery-card__locked'));
+    }
+    if (!unlocked || !finalVersion) { locked(); return card; }
+    // Storage has the last word on whether the file is readable, so ask it for
+    // the URL before promising a download. A refusal means still locked.
+    card.append(el('p', 'Preparing your download…', 'admin-muted'));
+    api.client.finalUrl(request.id).then(function (href) {
+      var link = el('a', 'Download final video', 'btn btn-primary btn--md');
+      link.href = href; link.download = ''; link.rel = 'noopener';
+      card.replaceChildren(el('p', 'Your final video is ready.', 'workflow-notice'), link);
+    }).catch(function () { locked(); });
+    return card;
+  }
+
+  function videoSection(body, request, secondary) {
+    var versions = api.versionsFor(request.id), preview = api.latestPreview(request.id);
+    var canPreview = admin && api.canUploadPreview(request), canFinal = admin && api.canUploadFinal(request);
+    var notes = api.videoFeedbackFor(request.id);
+    if (!versions.length && !canPreview && !canFinal) return;
+    var limits = api.videoRevisions(request.id);
+    body.append(el('h3', 'Video'));
+    body.append(el('p', 'Video revisions used: ' + limits.used + ' of ' + limits.included, 'admin-muted'));
+    if (canPreview) secondary.push(button(preview ? 'Upload new preview' : 'Upload preview video', function () { uploadVideo(request, 'preview'); }));
+    if (canFinal) secondary.push(button('Upload final video', function () { uploadVideo(request, 'final'); }));
+
+    if (preview) body.append(previewPlayer(request, preview));
+    else if (!admin) body.append(el('p', 'Your first cut will play here as soon as it is ready.', 'admin-muted'));
+
+    // The client approves the cut, or sends notes back.
+    if (!admin && request.stage === 'Video Ready for Preview') {
+      var bar = actionBar(), feedbackNotes = feedbackBox('video-feedback-' + request.id, 'What should we change?');
+      var approve = barButton('Approve video', 'btn-success'), changes = barButton('Request changes');
+      approve.onclick = function () {
+        bar.run(approve, async function () {
+          await api.client.reviewVideo(request.id, true);
+          flash('Video approved. We will invoice the final 40% and release your files.');
+        });
+      };
+      changes.onclick = function () {
+        if (feedbackNotes.hidden) { feedbackNotes.hidden = false; feedbackNotes.input.focus(); changes.textContent = 'Send change request'; return; }
+        bar.run(changes, async function () {
+          await api.client.reviewVideo(request.id, false, feedbackNotes.input.value);
+          flash('Thanks — your notes are with the studio.');
+        });
+      };
+      bar.row.append(changes, approve);
+      body.append(feedbackNotes, bar);
+    }
+    // Delivery: locked until the final payment lands.
+    if (!admin && ['Video Approved', 'Completed'].includes(request.stage)) {
+      body.append(el('h4', request.stage === 'Completed' ? 'Project complete' : 'Final delivery'), deliveryCard(request));
+    }
+
+    // The studio's own view of what has been sent.
+    if (admin && versions.length) {
+      body.append(el('h4', 'Versions'));
+      versions.slice().reverse().forEach(function (version) {
+        var row = el('div', undefined, 'workflow-entry');
+        row.append(el('strong', 'V' + version.number + ' · ' + date(version.createdAt)));
+        if (version.notes) row.append(el('p', version.notes));
+        var files = el('div', undefined, 'workflow-version-line');
+        if (version.previewPath) files.append(videoButton('Open preview', 'preview', version.previewPath));
+        if (version.finalPath) files.append(videoButton('Open final file', 'final', version.finalPath));
+        if (!version.previewPath && !version.finalPath) files.append(el('span', 'No video file attached.', 'admin-muted'));
+        row.append(files);
+        body.append(row);
+      });
+    }
+    if (notes.length) {
+      body.append(el('h4', 'Client video feedback'));
+      notes.slice().reverse().forEach(function (entry) {
+        var row = el('div', undefined, 'workflow-entry');
+        row.append(el('strong', (entry.approved ? 'Approved' : 'Changes requested') + ' · ' + date(entry.at)));
+        if (entry.text) row.append(el('blockquote', entry.text, 'workflow-feedback'));
+        body.append(row);
+      });
+    }
+  }
+
+  // Opens a stored video in a new tab through FijlyVideoStore. The tab is
+  // opened inside the click so pop-up blockers allow it.
+  function videoButton(label, kind, path) {
+    var node = el('button', label, 'btn btn-outline btn--md');
+    node.type = 'button';
+    node.onclick = function () {
+      if (node.disabled) return;
+      var tab = window.open('', '_blank');
+      run(node, async function () {
+        try { var href = await api.videoUrl(kind, path); if (tab) { tab.opener = null; tab.location.href = href; } else window.open(href, '_blank', 'noopener'); }
+        catch (problem) { if (tab) tab.close(); throw problem; }
+      });
+    };
+    return node;
+  }
+
+  // Everything the milestone workflow adds to a project, in one call.
+  function milestoneSections(body, request, secondary) {
+    body.append(progressStepper(request));
+    storyboardSection(body, request, secondary);
+    videoSection(body, request, secondary);
+  }
+
   function renderDetail() {
     if(!current)return;var kind=current.kind,item=admin?api.get(kind,current.id):api.client.get(kind,current.id),request=requestFor(kind,item),body=detail.body,secondary=[],primary=[];
     detail.title.textContent=kind==='revisions'?'Revision round '+item.round+' · '+request.title:request.title;body.replaceChildren();
@@ -175,7 +505,7 @@
       // The stage is the project's headline status; the request status stays
       // beside it for the production workflow.
       var statusLine=el('div',undefined,'workflow-version-line');statusLine.append(stageBadge(request.stage),badge(item.status));
-      body.append(statusLine,factGrid(facts));
+      body.append(statusLine,progressStepper(request),factGrid(facts));
       body.append(el('h3','Price'),priceBreakdown(request));
       body.append(el('h3','Payments'),paymentsCard(request));
       body.append(el('h3','Project details'),projectFacts(request));
@@ -189,10 +519,25 @@
       body.append(el('h3','Instructions'),el('p',request.instructions,'workflow-feedback'),el('h3','Reference links'));
       if(!request.references.length)body.append(el('p','No reference links provided.','admin-muted'));
       request.references.forEach(function(url){var p=el('p'),a=el('a',url);a.href=url;a.target='_blank';a.rel='noopener noreferrer';p.append(a);body.append(p);});
-      body.append(el('h3','Attachments'));body.append(el('p',request.attachments.length?request.attachments.map(function(a){return a.name+(a.size?' ('+Math.ceil(a.size/1024)+' KB)':'');}).join('\n'):'No attachments.','workflow-feedback'));body.append(el('p','File names as supplied with the project.','admin-muted'));
+      body.append(el('h3','Attachments'));
+      if(!request.attachments.length)body.append(el('p','No attachments.','admin-muted'));
+      else{
+        var stored=request.attachments.filter(function(a){return a.path;});
+        var attachmentList=el('div',undefined,'attachment-list');
+        request.attachments.forEach(function(a){
+          var row=el('div',undefined,'attachment-row');
+          row.append(el('span',a.name,'attachment-row__name'));
+          // Older projects kept the names only, so there is nothing to fetch.
+          if(a.path)row.append(fileButton(admin?'Download':'Download your file',a.path));
+          attachmentList.append(row);
+        });
+        body.append(attachmentList);
+        if(!stored.length)body.append(el('p','File names as supplied with the project; this project was submitted before attachments were stored.','admin-muted'));
+      }
       if(admin && request.status!=='Completed'){secondary.push(button('Edit details',function(){editRequest(request,true);}));if(request.stage!=='Awaiting Payment')secondary.push(button('Change stage',function(){changeStage(request);}));if(request.status==='Submitted'&&request.stage!=='Awaiting Payment')secondary.push(button('Start review',async function(){await api.reviewRequest(request.id);flash('Marked as Under Review.');renderDetail();}));}
       // Nothing moves into production until the deposit is in.
       if(request.stage==='Awaiting Payment'){body.append(el('p',admin?'This project is waiting for its 15% project-start payment. Mark that payment paid on the Payments screen to start it.':'We will email your PayPal invoice for the 15% project-start payment. Your project starts as soon as it is confirmed.','workflow-notice'));footer(detail,secondary);return;}
+      milestoneSections(body,request,secondary);
       var linked=state.videos.find(function(v){return v.requestId===request.id;});
       if(linked)primary.push(button('Open video',function(){show('videos',linked.id);},true));
       else if(admin)primary.push(button('Move to production',function(){confirmation('Move to production','Create a linked production workspace for this request?',async function(){var video=await api.produce(request.id);show('videos',video.id);flash('Moved to production. Add the first version when the draft is ready.');});},true));
@@ -201,10 +546,12 @@
     var video=kind==='videos'?item:api.get('videos',item.videoId),latest=api.latest(video);
     if(kind==='videos')body.append(media(latest));
     var version=el('div',undefined,'workflow-version-line');version.append(stageBadge(request.stage),badge(item.status),el('span',latest?(video.status==='Completed'?'Final delivery · ':'')+'V'+latest.number+' · '+latest.filename+' · '+date(latest.createdAt):'Awaiting first draft'));body.append(version);
+    if(kind==='videos')body.append(progressStepper(request));
     if(!admin&&kind==='videos'&&video.status==='Client Review')body.append(reviewBar(video));
     body.append(factGrid(facts));
     body.append(el('h3','Price'),priceBreakdown(request));
     body.append(el('h3','Payments'),paymentsCard(request));
+    if(kind==='videos')milestoneSections(body,request,secondary);
     secondary.push(button('Original request',function(){show('requests',request.id);}));
     if(admin&&kind==='videos')secondary.push(button('Change stage',function(){changeStage(request);}));
     if(kind==='revisions'){var f=video.feedback.find(function(value){return value.id===item.feedbackId;});body.append(el('h3','Client feedback · V'+item.baseVersion),el('blockquote',f.text,'workflow-feedback'),el('p',f.author+' · '+date(f.at),'admin-muted'));secondary.push(button('Open video',function(){show('videos',video.id);}));}
@@ -285,6 +632,6 @@
   if(!admin)document.querySelector('#client-project-search').addEventListener('input',renderClient);
   api.subscribe(function(changed){
     if(admin && changed.includes('clients'))document.querySelectorAll('[data-workflow-list] [data-filter="client"]').forEach(function(select){var value=select.value;select.replaceChildren();var all=el('option','All clients');all.value='all';select.append(all);state.clients.forEach(function(c){var option=el('option',c.name);option.value=c.id;select.append(option);});select.value=state.clients.some(function(c){return c.id===value;})?value:'all';filters[select.closest('[data-workflow-list]').dataset.workflowList].client=select.value;});
-    if(changed.some(function(k){return ['clients','requests','videos','revisions','payments'].includes(k);})) {if(admin)Object.keys(filters).forEach(renderList);else renderClient();if(detail.node.open){try{renderDetail();}catch(error){detail.node.close();current=null;}}}
+    if(changed.some(function(k){return ['clients','requests','videos','revisions','payments','storyboards','videoFeedback'].includes(k);})) {if(admin)Object.keys(filters).forEach(renderList);else renderClient();if(detail.node.open){try{renderDetail();}catch(error){detail.node.close();current=null;}}}
   });
 })();

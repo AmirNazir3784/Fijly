@@ -1,1 +1,17 @@
-{"scans":23,"issues":[],"errors":[]}
+node:internal/process/promises:394
+    triggerUncaughtException(err, true /* fromPromise */);
+    ^
+
+page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:8766/index.html
+Call log:
+[2m  - navigating to "http://localhost:8766/index.html", waiting until "domcontentloaded"[22m
+
+    at page.<computed> (C:\Users\Mister Naveed\OneDrive\Desktop\FIJLY\qa\runtime.cjs:104:30)
+    at C:\Users\Mister Naveed\OneDrive\Desktop\FIJLY\qa\final_browser.cjs:5:54 {
+  log: [
+    '  - navigating to "http://localhost:8766/index.html", waiting until "domcontentloaded"'
+  ],
+  name: 'Error'
+}
+
+Node.js v24.14.1

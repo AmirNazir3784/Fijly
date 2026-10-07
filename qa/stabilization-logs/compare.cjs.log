@@ -1,1 +1,11 @@
-Seven retained Client layouts passed.
+page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:8766/studio.html
+Call log:
+[2m  - navigating to "http://localhost:8766/studio.html", waiting until "domcontentloaded"[22m
+
+    at page.<computed> (C:\Users\Mister Naveed\OneDrive\Desktop\FIJLY\qa\runtime.cjs:104:30)
+    at C:\Users\Mister Naveed\OneDrive\Desktop\FIJLY\qa\compare.cjs:5:11 {
+  log: [
+    '  - navigating to "http://localhost:8766/studio.html", waiting until "domcontentloaded"'
+  ],
+  name: 'Error'
+}

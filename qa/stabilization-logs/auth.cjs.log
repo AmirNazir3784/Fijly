@@ -1,14 +1,11 @@
-{
-  "checks": [
-    "Signed out: studio.html and admin.html redirect to login.html; the portal starts inert under the loading overlay",
-    "Login form: labels, email type, show/hide toggle, wrong-password error with the button restored, no overflow at five widths, axe clean",
-    "Admin: sign in -> admin.html, real name in sidebar and Settings, FIJLY_AUTH set, studio data renders, login.html forwards when signed in, sign out -> login.html, other tab follows, session cleared",
-    "Client: sign in -> studio.html with the real name and client id; admin.html redirects to studio.html; sign out works",
-    "No profile row: sign-in refused with a clear message; an existing session without a profile is signed out of the portals",
-    "No linked workspace: client sees the welcome message with sign out and a link home, no data is loaded; an admin on the Client portal is sent to the Admin portal",
-    "SDK blocked: overlay stays up with an explanation, Try again and Go to sign in; the portal stays inert",
-    "Landing page: public, only the pinned SDK loads (no Supabase calls or session); both Sign in links and the footer Studio link point to login.html"
+page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:8766/studio.html
+Call log:
+[2m  - navigating to "http://localhost:8766/studio.html", waiting until "load"[22m
+
+    at page.<computed> (C:\Users\Mister Naveed\OneDrive\Desktop\FIJLY\qa\runtime.cjs:104:30)
+    at C:\Users\Mister Naveed\OneDrive\Desktop\FIJLY\qa\auth.cjs:91:16 {
+  log: [
+    '  - navigating to "http://localhost:8766/studio.html", waiting until "load"'
   ],
-  "scans": 3,
-  "errors": []
+  name: 'Error'
 }

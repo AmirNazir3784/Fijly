@@ -1,25 +1,12 @@
-{
-  checks: [
-    '1440px: all seven deep links, navigation, active state, titles, focus, scroll and overflow',
-    '1024px: all seven deep links, navigation, active state, titles, focus, scroll and overflow',
-    '768px: all seven deep links, navigation, active state, titles, focus, scroll and overflow',
-    '375px: all seven deep links, navigation, active state, titles, focus, scroll and overflow',
-    '390px: all seven deep links, navigation, active state, titles, focus, scroll and overflow',
-    'Sidebar: open, close button, backdrop, Escape, forward/reverse focus trap, return focus, desktop resize',
-    'Hash changes, browser back/forward and invalid hash fallback',
-    'All project filters and real search empty state',
-    'Client settings: no unsaved notification switches; stored default platform and length present',
-    'Preview play/pause mouse and keyboard, synchronized names, fullscreen',
-    'Projects are created through submit_project and appear in the request history',
-    'Projects mobile cards: no horizontal scrolling; keyboard opens the record',
-    '1440px marketing: anchors, menus where applicable, FAQ mouse/keyboard, overflow',
-    '1024px marketing: anchors, menus where applicable, FAQ mouse/keyboard, overflow',
-    '768px marketing: anchors, menus where applicable, FAQ mouse/keyboard, overflow',
-    '375px marketing: anchors, menus where applicable, FAQ mouse/keyboard, overflow',
-    '390px marketing: anchors, menus where applicable, FAQ mouse/keyboard, overflow',
-    'Motion study reduced-motion preference, Sign in and footer Studio links go through login.html (signed in: straight to the portal), return to website',
-    'Supporting pages: desktop, tablet and mobile',
-    'Direct file:// loading for both primary pages'
+page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:8766/studio.html#overview
+Call log:
+[2m  - navigating to "http://localhost:8766/studio.html#overview", waiting until "domcontentloaded"[22m
+
+    at page.<computed> (C:\Users\Mister Naveed\OneDrive\Desktop\FIJLY\qa\runtime.cjs:104:30)
+    at p.goto (C:\Users\Mister Naveed\OneDrive\Desktop\FIJLY\qa\functional.cjs:7:16)
+    at C:\Users\Mister Naveed\OneDrive\Desktop\FIJLY\qa\functional.cjs:15:12 {
+  log: [
+    '  - navigating to "http://localhost:8766/studio.html#overview", waiting until "domcontentloaded"'
   ],
-  errors: []
+  name: 'Error'
 }
