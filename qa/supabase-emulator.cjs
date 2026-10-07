@@ -8,8 +8,15 @@
    - RLS stand-in: admins read and write everything; a client reads and
      writes its own client's rows (directly or through their video or script)
      and its own profile, never admin_settings; anonymous callers see nothing.
-   - contact_submissions (landing page briefs) and orders (order.html): anyone
-     may insert, only admins may read (and update orders).
+   - contact_submissions (landing page briefs) and orders (the retired order
+     form): anyone may insert, only admins may read (and update orders).
+   - Milestone workflow: pricing (anyone reads, admin writes), payments and
+     storyboards (clients read their own, admin manages), and the new project
+     columns on requests. Clients may no longer INSERT into requests at all.
+   - RPCs under /rest/v1/rpc/: ensure_client_workspace, submit_project,
+     admin_set_payment_status and review_storyboard, mirroring the SQL — the
+     price is read from pricing server-side, three payment rows are created,
+     and paying a milestone advances requests.stage.
    Supports what the portals send: select with eq filters, order and limit;
    insert, update and delete with return=representation; single objects.
    Storage: the private `client-assets` bucket (upload, signed URL, download
@@ -22,7 +29,7 @@ const COLUMNS = {
   profiles: 'id email full_name role client_id avatar_url created_at updated_at',
   clients: 'id name status contact_name contact_email website notes created_at updated_at',
   client_settings: 'id client_id default_length default_platform created_at updated_at',
-  requests: 'id client_id title status priority deadline video_type platform brief reference_urls attachment_names length submitted_by created_at updated_at',
+  requests: 'id client_id title status priority deadline video_type platform brief reference_urls attachment_names length submitted_by created_at updated_at duration_seconds website purpose target_audience video_style brand_colors has_script has_voice_over script_file_path voice_over_file_path base_price script_price voice_over_price total_price stage',
   videos: 'id client_id request_id title video_type status deadline assigned_editor completed_at created_at updated_at',
   versions: 'id video_id version_number filename notes file_url revision_id created_at',
   feedback: 'id video_id version_id author_id author_role content created_at',
@@ -31,7 +38,10 @@ const COLUMNS = {
   scripts: 'id video_id client_id title status created_at updated_at',
   script_scenes: 'id script_id scene_order label content created_at updated_at',
   activity_log: 'id client_id video_id actor_id action details created_at',
-  admin_settings: 'id admin_id studio_name studio_email default_length default_priority default_lead_days notify_new_request notify_revision notify_approval created_at updated_at',
+  admin_settings: 'id admin_id studio_name studio_email default_length default_priority default_lead_days notify_new_request notify_revision notify_approval notify_weekly storyboard_revisions_included video_revisions_included created_at updated_at',
+  pricing: 'id item duration_seconds amount updated_at',
+  payments: 'id request_id client_id milestone percent amount status method reference paid_at marked_by created_at updated_at',
+  storyboards: 'id request_id client_id round file_path notes status client_feedback reviewed_at created_at updated_at',
   contact_submissions: 'id name email company project_type message plan created_at',
   orders: 'id name email company video_type duration price brief status payment_intent_id created_at updated_at'
 };
@@ -42,7 +52,16 @@ const PUBLIC_INSERT = {
   orders: { required: ['name', 'email', 'company', 'video_type', 'duration', 'price'], defaults: { status: 'pending' },
     checks: row => !row.status || ['pending', 'paid', 'processing', 'completed', 'cancelled'].includes(row.status) }
 };
-const UNIQUE = { versions: ['video_id', 'version_number'], revisions: ['video_id', 'round_number'], admin_settings: ['admin_id'], client_settings: ['client_id'] };
+const UNIQUE = { versions: ['video_id', 'version_number'], revisions: ['video_id', 'round_number'], admin_settings: ['admin_id'], client_settings: ['client_id'],
+  pricing: ['item', 'duration_seconds'], payments: ['request_id', 'milestone'], storyboards: ['request_id', 'round'] };
+// requests.stage, as in the table's CHECK constraint.
+const STAGES = ['Awaiting Payment', 'Project Submitted', 'Requirements Under Review', 'Information Requested',
+  'Storyboard In Progress', 'Storyboard Ready', 'Storyboard Changes Requested', 'Storyboard Approved',
+  'Video In Production', 'Video Ready for Preview', 'Video Revision Requested', 'Video Approved', 'Completed', 'Cancelled'];
+const VIDEO_TYPES = ['Product Launch', 'Homepage Video', 'Product Demo', 'Product Promo', 'SaaS Explainer', 'Tutorial / Onboarding'];
+const PAYMENT_STATUSES = ['due', 'paid', 'waived', 'refunded'];
+// Tables a client may read but never write: RLS grants them SELECT only.
+const CLIENT_READ_ONLY = ['requests', 'payments', 'storyboards', 'pricing'];
 
 // The demo records the portals were built against, frozen from the retired
 // session mock (mock-service.js + admin-data.js) when both portals moved to
@@ -60,7 +79,14 @@ function createDb(users) {
     db.clients.push({ id: c.id, name: c.name, status: c.status, contact_name: c.contact, contact_email: c.email, website: null, notes: c.notes, created_at: '2026-08-01T09:00:00Z', updated_at: '2026-08-01T09:00:00Z' });
     db.client_settings.push({ id: 'settings-' + c.id, client_id: c.id, default_length: '60–90 sec', default_platform: 'Website', created_at: now, updated_at: now });
   });
-  s.requests.forEach(r => db.requests.push({ id: r.id, client_id: r.client, title: r.title, status: r.status, priority: r.priority, deadline: r.deadline, video_type: r.videoType, platform: r.platform, brief: r.instructions, reference_urls: r.references, attachment_names: r.attachments.map(a => a.name), length: r.length, submitted_by: null, created_at: r.requestedAt, updated_at: r.requestedAt }));
+  // Seeded requests predate the wizard: they carry the table's default stage
+  // and no per-item pricing, exactly like the rows already in the live project.
+  s.requests.forEach(r => db.requests.push({ id: r.id, client_id: r.client, title: r.title, status: r.status, priority: r.priority, deadline: r.deadline, video_type: r.videoType, platform: r.platform, brief: r.instructions, reference_urls: r.references, attachment_names: r.attachments.map(a => a.name), length: r.length, submitted_by: null, created_at: r.requestedAt, updated_at: r.requestedAt, duration_seconds: null, website: null, purpose: null, target_audience: null, video_style: null, brand_colors: null, has_script: false, has_voice_over: false, script_file_path: null, voice_over_file_path: null, base_price: null, script_price: null, voice_over_price: null, total_price: null, stage: 'Project Submitted' }));
+  // The published price list (the live project's seed values).
+  const prices = { base: { 30: 300, 60: 500, 90: 700, 120: 950 }, script: { 30: 0, 60: 0, 90: 0, 120: 0 }, voice_over: { 30: 0, 60: 0, 90: 0, 120: 0 } };
+  Object.keys(prices).forEach(item => [30, 60, 90, 120].forEach(seconds => db.pricing.push({
+    id: 'pricing-' + item + '-' + seconds, item, duration_seconds: seconds, amount: prices[item][seconds].toFixed(2), updated_at: now
+  })));
   s.videos.forEach(v => {
     const r = request(v.requestId), created = (v.activity[0] || {}).at || r.requestedAt;
     db.videos.push({ id: v.id, client_id: r.client, request_id: r.id, title: r.title, video_type: r.videoType, status: v.status, deadline: r.deadline, assigned_editor: r.assignedEditor || null, completed_at: v.completedAt || null, created_at: created, updated_at: created });
@@ -80,17 +106,27 @@ function createDb(users) {
   s.assets.forEach(a => db.assets.push({ id: a.id, client_id: a.client, name: a.name, category: a.category, file_type: a.fileType, file_size: a.size, file_url: null, notes: a.notes, uploaded_by: null, created_at: a.uploadedAt, updated_at: a.uploadedAt }));
   Object.values(users).forEach(u => { if (u.profile) db.profiles.push({ id: u.id, email: u.email, avatar_url: null, created_at: '2026-01-01T00:00:00Z', updated_at: '2026-01-01T00:00:00Z', ...u.profile }); });
   const st = s.settings;
-  db.admin_settings.push({ id: 'admin-settings-1', admin_id: users.admin.id, studio_name: st.studioName, studio_email: st.studioEmail, default_length: st.defaultLength, default_priority: st.defaultPriority, default_lead_days: st.defaultLeadDays, notify_new_request: st.notifyNewRequest, notify_revision: st.notifyRevision, notify_approval: st.notifyApproval, created_at: now, updated_at: now });
+  db.admin_settings.push({ id: 'admin-settings-1', admin_id: users.admin.id, studio_name: st.studioName, studio_email: st.studioEmail, default_length: st.defaultLength, default_priority: st.defaultPriority, default_lead_days: st.defaultLeadDays, notify_new_request: st.notifyNewRequest, notify_revision: st.notifyRevision, notify_approval: st.notifyApproval, notify_weekly: true, storyboard_revisions_included: 2, video_revisions_included: 2, created_at: now, updated_at: now });
   return db;
 }
 
 function error(status, code, message) { return { status, body: { code, message, details: null, hint: null } }; }
 
+// public.get_user_role() / public.get_user_client_id(): both read the live
+// profiles row, so a workspace created by ensure_client_workspace during a
+// test is picked up straight away.
+function callerProfile(db, caller) {
+  if (!caller) return null;
+  return db.profiles.find(row => row.id === caller.id) || caller.profile || null;
+}
+function callerRole(db, caller) { const profile = callerProfile(db, caller); return profile && profile.role; }
+function callerClientId(db, caller) { const profile = callerProfile(db, caller); return (profile && profile.client_id) || null; }
+
 // Returns { status, body } for one REST call.
 function handle(db, caller, method, url, headers, body) {
   const table = url.pathname.replace(/^\/rest\/v1\//, '');
   if (!COLUMNS[table]) return error(404, 'PGRST205', `Could not find the table 'public.${table}' in the schema cache`);
-  const columns = COLUMNS[table], role = caller && caller.profile && caller.profile.role;
+  const columns = COLUMNS[table], role = callerRole(db, caller), callerClient = callerClientId(db, caller);
   const filters = [], params = {};
   for (const [key, value] of url.searchParams) {
     if (['select', 'order', 'limit', 'offset', 'columns', 'on_conflict'].includes(key)) { params[key] = value; continue; }
@@ -107,8 +143,9 @@ function handle(db, caller, method, url, headers, body) {
     if (table === 'script_scenes') { const script = db.scripts.find(x => x.id === row.script_id); return script && script.client_id; }
     return null;
   };
-  const own = row => !!(caller && caller.profile && caller.profile.client_id && owner(row) === caller.profile.client_id);
+  const own = row => !!(caller && callerClient && owner(row) === callerClient);
   const visible = row => {
+    if (table === 'pricing') return true; // "Anyone reads pricing"
     if (!caller) return false;
     if (role === 'admin') return true;
     if (table === 'profiles') return row.id === caller.id;
@@ -123,7 +160,11 @@ function handle(db, caller, method, url, headers, body) {
     return represent || method === 'GET' ? { status: status || 200, body: copy } : { status: 204 };
   };
   const unknown = row => Object.keys(row).find(key => !columns.has(key));
-  const writable = row => role === 'admin' || (table === 'profiles' ? row.id === caller.id : table !== 'admin_settings' && !PUBLIC_INSERT[table] && own(row));
+  // A client writes only its own rows, and never the read-only tables: every
+  // project now goes through submit_project, so an INSERT into requests fails
+  // here exactly as it does under the live policies.
+  const writable = row => role === 'admin' || (table === 'profiles' ? row.id === caller.id
+    : table !== 'admin_settings' && !PUBLIC_INSERT[table] && !CLIENT_READ_ONLY.includes(table) && own(row));
   // The contact and order forms insert as anyone (signed in or not) and can't
   // read the row back; only admins read or change them.
   if (PUBLIC_INSERT[table] && method === 'POST' && !represent) {
@@ -135,7 +176,7 @@ function handle(db, caller, method, url, headers, body) {
     db[table].push(Object.assign(Object.fromEntries([...columns].map(key => [key, null])), { id: crypto.randomUUID(), created_at: now }, columns.has('updated_at') ? { updated_at: now } : {}, PUBLIC_INSERT[table].defaults, input));
     return { status: 201 };
   }
-  if (!caller) return error(401, '42501', 'permission denied for table ' + table);
+  if (!caller && !(method === 'GET' && table === 'pricing')) return error(401, '42501', 'permission denied for table ' + table);
   // Otherwise RLS hides these rows from non-admins: reads return nothing.
 
   if (method === 'GET') {
@@ -181,6 +222,149 @@ function handle(db, caller, method, url, headers, body) {
   return error(405, 'QA000', 'Method not supported by the QA emulator: ' + method);
 }
 
+/* RPCs -------------------------------------------------------------------
+   The four SECURITY DEFINER functions the portals call, with the same
+   argument names, the same validation order and the same side effects as the
+   SQL in the live project. They run as the caller's role, so every "admins
+   only" / "your workspace only" check is kept here too. */
+const rpcError = message => ({ status: 400, body: { code: 'P0001', message, details: null, hint: null } });
+const round2 = value => Math.round(value * 100) / 100;
+const clip = (value, limit) => (value === null || value === undefined ? null : String(value).slice(0, limit));
+
+const RPC = {
+  // ensure_client_workspace(p_company, p_website) -> client_id
+  ensure_client_workspace(db, caller, args) {
+    if (!caller) return rpcError('Please sign in first.');
+    const profile = db.profiles.find(row => row.id === caller.id);
+    if (!profile || profile.role !== 'client') return rpcError('Only client accounts can start projects.');
+    if (profile.client_id) return { status: 200, body: profile.client_id };
+    let name = String(args.p_company || '').trim().slice(0, 200);
+    if (!name) return rpcError('Company name is required.');
+    // A duplicate company name gets a short suffix, as in the SQL.
+    if (db.clients.some(row => String(row.name).toLowerCase() === name.toLowerCase())) {
+      name = name.slice(0, 190) + ' ' + crypto.randomUUID().slice(0, 6);
+    }
+    const now = new Date().toISOString(), id = crypto.randomUUID();
+    db.clients.push({ id, name, status: 'Onboarding', contact_name: profile.full_name, contact_email: profile.email,
+      website: String(args.p_website || '').trim() || null, notes: null, created_at: now, updated_at: now });
+    if (!db.client_settings.some(row => row.client_id === id)) {
+      db.client_settings.push({ id: 'settings-' + id, client_id: id, default_length: '60–90 sec', default_platform: 'Website', created_at: now, updated_at: now });
+    }
+    profile.client_id = id;
+    return { status: 200, body: id };
+  },
+
+  // submit_project(...) -> request_id. Prices the project from public.pricing
+  // and creates the three milestone payment rows.
+  submit_project(db, caller, args) {
+    if (!caller) return rpcError('Please sign in first.');
+    const profile = db.profiles.find(row => row.id === caller.id && row.role === 'client');
+    const clientId = profile && profile.client_id;
+    if (!clientId) return rpcError('Set up your workspace before submitting a project.');
+    if (!String(args.p_title || '').trim()) return rpcError('Project name is required.');
+    if (!String(args.p_brief || '').trim()) return rpcError('Project details are required.');
+    if (!VIDEO_TYPES.includes(args.p_video_type)) return rpcError('Unknown video type.');
+    if (![30, 60, 90, 120].includes(Number(args.p_duration))) return rpcError('Unknown video length.');
+    const hasScript = !!args.p_has_script, hasVoice = !!args.p_has_voice_over;
+    const scriptPath = args.p_script_file_path || null, voicePath = args.p_voice_over_file_path || null;
+    if (hasScript && !scriptPath) return rpcError('Upload your script file.');
+    if (hasVoice && !voicePath) return rpcError('Upload your voice over file.');
+    // A supplied file must sit in this client's own storage folder.
+    if (scriptPath && String(scriptPath).split('/')[0] !== clientId) return rpcError('Invalid script file.');
+    if (voicePath && String(voicePath).split('/')[0] !== clientId) return rpcError('Invalid voice over file.');
+
+    const seconds = Number(args.p_duration);
+    const priceOf = item => {
+      const row = db.pricing.find(entry => entry.item === item && Number(entry.duration_seconds) === seconds);
+      return row ? Number(row.amount) : null;
+    };
+    const base = priceOf('base');
+    if (base === null) return rpcError('Pricing is not configured.');
+    const script = hasScript ? 0 : (priceOf('script') || 0);
+    const voice = hasVoice ? 0 : (priceOf('voice_over') || 0);
+    const total = base + script + voice;
+    const first = round2(total * 0.15), second = round2(total * 0.45);
+
+    const now = new Date().toISOString(), id = crypto.randomUUID();
+    db.requests.push({ id, client_id: clientId, submitted_by: caller.id, title: String(args.p_title).trim().slice(0, 200),
+      video_type: args.p_video_type, brief: clip(args.p_brief, 5000), length: seconds + ' seconds', duration_seconds: seconds,
+      deadline: args.p_delivery_date || null, platform: null, priority: 'Normal',
+      reference_urls: args.p_reference_urls || [], attachment_names: args.p_attachment_names || [], status: 'Submitted',
+      website: clip(args.p_website, 300), purpose: clip(args.p_purpose, 2000), target_audience: clip(args.p_target_audience, 2000),
+      video_style: clip(args.p_video_style, 2000), brand_colors: clip(args.p_brand_colors, 500),
+      has_script: hasScript, has_voice_over: hasVoice, script_file_path: scriptPath, voice_over_file_path: voicePath,
+      base_price: base.toFixed(2), script_price: script.toFixed(2), voice_over_price: voice.toFixed(2), total_price: total.toFixed(2),
+      stage: 'Awaiting Payment', created_at: now, updated_at: now });
+
+    [['start', 15, first], ['storyboard', 45, second], ['final', 40, round2(total - first - second)]].forEach(([milestone, percent, amount]) => {
+      db.payments.push({ id: crypto.randomUUID(), request_id: id, client_id: clientId, milestone, percent,
+        amount: amount.toFixed(2), status: 'due', method: null, reference: null, paid_at: null, marked_by: null,
+        created_at: now, updated_at: now });
+    });
+    db.activity_log.push({ id: crypto.randomUUID(), client_id: clientId, video_id: null, actor_id: caller.id,
+      action: 'Project submitted', details: clip(args.p_title, 200), created_at: now });
+    return { status: 200, body: id };
+  },
+
+  // admin_set_payment_status(p_payment_id, p_status, p_method, p_reference).
+  // Settling a milestone advances the project's stage.
+  admin_set_payment_status(db, caller, args) {
+    const role = callerRole(db, caller);
+    if (role !== 'admin') return rpcError('Admins only.');
+    if (!PAYMENT_STATUSES.includes(args.p_status)) return rpcError('Unknown payment status.');
+    const payment = db.payments.find(row => row.id === args.p_payment_id);
+    if (!payment) return rpcError('Payment not found.');
+    const now = new Date().toISOString(), settled = ['paid', 'waived'].includes(args.p_status);
+    Object.assign(payment, { status: args.p_status, method: clip(args.p_method, 50), reference: clip(args.p_reference, 200),
+      paid_at: settled ? now : null, marked_by: caller.id, updated_at: now });
+    if (settled) {
+      const request = db.requests.find(row => row.id === payment.request_id);
+      // Each milestone only moves the project on from the stage that owes it.
+      const moves = { start: ['Awaiting Payment', 'Project Submitted'], storyboard: ['Storyboard Approved', 'Video In Production'],
+        final: ['Video Approved', 'Completed'] }[payment.milestone];
+      if (request && moves && request.stage === moves[0]) {
+        request.stage = moves[1];
+        if (payment.milestone === 'final') request.status = 'Completed';
+        request.updated_at = now;
+      }
+    }
+    db.activity_log.push({ id: crypto.randomUUID(), client_id: payment.client_id, video_id: null, actor_id: caller.id,
+      action: 'Payment ' + args.p_status, details: payment.milestone + ' milestone (' + payment.percent + '%)', created_at: now });
+    return { status: 204 };
+  },
+
+  // review_storyboard(p_storyboard_id, p_approve, p_feedback). Used by the
+  // next task; included so the emulator matches the schema already applied.
+  review_storyboard(db, caller, args) {
+    const storyboard = db.storyboards.find(row => row.id === args.p_storyboard_id);
+    const clientId = callerClientId(db, caller);
+    if (!storyboard || storyboard.client_id !== clientId) return rpcError('Storyboard not found.');
+    if (storyboard.status !== 'Ready') return rpcError('This storyboard has already been reviewed.');
+    const now = new Date().toISOString(), request = db.requests.find(row => row.id === storyboard.request_id);
+    const feedback = String(args.p_feedback || '').trim();
+    if (args.p_approve) {
+      Object.assign(storyboard, { status: 'Approved', client_feedback: feedback || null, reviewed_at: now, updated_at: now });
+      if (request) { request.stage = 'Storyboard Approved'; request.updated_at = now; }
+    } else {
+      if (!feedback) return rpcError('Tell us what to change.');
+      const limit = db.admin_settings.reduce((most, row) => Math.max(most, row.storyboard_revisions_included ?? 2), 2);
+      const used = db.storyboards.filter(row => row.request_id === storyboard.request_id && row.status === 'Changes Requested').length;
+      if (used >= limit) return rpcError('You have used all ' + limit + ' included storyboard revisions. Please contact us for further changes.');
+      Object.assign(storyboard, { status: 'Changes Requested', client_feedback: feedback.slice(0, 5000), reviewed_at: now, updated_at: now });
+      if (request) { request.stage = 'Storyboard Changes Requested'; request.updated_at = now; }
+    }
+    db.activity_log.push({ id: crypto.randomUUID(), client_id: storyboard.client_id, video_id: null, actor_id: caller.id,
+      action: args.p_approve ? 'Storyboard approved' : 'Storyboard changes requested', details: 'Round ' + storyboard.round, created_at: now });
+    return { status: 204 };
+  }
+};
+
+// Returns { status, body } for one POST /rest/v1/rpc/<name>.
+function handleRpc(db, caller, name, body) {
+  if (!RPC[name]) return error(404, 'PGRST202', `Could not find the function public.${name} in the schema cache`);
+  return RPC[name](db, caller, body || {});
+}
+
 /* Simulated client: writes the same rows the Client portal writes (a request,
    revision feedback, an approval) straight to the test database, for suites
    that focus on the studio side. studio-client and round-b drive the real
@@ -213,7 +397,11 @@ const simClient = {
 
 /* Storage ------------------------------------------------------------------ */
 const BUCKET = 'client-assets', MAX_FILE = 52428800;
-const MIME = ['image/png', 'image/jpeg', 'image/gif', 'image/svg+xml', 'image/webp', 'application/pdf', 'video/mp4', 'video/webm', 'video/quicktime', 'font/woff2', 'font/woff', 'font/ttf', 'font/otf', 'application/zip'];
+// The bucket's allowed list, including the script and voice over types the
+// project wizard uploads.
+const MIME = ['image/png', 'image/jpeg', 'image/gif', 'image/svg+xml', 'image/webp', 'application/pdf', 'video/mp4', 'video/webm', 'video/quicktime',
+  'font/woff2', 'font/woff', 'font/ttf', 'font/otf', 'application/zip', 'audio/mpeg', 'audio/wav', 'audio/x-wav', 'audio/mp4', 'audio/x-m4a',
+  'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain'];
 const storageError = (status, message) => ({ status, body: { statusCode: String(status), error: message, message } });
 // Pulls the file part (field name "") out of the SDK's multipart upload.
 function filePart(buffer, contentType) {
@@ -230,7 +418,7 @@ function filePart(buffer, contentType) {
 }
 // Returns { status, body, raw?, type? } for one Storage call.
 function handleStorage(db, caller, method, url, headers, buffer) {
-  const role = caller && caller.profile && caller.profile.role, clientId = caller && caller.profile && caller.profile.client_id;
+  const role = callerRole(db, caller), clientId = callerClientId(db, caller);
   const rest = decodeURIComponent(url.pathname.replace(/^\/storage\/v1\/object\//, ''));
   const canRead = objectPath => role === 'admin' || (!!clientId && objectPath.split('/')[0] === clientId);
   if (method === 'GET' && rest.startsWith('sign/' + BUCKET + '/')) {
@@ -262,4 +450,4 @@ function handleStorage(db, caller, method, url, headers, buffer) {
   return storageError(400, 'Not supported by the QA emulator: ' + method + ' ' + url.pathname);
 }
 
-module.exports = { createDb, handle, handleStorage, COLUMNS, simClient };
+module.exports = { createDb, handle, handleRpc, handleStorage, COLUMNS, STAGES, VIDEO_TYPES, PAYMENT_STATUSES, simClient };

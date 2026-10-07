@@ -1,29 +1,29 @@
 {
-  "measuredAt": "2026-09-24T03:43:34.073Z",
+  "measuredAt": "2026-10-07T09:41:56.744Z",
   "note": "Local static server, Chromium, three fresh contexts. Diagnostic timings, not a production SLA. Gzip sizes are estimates; the QA server serves uncompressed files.",
   "reports": [
     {
       "portal": "studio",
       "samples": [
         {
-          "domReadyMs": 1515.9000000059605,
-          "loadMs": 1516.4000000059605,
-          "domNodes": 791,
-          "resources": 36
+          "domReadyMs": 615.5999999940395,
+          "loadMs": 615.7999999821186,
+          "domNodes": 734,
+          "resources": 42
         },
         {
-          "domReadyMs": 1513.7000000178814,
-          "loadMs": 1513.7000000178814,
-          "domNodes": 791,
-          "resources": 36
+          "domReadyMs": 620,
+          "loadMs": 620.2999999821186,
+          "domNodes": 734,
+          "resources": 42
         },
         {
-          "domReadyMs": 1495.800000011921,
-          "loadMs": 1496.0999999940395,
-          "domNodes": 791,
-          "resources": 36,
+          "domReadyMs": 603.3999999761581,
+          "loadMs": 603.8999999761581,
+          "domNodes": 734,
+          "resources": 42,
           "noopUpdates": {
-            "tenNoopSavesMs": 5.4000000059604645,
+            "tenNoopSavesMs": 0.7000000178813934,
             "domMutations": 0
           }
         }
@@ -33,24 +33,24 @@
       "portal": "admin",
       "samples": [
         {
-          "domReadyMs": 1506.0999999940395,
-          "loadMs": 1506.2000000178814,
-          "domNodes": 1841,
-          "resources": 38
+          "domReadyMs": 604,
+          "loadMs": 604.5,
+          "domNodes": 2045,
+          "resources": 41
         },
         {
-          "domReadyMs": 1524.0999999940395,
-          "loadMs": 1524.199999988079,
-          "domNodes": 1841,
-          "resources": 38
+          "domReadyMs": 559.1999999880791,
+          "loadMs": 559.2999999821186,
+          "domNodes": 2045,
+          "resources": 41
         },
         {
-          "domReadyMs": 1510.5,
-          "loadMs": 1510.5999999940395,
-          "domNodes": 1841,
-          "resources": 38,
+          "domReadyMs": 527,
+          "loadMs": 527.0999999940395,
+          "domNodes": 2045,
+          "resources": 41,
           "noopUpdates": {
-            "tenNoopSavesMs": 2.9000000059604645,
+            "tenNoopSavesMs": 1.4000000059604645,
             "domMutations": 0
           }
         }
@@ -61,14 +61,14 @@
     {
       "portal": "studio",
       "jsCssFiles": 17,
-      "jsCssBytes": 295127,
-      "jsCssGzipBytes": 74769
+      "jsCssBytes": 314674,
+      "jsCssGzipBytes": 80168
     },
     {
       "portal": "admin",
-      "jsCssFiles": 17,
-      "jsCssBytes": 338267,
-      "jsCssGzipBytes": 84323
+      "jsCssFiles": 18,
+      "jsCssBytes": 368940,
+      "jsCssGzipBytes": 93203
     }
   ],
   "sizes": [
@@ -78,24 +78,29 @@
       "gzipBytes": 3054
     },
     {
+      "file": "js/admin-payments.js",
+      "bytes": 13704,
+      "gzipBytes": 4043
+    },
+    {
       "file": "js/admin-sections.js",
-      "bytes": 46787,
-      "gzipBytes": 11152
+      "bytes": 46257,
+      "gzipBytes": 11176
     },
     {
       "file": "js/admin.js",
-      "bytes": 17670,
-      "gzipBytes": 4834
+      "bytes": 18973,
+      "gzipBytes": 5181
     },
     {
       "file": "js/client-portal.js",
-      "bytes": 25398,
-      "gzipBytes": 7660
+      "bytes": 26122,
+      "gzipBytes": 7937
     },
     {
       "file": "js/config.js",
-      "bytes": 389,
-      "gzipBytes": 286
+      "bytes": 617,
+      "gzipBytes": 393
     },
     {
       "file": "js/hero.js",
@@ -109,8 +114,8 @@
     },
     {
       "file": "js/order.js",
-      "bytes": 11530,
-      "gzipBytes": 4040
+      "bytes": 27329,
+      "gzipBytes": 8664
     },
     {
       "file": "js/portal-auth.js",
@@ -144,8 +149,8 @@
     },
     {
       "file": "js/supabase-data.js",
-      "bytes": 62782,
-      "gzipBytes": 16248
+      "bytes": 76248,
+      "gzipBytes": 19850
     },
     {
       "file": "js/video-gallery.js",
@@ -154,13 +159,13 @@
     },
     {
       "file": "js/workflow.js",
-      "bytes": 34263,
-      "gzipBytes": 10492
+      "bytes": 35650,
+      "gzipBytes": 11010
     },
     {
       "file": "css/admin.css",
-      "bytes": 43541,
-      "gzipBytes": 8722
+      "bytes": 44884,
+      "gzipBytes": 9068
     },
     {
       "file": "css/base.css",
@@ -169,8 +174,8 @@
     },
     {
       "file": "css/client-portal.css",
-      "bytes": 4863,
-      "gzipBytes": 1496
+      "bytes": 7490,
+      "gzipBytes": 2152
     },
     {
       "file": "css/components.css",
@@ -189,8 +194,8 @@
     },
     {
       "file": "css/marketing.css",
-      "bytes": 52469,
-      "gzipBytes": 11677
+      "bytes": 60624,
+      "gzipBytes": 13254
     },
     {
       "file": "css/studio-polish.css",

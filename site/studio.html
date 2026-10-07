@@ -146,6 +146,7 @@
 </div>
 
 </div>
+<div class="payment-banners" id="client-payment-banners"></div>
 <!-- STATS -->
 <div class="stats-grid">
 <article class="stat-card">
@@ -294,54 +295,18 @@
 </section>
 <!-- ================= VIDEO REQUESTS ================= -->
 <section aria-labelledby="h-requests" class="screen" data-screen="requests" data-title="Video Requests" hidden="" id="screen-requests">
-<div class="page-head"><h1 id="h-requests">Video Requests</h1><p>Kick off a new video — we'll scope it within one business day.</p></div>
+<div class="page-head"><h1 id="h-requests">Video Requests</h1><p>Start a new video project, and follow every brief you have sent us.</p></div>
 <div class="requests-grid">
-<form aria-describedby="request-demo" aria-labelledby="h-new-request" class="panel request-form" data-request-form="">
-<h2 id="h-new-request">New request</h2>
-<div class="form-group">
-<label class="field-label" for="req-name">Video title</label>
-<input class="input" id="req-name" maxlength="120" name="name" placeholder="e.g. Product onboarding walkthrough" required="" type="text" value=""/>
-</div>
-<fieldset class="form-group">
-<legend class="field-label">Video type</legend>
-<div class="chip-group">
-<label class="choice-chip"><input checked="" name="type" type="radio" value="SaaS Launch"/><span>SaaS Launch</span></label>
-<label class="choice-chip"><input name="type" type="radio" value="Product Demo"/><span>Product Demo</span></label>
-<label class="choice-chip"><input name="type" type="radio" value="Explainer"/><span>Explainer</span></label>
-<label class="choice-chip"><input name="type" type="radio" value="Tutorial"/><span>Tutorial</span></label>
-<label class="choice-chip"><input name="type" type="radio" value="Product Promo"/><span>Product Promo</span></label>
-<label class="choice-chip"><input name="type" type="radio" value="Homepage Video"/><span>Homepage Video</span></label>
-</div>
-</fieldset>
-<div class="form-group">
-<label class="field-label" for="req-brief">Brief</label>
-<textarea class="input" id="req-brief" maxlength="3000" name="brief" placeholder="Describe your audience, key message, scenes and call to action." required=""></textarea>
-</div>
-<div class="form-row">
-<div>
-<label class="field-label" for="req-length">Target length</label>
-<div class="input-wrap">
-<select class="input" id="req-length" name="length"><option>15–30 sec</option><option>30–45 sec</option><option selected="">60–90 sec</option><option>90–120 sec</option><option>2–3 min</option><option>3 min+</option></select>
-<svg aria-hidden="true" fill="none" height="15" stroke="#8A93A3" stroke-width="2" viewbox="0 0 24 24" width="15"><path d="M6 9l6 6 6-6"></path></svg>
-</div>
-</div>
-<div>
-<label class="field-label" for="req-due">Requested deadline</label>
-<div class="input-wrap">
-<input class="input" id="req-due" name="due" required="" type="date" value="2026-09-30"/>
-</div>
-</div>
-</div>
-<div class="form-row">
-<div class="form-group"><label class="field-label" for="req-platform">Platform</label><select class="input" id="req-platform" name="platform"><option>Website</option><option>YouTube</option><option>LinkedIn</option><option>Instagram</option><option>Paid ads</option></select></div>
-<div class="form-group"><label class="field-label" for="req-priority">Priority</label><select class="input" id="req-priority" name="priority"><option>Normal</option><option>Low</option><option>High</option><option>Urgent</option></select></div>
-</div>
-<div class="form-group"><label class="field-label" for="req-references">Reference links (one per line)</label><textarea class="input" id="req-references" name="references" placeholder="https://example.com/reference" rows="2"></textarea></div>
-<div class="form-group"><label class="field-label" for="req-attachments">Attachments (file names only; files are not uploaded)</label><input class="input workflow-file" id="req-attachments" multiple="" name="attachments" type="file"/></div>
-<p class="request-form__note" id="request-demo">Preview only: requests stay in this workspace. Files are not uploaded.</p>
-<button class="btn btn-primary btn--md btn--block" type="submit">Submit request</button>
-<p class="request-form__note" data-request-note="" hidden="" role="status">Request sent to the FIJLY studio. We will review your brief next.</p>
-</form>
+<section aria-labelledby="h-new-request" class="panel request-start">
+<h2 id="h-new-request">Start a new project</h2>
+<p class="panel__sub">Projects begin on the order page, where you choose your video length, add a script or voice over, and see your price and payment schedule before you submit.</p>
+<ul class="request-start__list">
+<li>15% to start, 45% at storyboard approval, 40% on final delivery.</li>
+<li>Bring your own script and voice over, or let us write and record them.</li>
+<li>We invoice each milestone through PayPal.</li>
+</ul>
+<a class="btn btn-primary btn--md btn--block" href="order.html">Start a new project <span aria-hidden="true">&rarr;</span></a>
+</section>
 <section aria-labelledby="h-open-requests" class="stack" data-request-list="">
 <h2 class="list-title" id="h-open-requests">Your requests</h2>
 </section>

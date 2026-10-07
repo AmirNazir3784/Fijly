@@ -50,6 +50,30 @@
     cell.append(typeof child === 'string' ? document.createTextNode(child) : child);
     row.append(cell);
   }
+  // Submitted projects still waiting for their project-start payment. They are
+  // deliberately kept out of "Needs your action": there is nothing to produce
+  // until the deposit is in, only an invoice to chase.
+  function renderAwaitingDeposit() {
+    var panel = document.getElementById('admin-awaiting-deposit');
+    if (!panel) return;
+    var list = document.getElementById('admin-awaiting-list');
+    var waiting = api.awaitingDeposit().slice().sort(function (a, b) { return a.requestedAt.localeCompare(b.requestedAt); });
+    list.replaceChildren();
+    document.getElementById('admin-awaiting-count').textContent = waiting.length + (waiting.length === 1 ? ' project' : ' projects');
+    panel.hidden = !waiting.length;
+    waiting.forEach(function (request) {
+      var row = node('li'), link = node('button', 'btn-link', request.title);
+      link.type = 'button';
+      link.addEventListener('click', function () { window.FijlyWorkflow.open('requests', request.id); });
+      var identity = node('div');
+      identity.append(link, node('span', 'admin-muted admin-block', client(request.client).name));
+      var deposit = api.paymentsFor(request.id).find(function (payment) { return payment.milestone === 'start'; });
+      row.append(identity, node('span', 'admin-action-label', deposit
+        ? api.formatMoney(deposit.amount, 'Price to confirm') + ' deposit due'
+        : 'Deposit due'));
+      list.append(row);
+    });
+  }
   function renderDashboard() {
     var actions = api.adminActions();
     var queue = document.getElementById('admin-action-queue');
@@ -67,6 +91,7 @@
       row.append(identity, node('span', 'admin-action-label', item.label)); queue.append(row);
     });
     if (!actions.length) queue.append(node('li', 'admin-muted', 'All caught up. New requests and review outcomes will appear here.'));
+    renderAwaitingDeposit();
     ['requests', 'revisions', 'scripts', 'videos'].forEach(function (section) {
       var link = document.querySelector('.sidebar-link[data-screen="' + section + '"]');
       var count = actions.filter(function (item) { return item.section === section; }).length;
@@ -98,7 +123,8 @@
       ['Active clients', active, data.clients.length + ' clients in the studio'],
       ['Active projects', openVideos.length + waiting, production + ' in production · +' + waiting + ' submitted ' + (waiting === 1 ? 'request' : 'requests')],
       ['Awaiting review', review, 'Ready for client feedback'],
-      ['Due this week', thisWeek.length, date(weekStart) + ' – ' + date(weekEnd) + (overdue.length ? ' · ' + overdue.length + ' overdue' : '')]
+      ['Due this week', thisWeek.length, date(weekStart) + ' – ' + date(weekEnd) + (overdue.length ? ' · ' + overdue.length + ' overdue' : '')],
+      ['Payments due', api.duePayments().length, api.awaitingDeposit().length + ' awaiting deposit']
     ].forEach(function (stat) {
       var card = node('article', 'stat-card');
       card.append(node('h2', 'stat-card__label', stat[0]), node('div', 'stat-card__value', String(stat[1]).padStart(2, '0')), node('div', 'stat-card__delta stat-card__delta--muted', stat[2]));
@@ -278,6 +304,6 @@
   document.getElementById('clear-client-filters').addEventListener('click', function () {
     search.value = ''; status.value = 'all'; renderClients(); search.focus();
   });
-  api.subscribe(function (changed) { if(changed.some(function(k){return ['clients','requests','videos','revisions','scripts'].includes(k);})) {renderDashboard();renderClients();}if(detail.open){if(client(selectedId))openDetail(selectedId);else detail.close();} });
+  api.subscribe(function (changed) { if(changed.some(function(k){return ['clients','requests','videos','revisions','scripts','payments'].includes(k);})) {renderDashboard();renderClients();}if(detail.open){if(client(selectedId))openDetail(selectedId);else detail.close();} });
   renderDashboard(); renderClients();
 })();

@@ -95,7 +95,7 @@ const url = (portal, route) => require('./runtime.cjs').base+`${portal}.html#${r
   await p.locator('[data-add-asset]').click();
   await p.locator('#asset-form button[type=submit]').click();
   assert.equal(await p.locator('#asset-file-error').innerText(), 'Please select a file.', 'missing file');
-  await p.locator('#asset-file').setInputFiles({ name: 'notes.txt', mimeType: 'text/plain', buffer: Buffer.from('text') });
+  await p.locator('#asset-file').setInputFiles({ name: 'notes.rtf', mimeType: 'application/rtf', buffer: Buffer.from('text') });
   assert.equal(await p.locator('#asset-file-error').innerText(), 'This file type is not supported.', 'unsupported type');
   await p.locator('#asset-form button[type=submit]').click();
   assert.equal(await p.locator('#asset-editor').evaluate(d => d.open), true, 'invalid file blocks save');

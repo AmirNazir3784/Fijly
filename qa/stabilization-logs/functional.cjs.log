@@ -10,7 +10,7 @@
     'All project filters and real search empty state',
     'Client settings: no unsaved notification switches; stored default platform and length present',
     'Preview play/pause mouse and keyboard, synchronized names, fullscreen',
-    'Request validation and database submission',
+    'Projects are created through submit_project and appear in the request history',
     'Projects mobile cards: no horizontal scrolling; keyboard opens the record',
     '1440px marketing: anchors, menus where applicable, FAQ mouse/keyboard, overflow',
     '1024px marketing: anchors, menus where applicable, FAQ mouse/keyboard, overflow',

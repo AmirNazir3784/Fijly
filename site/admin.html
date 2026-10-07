@@ -62,7 +62,8 @@
 <ul>
 <li><a class="sidebar-link" href="#dashboard" data-screen="dashboard" aria-current="page"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/></svg><span>Dashboard</span></a></li>
 <li><a class="sidebar-link" href="#orders" data-screen="orders"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 2h12l2 5H4z"/><path d="M4 7h16v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><path d="M9 11a3 3 0 0 0 6 0"/></svg><span>Orders</span></a></li>
-<li><a class="sidebar-link" href="#clients" data-screen="clients"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg><span>Clients</span></a></li>
+<li><a class="sidebar-link" href="#payments" data-screen="payments"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="2.5"/><path d="M2 10h20M6 15h4"/></svg><span>Payments</span></a></li>
+      <li><a class="sidebar-link" href="#clients" data-screen="clients"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg><span>Clients</span></a></li>
 <li><a class="sidebar-link" href="#requests" data-screen="requests"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="5" width="14" height="14" rx="2.5"/><path d="M17 10l4-2v8l-4-2"/></svg><span>Video Requests</span></a></li>
 <li><a class="sidebar-link" href="#videos" data-screen="videos"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="5" width="14" height="14" rx="2.5"/><path d="M17 10l4-2v8l-4-2"/></svg><span>Videos</span></a></li>
 <li><a class="sidebar-link" href="#revisions" data-screen="revisions"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M7 3h7l5 5v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M13 3v6h6"/></svg><span>Revisions</span></a></li>
@@ -110,6 +111,7 @@
         </div>
         <div class="stats-grid" id="admin-stats"></div>
 <section class="panel admin-action-panel" aria-labelledby="h-action-queue"><div class="admin-panel-head admin-panel-head--plain"><h2 id="h-action-queue">Needs your action</h2><span id="admin-action-count" class="admin-muted"></span></div><ul id="admin-action-queue" class="admin-action-queue"></ul></section>
+<section class="panel admin-action-panel" id="admin-awaiting-deposit" aria-labelledby="h-awaiting-deposit" hidden><div class="admin-panel-head admin-panel-head--plain"><div><h2 id="h-awaiting-deposit">Awaiting deposit</h2><p class="panel__sub">Submitted projects waiting for their 15% project-start payment. Production starts once it is marked paid on Payments.</p></div><span id="admin-awaiting-count" class="admin-muted"></span></div><ul id="admin-awaiting-list" class="admin-action-queue"></ul></section>
         <div class="admin-dashboard-grid">
           <section class="panel panel--flush" aria-labelledby="h-priorities">
             <div class="admin-panel-head"><div><h2 id="h-priorities">Coming up next</h2><p class="panel__sub">Overdue work and open projects due this week (Mon–Sun)</p></div><span class="badge" id="due-count"></span></div>
@@ -140,6 +142,22 @@
           <div class="admin-empty" id="order-empty" hidden><h2 id="order-empty-title">No orders yet</h2><p id="order-empty-text">Orders placed on fijly.com will appear here.</p><button class="btn btn-outline btn--xs" type="button" id="order-empty-action" hidden>Try again</button></div>
         </div>
         <p class="admin-save-status" id="order-save-status" role="status"></p>
+      </section>
+      <section class="screen" id="screen-payments" data-screen="payments" data-title="Payments" aria-labelledby="h-payments" hidden>
+        <div class="page-head page-head--row"><div><h1 id="h-payments">Payments</h1><p>Every milestone across all projects: 15% to start, 45% at storyboard approval, 40% on final delivery. Invoices are sent by hand through PayPal.</p></div></div>
+        <div class="panel panel--flush">
+          <div class="admin-client-toolbar">
+            <label><span class="field-label">Status</span><select class="input" id="payment-status-filter"><option value="due">Due</option><option value="all">All statuses</option><option value="paid">Paid</option><option value="waived">Waived</option><option value="refunded">Refunded</option></select></label>
+            <label><span class="field-label">Client</span><select class="input" id="payment-client-filter"><option value="all">All clients</option></select></label>
+          </div>
+          <p class="admin-result-count" id="payment-count" role="status"></p>
+          <p class="table-hint">Scroll horizontally to see every column.</p>
+          <div class="table-scroll" tabindex="0" role="region" aria-label="Payments table, scroll horizontally">
+            <table class="table admin-payments-table"><caption class="visually-hidden">Milestone payments</caption><thead><tr><th scope="col">CLIENT</th><th scope="col">PROJECT</th><th scope="col">MILESTONE</th><th scope="col">%</th><th scope="col">AMOUNT</th><th scope="col">STATUS</th><th scope="col">PAID</th><th scope="col"><span class="visually-hidden">Actions</span></th></tr></thead><tbody id="payment-rows"></tbody></table>
+          </div>
+          <div class="admin-empty" id="payment-empty" hidden><h2 id="payment-empty-title">No payments due</h2><p id="payment-empty-text">Milestones appear here as soon as a project is submitted.</p><button class="btn btn-outline btn--xs" type="button" id="payment-clear-filters">Clear filters</button></div>
+        </div>
+        <p class="admin-save-status" id="payment-save-status" role="status"></p>
       </section>
       <section class="screen" id="screen-clients" data-screen="clients" data-title="Clients" aria-labelledby="h-clients" hidden>
         <div class="page-head page-head--row"><div><h1 id="h-clients">Clients</h1><p>Client relationships, production context, and project history.</p></div><button class="btn btn-primary btn--xs" type="button" data-add-client><span aria-hidden="true">+</span> Add client</button></div>
@@ -279,6 +297,12 @@
               <div class="form-group"><label class="field-label" for="set-default-lead">Default turnaround (days)</label><input class="input" id="set-default-lead" name="defaultLeadDays" type="number" min="1" max="90" step="1" required></div>
               <div class="form-group"><label class="field-label" for="set-default-length">Default video length</label><select class="input" id="set-default-length" name="defaultLength"><option>30–45 sec</option><option>60–90 sec</option><option>2–3 min</option><option>3 min+</option></select></div>
             </section>
+            <section class="panel" aria-labelledby="h-set-revisions">
+              <h2 id="h-set-revisions">Included revisions</h2>
+              <p class="panel__sub">How many rounds a project includes before extra changes are quoted. The storyboard limit is enforced when a client requests changes.</p>
+              <div class="form-group"><label class="field-label" for="set-storyboard-revisions">Storyboard revisions included</label><input class="input" id="set-storyboard-revisions" name="storyboardRevisions" type="number" min="0" max="20" step="1" required></div>
+              <div class="form-group"><label class="field-label" for="set-video-revisions">Video revisions included</label><input class="input" id="set-video-revisions" name="videoRevisions" type="number" min="0" max="20" step="1" required></div>
+            </section>
           </div>
           <div class="admin-settings-actions">
             <button class="btn btn-outline btn--md" type="button" id="settings-reset">Discard changes</button>
@@ -287,10 +311,37 @@
           <p class="admin-save-status" id="settings-status" role="status"></p>
           <p class="panel__sub">Saved to your account. No billing, plan, or team permission is created.</p>
         </form>
+        <form id="pricing-form" novalidate>
+          <section class="panel" aria-labelledby="h-set-pricing">
+            <h2 id="h-set-pricing">Pricing</h2>
+            <p class="panel__sub">The published price list. The order page shows these figures and the database prices every project from them, so a change here applies to new projects only.</p>
+            <p class="table-hint">Scroll horizontally to see every length.</p>
+            <div class="table-scroll" tabindex="0" role="region" aria-label="Price list, scroll horizontally">
+              <table class="table admin-pricing-table"><caption class="visually-hidden">Price per item and video length</caption>
+                <thead><tr><th scope="col">ITEM</th><th scope="col">30 SEC</th><th scope="col">60 SEC</th><th scope="col">90 SEC</th><th scope="col">120 SEC</th></tr></thead>
+                <tbody id="pricing-rows"></tbody>
+              </table>
+            </div>
+            <p class="field-hint">Set an add-on to 0 to include it in the base price. Prices are in US dollars.</p>
+          </section>
+          <div class="admin-settings-actions">
+            <button class="btn btn-outline btn--md" type="button" id="pricing-reset">Discard changes</button>
+            <button class="btn btn-primary btn--md" type="submit">Save pricing</button>
+          </div>
+          <p class="admin-save-status" id="pricing-status" role="status"></p>
+        </form>
       </section>
     </div>
   </main>
 </div>
+<dialog class="admin-dialog" id="payment-detail" aria-labelledby="payment-detail-title">
+  <div class="admin-dialog-head"><div><p class="admin-eyebrow">MILESTONE PAYMENT</p><h2 id="payment-detail-title"></h2></div><button class="icon-btn" type="button" data-close-payment aria-label="Close payment"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+  <div id="payment-detail-body"></div>
+  <div class="form-group" id="payment-method-group"><label class="field-label" for="payment-method">Method</label><input class="input" id="payment-method" maxlength="50" value="PayPal" aria-describedby="payment-method-hint"><p class="field-hint" id="payment-method-hint">How this milestone was settled.</p></div>
+  <div class="form-group" id="payment-reference-group"><label class="field-label" for="payment-reference">Reference / invoice ID</label><input class="input" id="payment-reference" maxlength="200" aria-describedby="payment-reference-hint"><p class="field-hint" id="payment-reference-hint">Optional. The PayPal invoice number, so the payment can be traced.</p></div>
+  <p class="workflow-error" id="payment-detail-error" role="alert"></p>
+  <div class="admin-dialog-foot"><button class="btn btn-ghost btn--md dialog-dismiss" type="button" data-close-payment>Cancel</button><button class="btn btn-primary btn--md" type="button" id="payment-confirm">Confirm</button></div>
+</dialog>
 <dialog class="admin-dialog" id="client-detail" aria-labelledby="client-detail-title">
   <div class="admin-dialog-head"><div><p class="admin-eyebrow">CLIENT PROFILE</p><h2 id="client-detail-title"></h2></div><button class="icon-btn" type="button" data-close-detail aria-label="Close client profile"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
   <div id="client-detail-body"></div>
@@ -361,6 +412,7 @@
 <script src="js/workflow.js"></script>
 <script src="js/admin-sections.js"></script>
 <script src="js/admin-orders.js"></script>
+<script src="js/admin-payments.js"></script>
 <dialog id="profile-dialog" class="admin-dialog profile-dialog"></dialog>
 <script src="js/profile.js"></script>
 </body>

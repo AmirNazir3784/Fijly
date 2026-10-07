@@ -1,41 +1,42 @@
-/* Order page (order.html): video details, then review. The customer signs up
-   (or in) first on the landing page; without a session this page sends them
-   back to the sign-up form. Orders are saved to the Supabase `orders` table
-   for the studio to process, with the name and email of the signed-in
-   account. Payment is not connected yet; the Pay button is a placeholder.
+/* Project wizard (order.html). The customer signs up (or in) on the landing
+   page first; without a session this page sends them back to the sign-up form.
 
-   The orders table (already created in Supabase), for reference:
+   Four steps, then the payment step:
+     1. Project basics   — calls ensure_client_workspace() and keeps client_id.
+     2. Creative details — uploads logo/screenshots to project-files.
+     3. Script & voice over — two choices, each with its own upload.
+     4. Review & submit  — calls submit_project().
 
-     CREATE TABLE public.orders (
-       id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
-       name text NOT NULL,
-       email text NOT NULL,
-       company text NOT NULL,
-       video_type text NOT NULL,
-       duration text NOT NULL,
-       price integer NOT NULL,
-       brief text,
-       status text DEFAULT 'pending' CHECK (status IN ('pending', 'paid', 'processing', 'completed', 'cancelled')),
-       payment_intent_id text,
-       created_at timestamptz DEFAULT now()
-     );
-     ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;
-     CREATE POLICY "Anyone can create orders" ON public.orders FOR INSERT WITH CHECK (true);
-     CREATE POLICY "Admins read all orders" ON public.orders FOR SELECT USING (public.get_user_role() = 'admin');
-     CREATE POLICY "Admins update orders" ON public.orders FOR UPDATE USING (public.get_user_role() = 'admin');
+   The browser never calculates the price that gets charged. The breakdown on
+   screen is read from public.pricing (readable by anyone) purely to show the
+   customer what to expect; submit_project() prices the project server-side and
+   creates the three milestone payment rows (15% / 45% / 40%). The amounts on
+   the payment step are read back from public.payments, so they are the saved
+   figures rather than anything computed here.
 
-   The database also checks that the price matches the length
-   (check_order_price), so these prices must stay in step with it. */
+   Payments are manual for now: we email a PayPal invoice. FIJLY_CONFIG
+   .paypalEnabled is false and no PayPal code is loaded, so the Pay with PayPal
+   button on the payment step is disabled in the markup. Wiring it up is the
+   job of the task that turns that flag on. */
 (function () {
   'use strict';
-  var PRICES = { 30: 300, 60: 500, 90: 700, 120: 950 };
-  var CONTACT_EMAIL = 'hello@fijly.com';
   var SIGN_UP = 'index.html#contact';
+  var CONTACT_EMAIL = (window.FIJLY_CONFIG && window.FIJLY_CONFIG.contactEmail) || 'hello@fijly.com';
+  var LAST_STEP = 4;
+  var BUCKET = 'client-assets', MAX_FILE_SIZE = 50 * 1024 * 1024;
+  // Extension to the MIME type the file is stored as. Browsers leave some of
+  // these untyped, and the bucket refuses anything outside its allowed list,
+  // so every upload is retyped from its extension.
+  var attachmentTypes = { png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', gif: 'image/gif', svg: 'image/svg+xml', webp: 'image/webp',
+    pdf: 'application/pdf', mp4: 'video/mp4', webm: 'video/webm', mov: 'video/quicktime', zip: 'application/zip' };
+  var scriptTypes = { pdf: 'application/pdf', doc: 'application/msword', docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', txt: 'text/plain' };
+  var voiceTypes = { mp3: 'audio/mpeg', wav: 'audio/wav', m4a: 'audio/mp4' };
+
   var card = document.getElementById('order-card');
   var form = document.getElementById('order-form');
   var steps = form.querySelectorAll('[data-step]');
   var progress = document.querySelectorAll('[data-progress]');
-  var success = document.getElementById('order-success');
+  var payment = document.getElementById('order-payment');
   var submit = document.getElementById('order-submit');
   var submitLabel = document.getElementById('order-submit-label');
   var errorBox = document.getElementById('order-error');
@@ -43,63 +44,234 @@
   var baseTitle = document.title;
   var current = 1, pending = false, done = false, db = null;
   var account = { name: '', email: '' };
+  var clientId = null;
+  // Pricing from public.pricing: { base: { 30: 300, … }, script: {…}, voice_over: {…} }.
+  var pricing = null;
+  // Files already in Storage, keyed by the picked file so Back never re-uploads.
+  var uploaded = { attachments: null, script: null, voice: null };
 
-  function money(amount) { return '$' + amount.toLocaleString('en-US'); }
+  /* Helpers ---------------------------------------------------------------- */
+  function money(amount) {
+    var value = Number(amount);
+    if (!Number.isFinite(value)) return '—';
+    return '$' + value.toLocaleString('en-US', { minimumFractionDigits: value % 1 ? 2 : 0, maximumFractionDigits: 2 });
+  }
   function field(name) { return form.elements.namedItem(name); }
-  function values() {
-    var duration = Number((form.querySelector('input[name="duration"]:checked') || {}).value) || null;
-    return {
-      videoType: field('videoType').value, duration: duration, price: duration ? PRICES[duration] : null,
-      company: field('company').value.trim(), brief: field('brief').value.trim(),
-      name: account.name, email: account.email
-    };
+  function text(name) { return String(field(name).value || '').trim(); }
+  function set(id, value) { document.getElementById(id).textContent = value; }
+  function extensionOf(name) { var match = /\.([a-z0-9]+)$/i.exec(String(name || '')); return match ? match[1].toLowerCase() : ''; }
+  function signature(file) { return file ? [file.name, file.size, file.lastModified].join('|') : ''; }
+  function duration() { var picked = form.querySelector('input[name="duration"]:checked'); return picked ? Number(picked.value) : null; }
+  function hasScript() { return (form.querySelector('input[name="scriptChoice"]:checked') || {}).value === 'own'; }
+  function hasVoice() { return (form.querySelector('input[name="voiceChoice"]:checked') || {}).value === 'own'; }
+  function references() {
+    return text('references').split(/\n/).map(function (line) { return line.trim(); }).filter(Boolean);
+  }
+  function badLink(value) {
+    var url; try { url = new URL(value); } catch (_) { return true; }
+    return !['http:', 'https:'].includes(url.protocol);
+  }
+  // The rounding submit_project() uses, so the schedule on screen matches the
+  // rows it writes (the payment step then reads the saved amounts anyway).
+  function cents(amount) { return Math.round(Number(amount) * 100) / 100; }
+  function schedule(total) {
+    var start = cents(total * 0.15), storyboard = cents(total * 0.45);
+    return { start: start, storyboard: storyboard, final: cents(total - start - storyboard) };
   }
 
-  /* Validation: messages show under each field, not as browser bubbles. -- */
+  /* Price breakdown: read from public.pricing, shown only ------------------ */
+  function priceOf(item, seconds) {
+    var row = pricing && pricing[item];
+    var amount = row && row[seconds];
+    return amount === undefined || amount === null ? null : Number(amount);
+  }
+  function breakdown() {
+    var seconds = duration(), base = priceOf('base', seconds);
+    if (base === null) return null;
+    var script = hasScript() ? 0 : (priceOf('script', seconds) || 0);
+    var voice = hasVoice() ? 0 : (priceOf('voice_over', seconds) || 0);
+    return { base: base, script: script, voice: voice, total: base + script + voice };
+  }
+  // "Provided by you" when the customer brings their own, "Included" when the
+  // list price is zero, and the amount otherwise.
+  function addOnLabel(element, provided, amount) {
+    var included = provided || amount === 0;
+    element.textContent = provided ? 'Provided by you' : amount === 0 ? 'Included' : money(amount);
+    if (included) element.dataset.included = 'true'; else delete element.dataset.included;
+  }
+  function renderPrices() {
+    var prices = breakdown(), note = document.getElementById('order-pricing-note');
+    ['line', 'review'].forEach(function (prefix) {
+      var baseEl = document.getElementById(prefix + '-base');
+      if (!prices) {
+        [prefix + '-base', prefix + '-script', prefix + '-voice', prefix + '-total'].forEach(function (id) { set(id, '—'); });
+        return;
+      }
+      baseEl.textContent = money(prices.base);
+      addOnLabel(document.getElementById(prefix + '-script'), hasScript(), prices.script);
+      addOnLabel(document.getElementById(prefix + '-voice'), hasVoice(), prices.voice);
+      set(prefix + '-total', money(prices.total));
+    });
+    var parts = prices ? schedule(prices.total) : null;
+    [['schedule', parts], ['paid', parts]].forEach(function (pair) {
+      ['start', 'storyboard', 'final'].forEach(function (key) {
+        set(pair[0] + '-' + key, pair[1] ? money(pair[1][key]) : '—');
+      });
+    });
+    note.textContent = prices
+      ? 'Prices come from the FIJLY price list. The amount you are invoiced is confirmed when your project is saved.'
+      : 'We couldn’t load the price list. Your price is confirmed by email once your project is saved.';
+  }
+
+  /* Validation: messages show under each field, not as browser bubbles. ---- */
   var messages = {
+    title: { valueMissing: 'Enter a name for this project.' },
+    company: { valueMissing: 'Enter your company or brand name.' },
+    companyWebsite: { invalid: 'Enter the website as a full address, starting with https://' },
     videoType: { valueMissing: 'Choose a video type.' },
     duration: { valueMissing: 'Choose a video length.' },
-    company: { valueMissing: 'Enter your company name.' },
-    brief: { valueMissing: 'Tell us about your project.', tooShort: 'Please add at least 20 characters about your project.' }
+    deliveryDate: { invalid: 'Choose a valid delivery date.' },
+    purpose: { valueMissing: 'Tell us what this video should achieve.', tooShort: 'Please add at least 10 characters.' },
+    targetAudience: { valueMissing: 'Tell us who this video is for.', tooShort: 'Please add at least 5 characters.' },
+    references: { invalid: 'Enter complete http(s) links, one per line.' },
+    brief: { valueMissing: 'Tell us about your project.', tooShort: 'Please add at least 20 characters about your project.' },
+    scriptFile: { valueMissing: 'Upload your script file.', invalid: 'Scripts must be a PDF, DOC, DOCX or TXT file under 50MB.' },
+    voiceFile: { valueMissing: 'Upload your voice over file.', invalid: 'Voice overs must be an MP3, WAV or M4A file under 50MB.' },
+    attachments: { invalid: 'Images, PDF, video or ZIP files under 50MB each, please.' }
   };
-  function controls(step) {
-    return Array.prototype.filter.call(steps[step - 1].querySelectorAll('input, select, textarea'), function (control) {
-      return control !== honeypot && !(control.type === 'radio' && control !== field('duration')[0]);
-    });
+  // The fields each step validates, in the order their problems are reported.
+  var stepFields = {
+    1: ['title', 'company', 'companyWebsite', 'videoType', 'duration', 'deliveryDate'],
+    2: ['purpose', 'targetAudience', 'references', 'attachments', 'brief'],
+    3: ['scriptFile', 'voiceFile'],
+    4: []
+  };
+  function errorFor(name) {
+    var ids = { duration: 'order-duration-error', companyWebsite: 'order-website-error', targetAudience: 'order-audience-error',
+      videoType: 'order-type-error', deliveryDate: 'order-delivery-error', brandColors: 'order-colors-error', videoStyle: 'order-style-error',
+      scriptFile: 'order-script-file-error', voiceFile: 'order-voice-file-error' };
+    return document.getElementById(ids[name] || 'order-' + name + '-error');
   }
-  function errorFor(control) { return document.getElementById(control.type === 'radio' ? 'order-duration-error' : control.id + '-error'); }
-  function problem(control) {
-    if (control.type !== 'radio') control.value = control.value.replace(/^\s+|\s+$/g, '');
-    var name = control.name, validity = control.validity;
-    // minlength is only enforced for typed text, so check lengths directly.
-    if (validity.valueMissing) return messages[name].valueMissing;
-    if (control.minLength > 0 && control.value.length < control.minLength) return messages[name].tooShort;
+  function fileProblem(file, types) {
+    if (file.size > MAX_FILE_SIZE) return true;
+    return !types[extensionOf(file.name)];
+  }
+  // Returns the problem with one field as a sentence, or '' when it is fine.
+  function problem(name) {
+    var control = field(name), note = messages[name] || {};
+    if (name === 'duration') return duration() ? '' : note.valueMissing;
+    if (name === 'references') return references().some(badLink) ? note.invalid : '';
+    if (name === 'attachments') return Array.from(control.files).some(function (file) { return fileProblem(file, attachmentTypes); }) ? note.invalid : '';
+    if (name === 'scriptFile' || name === 'voiceFile') {
+      var wanted = name === 'scriptFile' ? hasScript() : hasVoice();
+      if (!wanted) return '';
+      var types = name === 'scriptFile' ? scriptTypes : voiceTypes, chosen = control.files[0];
+      var ready = name === 'scriptFile' ? uploaded.script : uploaded.voice;
+      if (!chosen) return ready ? '' : note.valueMissing;
+      return fileProblem(chosen, types) ? note.invalid : '';
+    }
+    control.value = control.value.replace(/^\s+|\s+$/g, '');
+    if (control.validity.valueMissing) return note.valueMissing;
+    if (!control.value) return '';
+    if (control.minLength > 0 && control.value.length < control.minLength) return note.tooShort;
+    if (name === 'companyWebsite') return badLink(control.value) ? note.invalid : '';
+    if (!control.validity.valid) return note.invalid || 'Check this field.';
     return '';
   }
-  function mark(control, message) {
-    var target = control.type === 'radio' ? control.closest('fieldset') : control;
-    errorFor(control).textContent = message;
+  // A radio group comes back as a RadioNodeList (no tagName of its own); a
+  // select has a length too, so check for the tag rather than the length.
+  function isGroup(control) { return !!control && control.length !== undefined && !control.tagName; }
+  function firstControl(control) { return isGroup(control) ? control[0] : control; }
+  function mark(name, message) {
+    var control = field(name), note = errorFor(name);
+    // Problems with a group of radios belong on the fieldset that owns them.
+    var target = isGroup(control) ? (firstControl(control).closest('fieldset') || firstControl(control)) : control;
+    if (note) note.textContent = message;
+    if (!target) return;
     if (message) target.setAttribute('aria-invalid', 'true'); else target.removeAttribute('aria-invalid');
   }
-  // Checks a step; with `show`, reports problems and focuses the first one.
+  // Checks a step; with `show`, reports every problem and focuses the first.
   function validate(step, show) {
-    var first = null;
-    controls(step).forEach(function (control) {
-      var message = problem(control);
-      if (show) mark(control, message);
-      if (message && !first) first = control;
+    var first = '';
+    stepFields[step].forEach(function (name) {
+      var message = problem(name);
+      if (show) mark(name, message);
+      if (message && !first) first = name;
     });
-    if (first && show) first.focus();
+    if (first && show) firstControl(field(first)).focus();
     return !first;
   }
-  form.addEventListener('input', function (event) { if (event.target.name && errorFor(event.target)) mark(event.target, ''); });
-  form.addEventListener('change', function (event) { if (event.target.name === 'duration') mark(event.target, ''); });
+  form.addEventListener('input', function (event) { if (event.target.name) mark(event.target.name, ''); });
+  form.addEventListener('change', function (event) { if (event.target.name) mark(event.target.name, ''); });
 
-  /* Steps: the URL hash (#step-1, #step-2) keeps the browser's Back button working. */
-  function stepFromHash() { var match = /^#step-([12])$/.exec(location.hash); return match ? Number(match[1]) : 1; }
+  /* Script and voice over choices ----------------------------------------- */
+  function syncChoices() {
+    document.getElementById('order-script-upload').hidden = !hasScript();
+    document.getElementById('order-voice-upload').hidden = !hasVoice();
+    renderPrices();
+  }
+  form.addEventListener('change', function (event) {
+    if (['scriptChoice', 'voiceChoice'].includes(event.target.name)) syncChoices();
+    if (event.target.name === 'duration') renderPrices();
+    // A different file replaces whatever was uploaded for that slot.
+    if (event.target.name === 'scriptFile') uploaded.script = null;
+    if (event.target.name === 'voiceFile') uploaded.voice = null;
+    if (event.target.name === 'attachments') uploaded.attachments = null;
+  });
+
+  /* Uploads: {client_id}/project-files/{uuid}.{ext} ------------------------ */
+  function busyUpload(id, message) {
+    var box = document.getElementById(id);
+    document.getElementById(id + '-text').textContent = message;
+    box.hidden = !message;
+  }
+  async function upload(file, types) {
+    var extension = extensionOf(file.name), name = crypto.randomUUID() + '.' + extension;
+    var path = clientId + '/project-files/' + name;
+    // The SDK sends a Blob's own type, so retype it from the extension.
+    var body = new Blob([file], { type: types[extension] });
+    var result = await db.storage.from(BUCKET).upload(path, body, { contentType: types[extension], upsert: false });
+    if (result.error) throw result.error;
+    return result.data.path;
+  }
+  // Uploads this step's files, reusing anything already stored for them.
+  async function uploadStep(step) {
+    if (step === 2) {
+      var files = Array.from(field('attachments').files), key = files.map(signature).join(',');
+      if (!files.length) { uploaded.attachments = null; return; }
+      if (uploaded.attachments && uploaded.attachments.key === key) return;
+      busyUpload('order-attachments-progress', 'Uploading ' + files.length + (files.length === 1 ? ' file…' : ' files…'));
+      try {
+        var paths = [];
+        for (var i = 0; i < files.length; i += 1) paths.push(await upload(files[i], attachmentTypes));
+        uploaded.attachments = { key: key, names: files.map(function (file) { return file.name; }), paths: paths };
+      } finally { busyUpload('order-attachments-progress', ''); }
+      return;
+    }
+    if (step === 3) {
+      var slots = [['script', 'scriptFile', scriptTypes, hasScript(), 'order-script-progress'],
+        ['voice', 'voiceFile', voiceTypes, hasVoice(), 'order-voice-progress']];
+      for (var s = 0; s < slots.length; s += 1) {
+        var slot = slots[s], file = field(slot[1]).files[0];
+        if (!slot[3]) { uploaded[slot[0]] = null; continue; }
+        if (!file || (uploaded[slot[0]] && uploaded[slot[0]].key === signature(file))) continue;
+        busyUpload(slot[4], 'Uploading ' + file.name + '…');
+        try { uploaded[slot[0]] = { key: signature(file), name: file.name, path: await upload(file, slot[2]) }; }
+        finally { busyUpload(slot[4], ''); }
+      }
+    }
+  }
+
+  /* Steps: the URL hash (#step-1 … #step-4) keeps Back working ------------- */
+  function stepFromHash() { var match = /^#step-([1-4])$/.exec(location.hash); return match ? Number(match[1]) : 1; }
+  // The furthest step the answers so far allow.
+  function reachable(step) {
+    for (var n = 1; n < step; n += 1) if (!validate(n, false)) return n;
+    return step;
+  }
   function show(step, focus) {
-    // The review opens only once the video details are complete.
-    if (step === 2 && !validate(1, false)) { step = 1; history.replaceState(null, '', '#step-1'); }
+    var allowed = reachable(step);
+    if (allowed !== step) { step = allowed; history.replaceState(null, '', '#step-' + step); }
     current = step;
     steps.forEach(function (section) { section.hidden = Number(section.dataset.step) !== step; });
     progress.forEach(function (item) {
@@ -107,77 +279,166 @@
       item.classList.toggle('is-done', n < step);
       if (n === step) item.setAttribute('aria-current', 'step'); else item.removeAttribute('aria-current');
     });
-    if (step === 2) summarize();
+    if (step === 3) syncChoices();
+    if (step === LAST_STEP) summarize();
     errorBox.hidden = true;
-    document.title = (step === 1 ? '' : 'Review — ') + baseTitle;
+    var labels = { 1: '', 2: 'Creative details — ', 3: 'Script & voice over — ', 4: 'Review — ' };
+    document.title = labels[step] + baseTitle;
     if (focus) {
       document.getElementById('step-' + step + '-title').focus({ preventScroll: true });
       card.scrollIntoView({ block: 'start' });
     }
   }
   function goTo(step) { if (location.hash === '#step-' + step) show(step, true); else location.hash = '#step-' + step; }
+  function stepError(step, message) {
+    var box = document.getElementById('order-step-' + step + '-error');
+    if (!box) return;
+    box.textContent = message || '';
+    box.hidden = !message;
+  }
+  function setContinueBusy(button, on, label) {
+    button.disabled = on;
+    button.setAttribute('aria-busy', String(on));
+    button.querySelector('[data-next-label]').textContent = on ? label : 'Continue';
+  }
+  // Continue: validate, do this step's server work, then move on.
+  async function advance(button, step) {
+    var next = Number(button.dataset.next);
+    stepError(step, '');
+    if (!validate(step, true)) return;
+    var label = step === 1 ? 'Setting up your workspace…' : 'Uploading…';
+    setContinueBusy(button, true, label);
+    try {
+      if (step === 1) clientId = await ensureWorkspace();
+      else await uploadStep(step);
+      goTo(next);
+    } catch (error) {
+      stepError(step, friendly(error));
+    } finally { setContinueBusy(button, false, label); }
+  }
+  function friendly(error) {
+    var code = error && error.code, message = String((error && error.message) || error || '');
+    if (/failed to fetch|networkerror|load failed/i.test(message)) return 'We couldn’t reach the server. Check your connection and try again.';
+    if (code === '42501' || /row-level security|permission denied/i.test(message)) return 'You don’t have permission to do that. Sign in again and retry.';
+    if (/exceeded the maximum allowed size/i.test(message)) return 'One of those files is larger than 50MB.';
+    if (/mime type/i.test(message)) return 'One of those file types isn’t supported.';
+    return message || 'Something went wrong. Please try again.';
+  }
+  async function ensureWorkspace() {
+    if (clientId) return clientId;
+    var result = await db.rpc('ensure_client_workspace', { p_company: text('company'), p_website: text('companyWebsite') || null });
+    if (result.error) throw result.error;
+    if (!result.data) throw new Error('We couldn’t set up your workspace. Please email ' + CONTACT_EMAIL + '.');
+    return result.data;
+  }
   form.addEventListener('click', function (event) {
     var next = event.target.closest('[data-next]'), back = event.target.closest('[data-back]');
-    if (next && validate(current, true)) goTo(Number(next.dataset.next));
+    if (next) advance(next, current);
     if (back) goTo(Number(back.dataset.back));
   });
   window.addEventListener('hashchange', function () { if (!done && card.dataset.state === 'ready') show(stepFromHash(), true); });
 
-  /* Review: the price appears only here. ----------------------------------- */
+  /* Review ----------------------------------------------------------------- */
+  function clip(value, limit) {
+    var all = String(value || '');
+    return all.length > limit ? all.slice(0, limit - 1).trim() + '…' : all;
+  }
   function summarize() {
-    var v = values();
-    document.getElementById('summary-item').textContent = v.videoType + ' · ' + v.duration + ' seconds';
-    document.getElementById('summary-company').textContent = v.company;
-    document.getElementById('summary-brief').textContent = '“' + (v.brief.length > 180 ? v.brief.slice(0, 177).trim() + '…' : v.brief) + '”';
-    document.getElementById('summary-account').textContent = (v.name ? v.name + ' · ' : '') + v.email;
-    document.getElementById('summary-total').textContent = money(v.price);
-    document.getElementById('order-pay-amount').textContent = money(v.price);
+    var seconds = duration(), links = references();
+    var attachments = uploaded.attachments ? uploaded.attachments.names : Array.from(field('attachments').files).map(function (file) { return file.name; });
+    set('summary-title', text('title'));
+    set('summary-company', text('company'));
+    set('summary-website', text('companyWebsite') || 'Not provided');
+    set('summary-item', text('videoType') + ' · ' + seconds + ' seconds');
+    set('summary-delivery', text('deliveryDate') || 'No fixed date');
+    set('summary-purpose', clip(text('purpose'), 240));
+    set('summary-audience', clip(text('targetAudience'), 240));
+    set('summary-style', clip(text('videoStyle'), 240) || 'Open to suggestions');
+    set('summary-colors', text('brandColors') || 'Not provided');
+    set('summary-references', links.length ? links.join(', ') : 'None');
+    set('summary-attachments', attachments.length ? attachments.join(', ') : 'None');
+    set('summary-script', hasScript() ? 'Provided by you' + (uploaded.script ? ' · ' + uploaded.script.name : '') : 'FIJLY writes the script');
+    set('summary-voice', hasVoice() ? 'Provided by you' + (uploaded.voice ? ' · ' + uploaded.voice.name : '') : 'FIJLY records the voice over');
+    set('summary-brief', '“' + clip(text('brief'), 240) + '”');
+    set('summary-account', (account.name ? account.name + ' · ' : '') + account.email);
+    renderPrices();
   }
 
-  /* Submit ---------------------------------------------------------------- */
+  /* Submit ----------------------------------------------------------------- */
   function setBusy(on) {
     pending = on;
     submit.disabled = on;
     submit.setAttribute('aria-busy', String(on));
-    submitLabel.textContent = on ? 'Submitting your brief…' : 'Submit brief';
+    submitLabel.textContent = on ? 'Saving your project…' : 'Submit project';
   }
-  function fail(v) {
-    var body = ['Video: ' + v.videoType + ', ' + v.duration + ' seconds (' + money(v.price) + ')', 'Company: ' + v.company,
-      'Name: ' + v.name, 'Email: ' + v.email, '', v.brief].join('\n');
+  function fail(message) {
     var link = document.createElement('a');
-    link.href = 'mailto:' + CONTACT_EMAIL + '?subject=' + encodeURIComponent('FIJLY video order — ' + v.company) + '&body=' + encodeURIComponent(body);
-    link.textContent = 'email your order to ' + CONTACT_EMAIL;
-    errorBox.replaceChildren(document.createTextNode('We couldn’t submit your order. Check your connection and try again, or '), link, document.createTextNode('.'));
+    link.href = 'mailto:' + CONTACT_EMAIL + '?subject=' + encodeURIComponent('FIJLY project — ' + text('company'));
+    link.textContent = 'email us at ' + CONTACT_EMAIL;
+    errorBox.replaceChildren(document.createTextNode(message + ' You can try again, or '), link, document.createTextNode('.'));
     errorBox.hidden = false;
   }
-  function finish(v) {
+  // The saved milestone rows, so the payment step shows what was stored.
+  async function savedPayments(requestId) {
+    try {
+      var result = await db.from('payments').select('milestone, amount').eq('request_id', requestId);
+      if (result.error || !result.data || !result.data.length) return null;
+      var byMilestone = {};
+      result.data.forEach(function (row) { byMilestone[row.milestone] = Number(row.amount); });
+      return byMilestone.start === undefined ? null : byMilestone;
+    } catch (_) { return null; }
+  }
+  function finish(amounts) {
     done = true;
     form.hidden = true;
     document.getElementById('order-progress').hidden = true;
-    document.getElementById('order-success-text').textContent = 'We’ll review your brief and email ' + v.email + ' to confirm the details and send your invoice.';
-    document.getElementById('order-success-summary').textContent = 'Your order: ' + v.videoType + ' · ' + v.duration + ' seconds · ' + money(v.price) + ' for ' + v.company + '.';
-    success.hidden = false;
+    set('order-payment-text', 'Pay the 15% project-start deposit (' + money(amounts.start) + ') to begin. We’ll email a PayPal invoice to '
+      + account.email + ' within one business day. Your project starts as soon as payment is confirmed.');
+    ['start', 'storyboard', 'final'].forEach(function (key) { set('paid-' + key, money(amounts[key])); });
+    payment.hidden = false;
     history.replaceState(null, '', location.pathname + location.search);
-    document.title = 'Order received — ' + baseTitle;
-    document.getElementById('order-success-title').focus();
+    document.title = 'Project saved — ' + baseTitle;
+    document.getElementById('order-payment-title').focus();
   }
   form.addEventListener('submit', async function (event) {
     event.preventDefault();
     if (pending || done) return;
-    if (!validate(1, false)) { goTo(1); validate(1, true); return; }
-    var v = values();
-    // A bot filled the hidden field: show success without saving anything.
-    if (honeypot.value) { finish(v); return; }
+    // Every earlier step must still hold; send the customer back to fix it.
+    for (var step = 1; step < LAST_STEP; step += 1) {
+      if (!validate(step, false)) { goTo(step); validate(step, true); return; }
+    }
+    var prices = breakdown();
+    // A bot filled the hidden field: show the payment step without saving.
+    if (honeypot.value) { finish(schedule(prices ? prices.total : 0)); return; }
     errorBox.hidden = true;
     setBusy(true);
     try {
-      // Insert only: customers can't read orders back (admins process them).
-      var saved = await db.from('orders').insert({ name: v.name || v.email, email: v.email, company: v.company, video_type: v.videoType,
-        duration: v.duration + ' seconds', price: v.price, brief: v.brief });
-      if (saved.error) throw saved.error;
-      finish(v);
-    } catch (_) {
-      fail(v); // The alert is announced; the brief stays in the form.
+      // Normally a no-op: each step uploads its own files. This covers a retry
+      // after an upload failed, so the paths the project is saved with exist.
+      await uploadStep(2);
+      await uploadStep(3);
+      var result = await db.rpc('submit_project', {
+        p_title: text('title'),
+        p_video_type: text('videoType'),
+        p_duration: duration(),
+        p_brief: text('brief'),
+        p_purpose: text('purpose'),
+        p_target_audience: text('targetAudience'),
+        p_video_style: text('videoStyle') || null,
+        p_brand_colors: text('brandColors') || null,
+        p_website: text('companyWebsite') || null,
+        p_reference_urls: references(),
+        p_attachment_names: uploaded.attachments ? uploaded.attachments.names : [],
+        p_delivery_date: text('deliveryDate') || null,
+        p_has_script: hasScript(),
+        p_has_voice_over: hasVoice(),
+        p_script_file_path: uploaded.script ? uploaded.script.path : null,
+        p_voice_over_file_path: uploaded.voice ? uploaded.voice.path : null
+      });
+      if (result.error) throw result.error;
+      finish((await savedPayments(result.data)) || schedule(prices ? prices.total : 0));
+    } catch (error) {
+      fail(friendly(error));
     } finally { setBusy(false); }
   });
 
@@ -186,7 +447,30 @@
     window.location.replace('index.html');
   });
 
-  /* Start: signed in? Then pre-fill and open the step in the URL. --------- */
+  /* Start: signed in? Then pre-fill and open the step in the URL ----------- */
+  async function loadPricing() {
+    try {
+      var result = await db.from('pricing').select('item, duration_seconds, amount');
+      if (result.error || !result.data) return;
+      var map = {};
+      result.data.forEach(function (row) {
+        if (!map[row.item]) map[row.item] = {};
+        map[row.item][row.duration_seconds] = Number(row.amount);
+      });
+      pricing = map;
+    } catch (_) { /* The breakdown says so; the server still prices the project. */ }
+  }
+  async function prefillWorkspace() {
+    var profile = await getUserProfile();
+    if (!profile) return;
+    account.name = profile.full_name || account.name;
+    if (!profile.client_id) return;
+    clientId = profile.client_id;
+    var workspace = await db.from('clients').select('name, website').eq('id', profile.client_id).maybeSingle();
+    if (!workspace.data) return;
+    if (workspace.data.name && !field('company').value) field('company').value = workspace.data.name;
+    if (workspace.data.website && !field('companyWebsite').value) field('companyWebsite').value = workspace.data.website;
+  }
   async function start() {
     db = initSupabase();
     var session = null;
@@ -195,22 +479,15 @@
     if (!session) { window.location.replace(SIGN_UP); return; }
     account.email = session.user.email || '';
     account.name = (session.user.user_metadata && session.user.user_metadata.full_name) || '';
-    try {
-      var profile = await getUserProfile();
-      if (profile) {
-        account.name = profile.full_name || account.name;
-        // An existing client's company comes from their workspace.
-        if (profile.client_id) {
-          var workspace = await db.from('clients').select('name').eq('id', profile.client_id).maybeSingle();
-          if (workspace.data && workspace.data.name && !field('company').value) field('company').value = workspace.data.name;
-        }
-      }
-    } catch (_) { /* The order still works with the session's details. */ }
+    await loadPricing();
+    try { await prefillWorkspace(); } catch (_) { /* The wizard still works from the session. */ }
     document.getElementById('order-account-email').textContent = account.email;
     document.getElementById('order-account').hidden = false;
-    var params = new URLSearchParams(location.search);
-    var preset = form.querySelector('input[name="duration"][value="' + (PRICES[params.get('duration')] ? params.get('duration') : '') + '"]');
+    // The length picked on a pricing card, carried here as ?duration=.
+    var wanted = new URLSearchParams(location.search).get('duration');
+    var preset = form.querySelector('input[name="duration"][value="' + String(wanted || '').replace(/[^0-9]/g, '') + '"]');
     if (preset) preset.checked = true;
+    syncChoices();
     card.dataset.state = 'ready';
     show(stepFromHash(), false);
   }

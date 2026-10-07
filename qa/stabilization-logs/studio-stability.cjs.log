@@ -2,15 +2,23 @@
   "checks": [
     {
       "validation": {
-        "rollover date": true,
-        "invalid date": true,
-        "invalid reference": true,
-        "incomplete link": true,
+        "in-portal request creation retired": true,
+        "unknown video type": true,
+        "unknown length": true,
+        "empty brief": true,
+        "script promised but not uploaded": true,
+        "voice over promised but not uploaded": true,
+        "file outside the client folder": true,
+        "direct request insert refused": true,
         "invalid workspace email": true,
         "invalid default length": true,
         "approve outside review": true,
         "script review outside Client Review": true,
-        "attachment names normalized": true
+        "valid project saved": true,
+        "priced server-side": true,
+        "opens awaiting payment": true,
+        "attachment names kept": true,
+        "three milestones created": true
       }
     },
     {
@@ -34,17 +42,28 @@
     "New client filters refresh, profile asset count updates on refresh, a deletion made elsewhere closes the stale asset editor",
     "Long title/instructions, repeated submit and dialog wrapping at all five widths",
     "Approval/close returns visible keyboard focus; route changes close modal details",
-    "Empty database: all 9 Admin screens render, Dashboard shows zeros, assets ask for a client first",
+    "Empty database: all 11 Admin screens render, Dashboard shows zeros, assets ask for a client first",
     "Integrity checks pass; inactive-client analytics and seeded completion dates are accurate",
     "Assets use cards on mobile and tables on desktop; analytics retain readable columns"
   ],
   "scans": 1,
-  "errors": [],
-  "failedRequests": [],
-  "cancelledResourcesChecked": [
-    "http://localhost:8766/assets/concept-taskpilot.svg",
-    "http://localhost:8766/assets/concept-aiflow.svg",
-    "http://localhost:8766/assets/concept-finly.svg",
-    "http://localhost:8766/assets/concept-clouddesk.svg"
-  ]
+  "errors": [
+    "Failed to load resource: the server responded with a status of 400 (Bad Request)",
+    "Failed to load resource: the server responded with a status of 400 (Bad Request)",
+    "Failed to load resource: the server responded with a status of 400 (Bad Request)",
+    "Failed to load resource: the server responded with a status of 400 (Bad Request)",
+    "Failed to load resource: the server responded with a status of 400 (Bad Request)",
+    "Failed to load resource: the server responded with a status of 400 (Bad Request)",
+    "Failed to load resource: the server responded with a status of 403 (Forbidden)"
+  ],
+  "failedRequests": [
+    "https://eaddovqkarognynnybeh.supabase.co/rest/v1/rpc/submit_project",
+    "https://eaddovqkarognynnybeh.supabase.co/rest/v1/rpc/submit_project",
+    "https://eaddovqkarognynnybeh.supabase.co/rest/v1/rpc/submit_project",
+    "https://eaddovqkarognynnybeh.supabase.co/rest/v1/rpc/submit_project",
+    "https://eaddovqkarognynnybeh.supabase.co/rest/v1/rpc/submit_project",
+    "https://eaddovqkarognynnybeh.supabase.co/rest/v1/rpc/submit_project",
+    "https://eaddovqkarognynnybeh.supabase.co/rest/v1/requests"
+  ],
+  "cancelledResourcesChecked": []
 }

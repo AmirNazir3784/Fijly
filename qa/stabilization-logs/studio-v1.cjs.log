@@ -1,16 +1,16 @@
 {
   "checks": [
-    "1440px: all 17 active routes, selected navigation, one heading, no overflow or subscription UI",
-    "1024px: all 17 active routes, selected navigation, one heading, no overflow or subscription UI",
-    "768px: all 17 active routes, selected navigation, one heading, no overflow or subscription UI",
-    "390px: all 17 active routes, selected navigation, one heading, no overflow or subscription UI",
-    "320px: all 17 active routes, selected navigation, one heading, no overflow or subscription UI",
+    "1440px: all 18 active routes, selected navigation, one heading, no overflow or subscription UI",
+    "1024px: all 18 active routes, selected navigation, one heading, no overflow or subscription UI",
+    "768px: all 18 active routes, selected navigation, one heading, no overflow or subscription UI",
+    "390px: all 18 active routes, selected navigation, one heading, no overflow or subscription UI",
+    "320px: all 18 active routes, selected navigation, one heading, no overflow or subscription UI",
     "Both shells: mobile links, focus trap, Escape, resize, and browser back/forward",
     "Team and subscriptions retained only in inactive templates; deferred Admin routes fall back safely",
     "Client filters, preview placeholder, storyboard, stored settings defaults, validated requests and database persistence",
     "Admin search/status/sort/empty state, validation and duplicate prevention, safe text rendering, add/edit/cancel, metric updates, profiles, dialogs, and database persistence"
   ],
-  "accessibilityScans": 38,
+  "accessibilityScans": 40,
   "errors": [],
   "apiRequests": []
 }

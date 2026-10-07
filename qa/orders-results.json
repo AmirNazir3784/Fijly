@@ -1,12 +1,11 @@
 {
   "checks": [
-    "Landing: Start Your Video (nav, menu, hero) and every pricing card lead to the sign-up form, cards keep their length, no direct order links, custom requests go to email; 4/2/1 pricing columns, no overflow at 1280/768/375",
+    "Landing: Start Your Video (nav, menu, hero) and every pricing card lead to the sign-up form, cards keep their length, no direct order links; 4/2/1 pricing columns, no overflow at 1280/768/375",
     "Sign-up: GET STARTED panel, name/email/password with show/hide, Google disabled with a note, sign-in and email links; validation; with sign-up disabled the request is saved to contact_submissions (length kept, no password) and the visitor is told to expect their login",
     "Sign-up outcomes: email confirmation (name only, link back to order.html with the length), existing account (sign-in link), signed-in (straight to order.html), honeypot (nothing saved); Google redirects to the Google provider and back to order.html once enabled",
     "order.html sends signed-out visitors to the sign-up form; login.html?next=order.html returns there after signing in, and no other destination is accepted",
-    "Order page (signed in): account line, company from the workspace, two steps (Your video, Review & submit), no account fields, lengths without prices, included list without prices; validation with focus; review lists video, company, brief and account with the $700 price and a disabled Pay placeholder; Back, browser Back/Forward and deep links behave",
-    "Submitting saves the order with the signed-in account (pending, $700, 90 seconds) and links to FIJLY Studio",
-    "A failed save keeps the brief with an email fallback and retry; honeypot orders are not saved; no overflow at 375/768/1280; Sign out returns to fijly.com",
+    "Order page (signed in): account line, company from the workspace, four steps, no account fields, lengths without prices, disabled PayPal placeholder with paypalEnabled false, deep links cannot skip steps",
+    "No overflow at 375/768/1280; Sign out returns to fijly.com",
     "Admin Orders: sidebar link between Dashboard and Clients with a pending count, newest-first table with every column, status badges, price-mismatch flag, search/filter/clear, detail with full brief and email link, status updates saved (processing, completed, cancelled), no overflow at 375"
   ],
   "scans": [
@@ -16,14 +15,6 @@
     },
     {
       "label": "order step 1",
-      "violations": []
-    },
-    {
-      "label": "order review",
-      "violations": []
-    },
-    {
-      "label": "order success",
       "violations": []
     },
     {

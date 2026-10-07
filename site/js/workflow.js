@@ -4,7 +4,7 @@
 (function () {
   'use strict';
   var api = window.FijlyData, state = api.state, admin = document.body.classList.contains('admin-body');
-  var filters = {}, current = null, clientFilter = 'all', applyDefaults = function () {}, notice = null;
+  var filters = {}, current = null, clientFilter = 'all', notice = null;
   var closeIcon = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
   var playIcon = '<svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>';
   function el(tag, text, cls) { var node = document.createElement(tag); if (text !== undefined) node.textContent = text; if (cls) node.className = cls; return node; }
@@ -18,6 +18,67 @@
     return Promise.resolve().then(fn).catch(showError).finally(function () { control.disabled = false; control.removeAttribute('aria-busy'); });
   }
   function badge(text) { return el('span', text, api.statusClass(text)); }
+  function stageBadge(stage) { return el('span', stage, api.stageClass(stage)); }
+  function money(value) { return api.formatMoney(value, 'Not priced'); }
+  // The price the project was saved with (from submit_project), never recalculated.
+  function priceBreakdown(request) {
+    var prices = request.prices || {}, list = el('dl', undefined, 'price-lines');
+    function line(label, value, provided) {
+      var row = el('div'), amount = provided ? 'Provided by you' : value === 0 ? 'Included' : money(value);
+      row.append(el('dt', label), el('dd', amount));
+      return row;
+    }
+    list.append(line('Base video', prices.base, false),
+      line('Script writing', prices.script, request.hasScript),
+      line('Voice over', prices.voiceOver, request.hasVoiceOver));
+    var total = el('div', undefined, 'price-lines__total');
+    total.append(el('dt', 'Total'), el('dd', money(prices.total)));
+    list.append(total);
+    return list;
+  }
+  // The three milestones, with the one the current stage makes payable marked.
+  function paymentsCard(request) {
+    var rows = api.paymentsFor(request.id), box = el('div', undefined, 'payment-rows');
+    if (!rows.length) { box.append(el('p', 'No payment schedule recorded for this project.', 'admin-muted')); return box; }
+    rows.forEach(function (payment) {
+      var row = el('div', undefined, 'payment-row' + (payment.status === 'due' && payment.required ? ' payment-row--required' : ''));
+      var name = el('div', undefined, 'payment-row__name');
+      name.append(document.createTextNode(api.milestoneLabel(payment.milestone) + ' · ' + payment.percent + '%'));
+      var amount = el('div', money(payment.amount), 'payment-row__amount');
+      var meta = el('div', undefined, 'payment-row__meta');
+      meta.append(el('span', api.paymentLabel(payment.status), api.paymentClass(payment.status)));
+      if (payment.paidAt) meta.append(document.createTextNode(' ' + api.paymentLabel(payment.status).toLowerCase() + ' ' + date(payment.paidAt)));
+      if (admin && payment.reference) meta.append(document.createTextNode(' · ' + payment.reference));
+      row.append(name, amount, meta);
+      box.append(row);
+    });
+    return box;
+  }
+  // Opens a script or voice over through a one-hour signed URL. The tab is
+  // opened inside the click so pop-up blockers allow it.
+  function fileButton(label, path) {
+    var node = el('button', label, 'btn btn-outline btn--md'); node.type = 'button';
+    node.onclick = function () {
+      if (node.disabled) return;
+      var tab = window.open('', '_blank');
+      run(node, async function () {
+        try { var url = await api.projectFileUrl(path); if (tab) { tab.opener = null; tab.location.href = url; } else window.open(url, '_blank', 'noopener'); }
+        catch (error) { if (tab) tab.close(); throw error; }
+      });
+    };
+    return node;
+  }
+  // The project details the order wizard collects, with plain fallbacks.
+  function projectFacts(request) {
+    return factGrid({
+      'Video purpose': request.purpose || 'Not provided',
+      'Target audience': request.targetAudience || 'Not provided',
+      'Video style': request.videoStyle || 'Open to suggestions',
+      'Brand colors': request.brandColors || 'Not provided',
+      Script: request.hasScript ? 'Provided by the client' : 'Written by FIJLY',
+      'Voice over': request.hasVoiceOver ? 'Provided by the client' : 'Recorded by FIJLY'
+    });
+  }
   function client(request) { return api.get('clients', request.client); }
   function date(value) { return api.formatDate(value); }
   function requestFor(kind, item) { return kind === 'requests' ? item : api.requestFor(kind === 'videos' ? item : api.get('videos', item.videoId)); }
@@ -66,6 +127,19 @@
       else{await api.client.revise(video.id,form.elements.feedback.value);flash('Feedback sent — the studio will start revisions.');}
     },admin?'Record revision':'Send revision request');
   }
+  // An admin moves a project through the stages no payment or storyboard
+  // review drives. The rest are set by the database when a milestone is paid
+  // or a storyboard is reviewed, so they are not offered here.
+  function changeStage(request) {
+    formEditor('Project stage', function (form) {
+      form.append(el('p', 'Current stage: ' + request.stage + '. Payment and storyboard stages are set when a milestone is paid or a storyboard is reviewed.', 'admin-muted'));
+      var select = field(form, 'stage', 'Move to stage', request.stage, null, api.adminStages);
+      select.required = true;
+    }, async function (form) {
+      await api.setProjectStage(request.id, form.elements.stage.value);
+      flash('Stage changed to ' + form.elements.stage.value + '.');
+    }, 'Save stage');
+  }
   function changeVideo(video, status) { confirmation(status, status==='Completed'?'Complete this video? Its request will also be marked Completed.':status==='Approved'?'Approve the current version and resolve its open revision?':'Change this video to '+status+'?',async function(){if(admin){await api.setVideoStatus(video.id,status);flash('Status changed to '+status+'.');}else{await api.client.approve(video.id);flash('Thanks — the studio has been notified. Your video will be finalized.');}}); }
   function show(kind,id) { if(!admin)api.client.get(kind,id); if(notice&&(notice.kind!==kind||notice.id!==id))notice=null; current={kind:kind,id:id};renderDetail();open(detail); }
   // No media is stored in this preview, so the player area says so plainly.
@@ -96,13 +170,29 @@
     if(!current)return;var kind=current.kind,item=admin?api.get(kind,current.id):api.client.get(kind,current.id),request=requestFor(kind,item),body=detail.body,secondary=[],primary=[];
     detail.title.textContent=kind==='revisions'?'Revision round '+item.round+' · '+request.title:request.title;body.replaceChildren();
     if(notice&&notice.kind===kind&&notice.id===current.id){var note=el('p',notice.text,'workflow-notice');note.setAttribute('role','status');body.append(note);if(notice.fresh){notice.fresh=false;detail.node.scrollTop=0;}}
-    var facts={Client:client(request).name,Platform:request.platform,'Video type':request.videoType,Priority:request.priority,'Requested date':date(kind==='revisions'?item.requestedAt:request.requestedAt),Deadline:date(request.deadline),'Video length':request.length};if(admin)facts['Assigned Editor']=request.assignedEditor;
+    var facts={Client:client(request).name,Website:request.website||'Not provided','Video type':request.videoType,Priority:request.priority,'Requested date':date(kind==='revisions'?item.requestedAt:request.requestedAt),Deadline:date(request.deadline),'Video length':request.durationSeconds?request.durationSeconds+' seconds':request.length};if(admin)facts['Assigned Editor']=request.assignedEditor;
     if(kind==='requests') {
-      body.append(badge(item.status),factGrid(facts),el('h3','Instructions'),el('p',request.instructions,'workflow-feedback'),el('h3','Reference links'));
+      // The stage is the project's headline status; the request status stays
+      // beside it for the production workflow.
+      var statusLine=el('div',undefined,'workflow-version-line');statusLine.append(stageBadge(request.stage),badge(item.status));
+      body.append(statusLine,factGrid(facts));
+      body.append(el('h3','Price'),priceBreakdown(request));
+      body.append(el('h3','Payments'),paymentsCard(request));
+      body.append(el('h3','Project details'),projectFacts(request));
+      // The script and voice over the client uploaded, behind signed URLs.
+      if(request.scriptFilePath||request.voiceOverFilePath){
+        var downloads=el('div',undefined,'workflow-version-line');
+        if(request.scriptFilePath)downloads.append(fileButton(admin?'Download client script':'Download your script',request.scriptFilePath));
+        if(request.voiceOverFilePath)downloads.append(fileButton(admin?'Download client voice over':'Download your voice over',request.voiceOverFilePath));
+        body.append(el('h3','Supplied files'),downloads);
+      }
+      body.append(el('h3','Instructions'),el('p',request.instructions,'workflow-feedback'),el('h3','Reference links'));
       if(!request.references.length)body.append(el('p','No reference links provided.','admin-muted'));
       request.references.forEach(function(url){var p=el('p'),a=el('a',url);a.href=url;a.target='_blank';a.rel='noopener noreferrer';p.append(a);body.append(p);});
-      body.append(el('h3','Attachments'));body.append(el('p',request.attachments.length?request.attachments.map(function(a){return a.name+(a.size?' ('+Math.ceil(a.size/1024)+' KB)':'');}).join('\n'):'No attachments.','workflow-feedback'));body.append(el('p','Attachment metadata only; files are not uploaded in this preview.','admin-muted'));
-      if(admin && request.status!=='Completed'){secondary.push(button('Edit details',function(){editRequest(request,true);}));if(request.status==='Submitted')secondary.push(button('Start review',async function(){await api.reviewRequest(request.id);flash('Marked as Under Review.');renderDetail();}));}
+      body.append(el('h3','Attachments'));body.append(el('p',request.attachments.length?request.attachments.map(function(a){return a.name+(a.size?' ('+Math.ceil(a.size/1024)+' KB)':'');}).join('\n'):'No attachments.','workflow-feedback'));body.append(el('p','File names as supplied with the project.','admin-muted'));
+      if(admin && request.status!=='Completed'){secondary.push(button('Edit details',function(){editRequest(request,true);}));if(request.stage!=='Awaiting Payment')secondary.push(button('Change stage',function(){changeStage(request);}));if(request.status==='Submitted'&&request.stage!=='Awaiting Payment')secondary.push(button('Start review',async function(){await api.reviewRequest(request.id);flash('Marked as Under Review.');renderDetail();}));}
+      // Nothing moves into production until the deposit is in.
+      if(request.stage==='Awaiting Payment'){body.append(el('p',admin?'This project is waiting for its 15% project-start payment. Mark that payment paid on the Payments screen to start it.':'We will email your PayPal invoice for the 15% project-start payment. Your project starts as soon as it is confirmed.','workflow-notice'));footer(detail,secondary);return;}
       var linked=state.videos.find(function(v){return v.requestId===request.id;});
       if(linked)primary.push(button('Open video',function(){show('videos',linked.id);},true));
       else if(admin)primary.push(button('Move to production',function(){confirmation('Move to production','Create a linked production workspace for this request?',async function(){var video=await api.produce(request.id);show('videos',video.id);flash('Moved to production. Add the first version when the draft is ready.');});},true));
@@ -110,10 +200,13 @@
     }
     var video=kind==='videos'?item:api.get('videos',item.videoId),latest=api.latest(video);
     if(kind==='videos')body.append(media(latest));
-    var version=el('div',undefined,'workflow-version-line');version.append(badge(item.status),el('span',latest?(video.status==='Completed'?'Final delivery · ':'')+'V'+latest.number+' · '+latest.filename+' · '+date(latest.createdAt):'Awaiting first draft'));body.append(version);
+    var version=el('div',undefined,'workflow-version-line');version.append(stageBadge(request.stage),badge(item.status),el('span',latest?(video.status==='Completed'?'Final delivery · ':'')+'V'+latest.number+' · '+latest.filename+' · '+date(latest.createdAt):'Awaiting first draft'));body.append(version);
     if(!admin&&kind==='videos'&&video.status==='Client Review')body.append(reviewBar(video));
     body.append(factGrid(facts));
+    body.append(el('h3','Price'),priceBreakdown(request));
+    body.append(el('h3','Payments'),paymentsCard(request));
     secondary.push(button('Original request',function(){show('requests',request.id);}));
+    if(admin&&kind==='videos')secondary.push(button('Change stage',function(){changeStage(request);}));
     if(kind==='revisions'){var f=video.feedback.find(function(value){return value.id===item.feedbackId;});body.append(el('h3','Client feedback · V'+item.baseVersion),el('blockquote',f.text,'workflow-feedback'),el('p',f.author+' · '+date(f.at),'admin-muted'));secondary.push(button('Open video',function(){show('videos',video.id);}));}
     if(admin && video.status!=='Completed' && (kind!=='revisions'||item.status!=='Resolved')) {
       secondary.push(button('Edit production details',function(){editRequest(request,false);}));
@@ -136,7 +229,7 @@
     records.sort(function(a,b){var x=requestFor(kind,a),y=requestFor(kind,b);if(f.sort==='priority')return ['Urgent','High','Normal','Low'].indexOf(x.priority)-['Urgent','High','Normal','Low'].indexOf(y.priority);if(f.sort==='title')return x.title.localeCompare(y.title);if(f.sort==='deadline')return x.deadline.localeCompare(y.deadline);return (f.sort==='oldest'?1:-1)*(a.requestedAt||x.requestedAt).localeCompare(b.requestedAt||y.requestedAt);});
     target.replaceChildren(el('p',records.length+' '+(records.length===1?{requests:'request',videos:'video',revisions:'revision'}[kind]:kind),'admin-result-count'));
     if(!records.length){var empty=el('div',undefined,'admin-empty');empty.append(el('strong','No matching '+kind),el('p','Try another search or clear your filters.'),button('Clear filters',function(){container.querySelectorAll('[data-filter]').forEach(function(input){input.value=input.dataset.filter==='search'?'':input.dataset.filter==='sort'?'newest':'all';filters[kind][input.dataset.filter]=input.value;});renderList(kind);}));target.append(empty);return;}
-    var wrap=el('div',undefined,'workflow-table-wrap');wrap.tabIndex=0;wrap.setAttribute('role','region');wrap.setAttribute('aria-label',kind+' table, scroll horizontally');var table=el('table',undefined,'table workflow-table'),head=el('thead'),tr=el('tr');['Video / Client',kind==='revisions'?'Round / Requested':'Type / Platform','Status','Priority','Assigned Editor','Deadline'].forEach(function(t){var th=el('th',t);th.scope='col';tr.append(th);});head.append(tr);var tbody=el('tbody');records.forEach(function(item){var r=requestFor(kind,item),row=el('tr'),identity=el('td');var b=button(r.title,function(){show(kind,item.id);});b.className='btn-link';identity.append(b,el('span',client(r).name,'admin-muted admin-block'));row.append(identity);var type=el('td',kind==='revisions'?'Round '+item.round+' / '+date(item.requestedAt):r.videoType+' / '+r.platform);var status=el('td');status.append(badge(item.status));row.append(type,status,el('td',r.priority),el('td',r.assignedEditor||'Unassigned'),el('td',date(r.deadline),'admin-date'));tbody.append(row);});table.append(head,tbody);wrap.append(table);target.append(el('p','Scroll horizontally to see all details.','table-hint'),wrap);
+    var wrap=el('div',undefined,'workflow-table-wrap');wrap.tabIndex=0;wrap.setAttribute('role','region');wrap.setAttribute('aria-label',kind+' table, scroll horizontally');var table=el('table',undefined,'table workflow-table'),head=el('thead'),tr=el('tr');['Video / Client',kind==='revisions'?'Round / Requested':'Type / Platform','Status','Priority','Assigned Editor','Deadline'].forEach(function(t){var th=el('th',t);th.scope='col';tr.append(th);});head.append(tr);var tbody=el('tbody');records.forEach(function(item){var r=requestFor(kind,item),row=el('tr'),identity=el('td');var b=button(r.title,function(){show(kind,item.id);});b.className='btn-link';identity.append(b,el('span',client(r).name,'admin-muted admin-block'));row.append(identity);var type=el('td');type.append(kind==='revisions'?'Round '+item.round+' / '+date(item.requestedAt):r.videoType+(r.durationSeconds?' / '+r.durationSeconds+' sec':r.platform?' / '+r.platform:''));if(kind!=='revisions'&&r.prices.total!==null)type.append(el('span',api.formatMoney(r.prices.total),'admin-muted admin-block'));var status=el('td');status.append(stageBadge(r.stage),el('span',item.status,'admin-muted admin-block'));row.append(type,status,el('td',r.priority),el('td',r.assignedEditor||'Unassigned'),el('td',date(r.deadline),'admin-date'));tbody.append(row);});table.append(head,tbody);wrap.append(table);target.append(el('p','Scroll horizontally to see all details.','table-hint'),wrap);
   }
   // Client Projects filters: one row status per project (the video's status, or
   // the request's while it waits), grouped by the chips.
@@ -146,14 +239,15 @@
   function renderClient() {
     var requests=api.client.records('requests'), videos=api.client.records('videos');
     var list=document.querySelector('[data-request-list]'),heading=el('h2','Your requests','panel__title');heading.id='h-open-requests';list.replaceChildren(heading);
-    requests.slice().sort(function(a,b){return b.requestedAt.localeCompare(a.requestedAt);}).forEach(function(r){var card=el('article',undefined,'list-card workflow-request-card');card.append(el('h3',r.title,'list-card__title'),badge(r.status),el('p',r.videoType+' · Requested '+date(r.requestedAt)+' · Due '+date(r.deadline),'admin-muted'),button('View request',function(){show('requests',r.id);}));list.append(card);});
-    if(!requests.length)list.append(el('p','No requests yet. Submit your first brief to get started.','admin-muted'));
+    requests.slice().sort(function(a,b){return b.requestedAt.localeCompare(a.requestedAt);}).forEach(function(r){var card=el('article',undefined,'list-card workflow-request-card');card.append(el('h3',r.title,'list-card__title'),stageBadge(r.stage),el('p',r.videoType+' · '+(r.durationSeconds?r.durationSeconds+' seconds · ':'')+api.formatMoney(r.prices.total,'Price to confirm')+' · Requested '+date(r.requestedAt),'admin-muted'),button('View project',function(){show('requests',r.id);}));list.append(card);});
+    if(!requests.length){var first=el('a','Start a new project','btn btn-primary btn--sm');first.href='order.html';list.append(el('p','No projects yet. Start your first project to get going.','admin-muted'),first);}
     var count=requests.filter(function(r){return ['Submitted','Under Review'].includes(r.status);}).length;var counter=document.querySelector('[data-request-count]');counter.textContent=count;counter.setAttribute('aria-label',count+' open requests');
     var search=document.querySelector('#client-project-search').value.trim().toLowerCase();
-    var rows=requests.map(function(r){var v=videos.find(function(v){return v.requestId===r.id;});return {request:r,video:v,status:v?v.status:r.status};});
+    // The stage is what a client follows; the video status drives the filters.
+    var rows=requests.map(function(r){var v=videos.find(function(v){return v.requestId===r.id;});return {request:r,video:v,status:v?v.status:r.status,stage:r.stage};});
     var shown=rows.filter(function(item){return (clientFilter==='all'||chipStatuses[clientFilter].includes(item.status))&&item.request.title.toLowerCase().includes(search);});
-    var tbody=document.querySelector('.projects-table tbody');tbody.replaceChildren();shown.forEach(function(item){var r=item.request,v=item.video,row=el('tr'),title=el('td');title.append(button(r.title,function(){show(v?'videos':'requests',v?v.id:r.id);}));var status=el('td');status.append(badge(item.status));row.append(title,el('td',r.videoType),status,el('td',date(r.deadline)),el('td',v&&v.versions.length?'V'+api.latest(v).number:'No draft'));tbody.append(row);});
-    if(!rows.length){var start=el('a','Submit a request','btn btn-primary btn--sm');start.href='#requests';start.dataset.screenLink='requests';tableMessage(tbody,'No videos yet — submit a request to get started',start);}
+    var tbody=document.querySelector('.projects-table tbody');tbody.replaceChildren();shown.forEach(function(item){var r=item.request,v=item.video,row=el('tr'),title=el('td');title.append(button(r.title,function(){show(v?'videos':'requests',v?v.id:r.id);}));var status=el('td');status.append(stageBadge(item.stage));if(v)status.append(el('span',item.status,'admin-muted admin-block'));row.append(title,el('td',r.videoType),status,el('td',date(r.deadline)),el('td',v&&v.versions.length?'V'+api.latest(v).number:'No draft'));tbody.append(row);});
+    if(!rows.length){var start=el('a','Start a new project','btn btn-primary btn--sm');start.href='order.html';tableMessage(tbody,'No projects yet — start your first project to get going',start);}
     else if(!shown.length)tableMessage(tbody,'No videos match this filter',button('Clear filters',function(){clearClientFilters();renderClient();}));
   }
   window.FijlyWorkflow = { open: show };
@@ -182,74 +276,15 @@
   if(admin)document.querySelectorAll('[data-workflow-list]').forEach(function(container){setupList(container.dataset.workflowList,container);});
   else {
     document.querySelectorAll('.filter-chip[data-filter]').forEach(function(chip){chip.onclick=function(){clientFilter=chip.dataset.filter;document.querySelectorAll('.filter-chip').forEach(function(c){c.setAttribute('aria-pressed',String(c===chip));});renderClient();};});
-    var requestForm=document.querySelector('[data-request-form]');
-    /* Apply the Admin's saved workflow defaults as starting values. Only fields
-       the visitor has not touched are set, and only when the form is empty, so
-       a default never overwrites typed input. */
-    function applyRequestDefaults(){
-      var defaults=state.settings||{},preferences=api.client.preferences(); var f=requestForm.elements;
-      ['length','platform'].forEach(function(name){var input=f.namedItem(name);if(!input.dataset.touched)input.value=name==='length'?preferences.defaultLength:preferences.platform;});
-      var priority=f.namedItem('priority'), due=f.namedItem('due');
-      if(defaults.defaultPriority&&priority&&!priority.dataset.touched)priority.value=defaults.defaultPriority;
-      if(due&&!due.dataset.touched&&defaults.defaultLeadDays){
-        // Count the turnaround from today's local calendar date.
-        var now=new Date(),target=new Date(now.getFullYear(),now.getMonth(),now.getDate()+Number(defaults.defaultLeadDays));
-        due.value=target.getFullYear()+'-'+String(target.getMonth()+1).padStart(2,'0')+'-'+String(target.getDate()).padStart(2,'0');
-      }
-    }
-    ['priority','due','length','platform'].forEach(function(name){
-      var field=requestForm.elements.namedItem(name);
-      if(field)field.addEventListener('change',function(){field.dataset.touched='1';});
-    });
-    requestForm.addEventListener('reset',function(){
-      ['priority','due','length','platform'].forEach(function(name){
-        var field=requestForm.elements.namedItem(name); if(field)delete field.dataset.touched;
-      });
-      setTimeout(applyRequestDefaults,0);
-    });
-    applyDefaults=applyRequestDefaults;
-    applyRequestDefaults();
-    // Keep errors with their fields and announce a single submission summary.
-    requestForm.noValidate = true;
-    var errorFields = ['name', 'brief', 'due', 'references'];
-    errorFields.forEach(function (name) {
-      var field = requestForm.elements.namedItem(name), error = el('p', '', 'workflow-error field-error');
-      error.id = field.id + '-error'; error.hidden = true;
-      field.setAttribute('aria-describedby', error.id); field.insertAdjacentElement('afterend', error);
-      field.addEventListener('input', function () { field.removeAttribute('aria-invalid'); error.hidden = true; error.textContent = ''; });
-    });
-    function fieldError(name, message) {
-      var field = requestForm.elements.namedItem(name), error = document.getElementById(field.id + '-error');
-      field.setAttribute('aria-invalid', 'true'); error.textContent = message; error.hidden = false;
-    }
-    function clearErrors() { errorFields.forEach(function (name) { var field = requestForm.elements.namedItem(name); field.removeAttribute('aria-invalid'); var error = document.getElementById(field.id + '-error'); error.hidden = true; error.textContent = ''; }); }
-    requestForm.addEventListener('reset', clearErrors);
-    var submitting = false;
-    requestForm.onsubmit = async function (e) {
-      e.preventDefault(); if (submitting) return; clearErrors();
-      var note = document.querySelector('[data-request-note]'), f = requestForm.elements, invalid = [];
-      [['name', 'Please enter a video title.'], ['brief', 'Please describe what you want in your video.'], ['due', 'Please choose a valid deadline.']].forEach(function (pair) {
-        var field = f.namedItem(pair[0]); if (!field.value.trim() || !field.validity.valid) { fieldError(pair[0], pair[1]); invalid.push(pair[0]); }
-      });
-      var badReference = f.references.value.split(/\n/).map(function (v) { return v.trim(); }).filter(Boolean).some(function (value) { try { return !['http:', 'https:'].includes(new URL(value).protocol); } catch (_) { return true; } });
-      if (badReference) { fieldError('references', 'Enter a complete link starting with https:// or http://, one per line.'); invalid.push('references'); }
-      if (invalid.length) {
-        note.className = 'workflow-error'; note.textContent = 'Please check the highlighted fields.'; note.hidden = false; f.namedItem(invalid[0]).focus(); return;
-      }
-      // One submission at a time: a double click must not create two requests.
-      var submitButton = requestForm.querySelector('[type="submit"]'); submitting = true; submitButton.disabled = true; submitButton.setAttribute('aria-busy', 'true');
-      try {
-        await api.client.createRequest({title:f.name.value,videoType:f.type.value,instructions:f.brief.value,platform:f.platform.value,priority:f.priority.value,deadline:f.due.value,length:f.namedItem('length').value,references:f.references.value},files(f.attachments));
-        requestForm.reset(); note.className = 'workflow-notice'; note.textContent = 'Request submitted. We will review your brief next. You can track its progress in Your requests.';
-      } catch (error) { note.className = 'workflow-error'; note.textContent = error.message; if (/reference/i.test(error.message)) { fieldError('references', 'Enter a complete link starting with https:// or http://.'); f.references.focus(); } }
-      finally { submitting = false; submitButton.disabled = false; submitButton.removeAttribute('aria-busy'); }
-      note.hidden = false;
-    };renderClient();
+    // The old in-portal request form is gone: clients may no longer insert
+    // into requests. Projects start in the wizard on order.html, which calls
+    // submit_project() so the price and the milestone payments are set by the
+    // database. This screen keeps the history list and links to the wizard.
+    renderClient();
   }
   if(!admin)document.querySelector('#client-project-search').addEventListener('input',renderClient);
   api.subscribe(function(changed){
     if(admin && changed.includes('clients'))document.querySelectorAll('[data-workflow-list] [data-filter="client"]').forEach(function(select){var value=select.value;select.replaceChildren();var all=el('option','All clients');all.value='all';select.append(all);state.clients.forEach(function(c){var option=el('option',c.name);option.value=c.id;select.append(option);});select.value=state.clients.some(function(c){return c.id===value;})?value:'all';filters[select.closest('[data-workflow-list]').dataset.workflowList].client=select.value;});
-    if(changed.some(function(k){return ['clients','requests','videos','revisions'].includes(k);})) {if(admin)Object.keys(filters).forEach(renderList);else renderClient();if(detail.node.open){try{renderDetail();}catch(error){detail.node.close();current=null;}}}
-    if(!admin&&changed.some(function(k){return ['settings','clientSettings','clients'].includes(k);}))applyDefaults();
+    if(changed.some(function(k){return ['clients','requests','videos','revisions','payments'].includes(k);})) {if(admin)Object.keys(filters).forEach(renderList);else renderClient();if(detail.node.open){try{renderDetail();}catch(error){detail.node.close();current=null;}}}
   });
 })();

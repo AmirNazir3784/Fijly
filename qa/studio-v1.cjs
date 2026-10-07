@@ -20,7 +20,7 @@ const { pathToFileURL } = require('url');
     if (/^https:\/\/eaddovqkarognynnybeh\.supabase\.co\/(auth\/v1\/|rest\/v1\/)/.test(r.url())) return;
     if (['fetch', 'xhr'].includes(r.resourceType()) || r.method() !== 'GET') requests.push(r.url());
   });
-  const routes = { studio: ['overview', 'projects', 'requests', 'assets', 'scripts', 'analytics', 'settings'], admin: ['dashboard', 'orders', 'clients', 'requests', 'videos', 'revisions', 'assets', 'scripts', 'analytics', 'settings'] };
+  const routes = { studio: ['overview', 'projects', 'requests', 'assets', 'scripts', 'analytics', 'settings'], admin: ['dashboard', 'orders', 'payments', 'clients', 'requests', 'videos', 'revisions', 'assets', 'scripts', 'analytics', 'settings'] };
   const url = (file, screen) => pathToFileURL(path.resolve(`site/${file}.html`)).href + '#' + screen;
   async function load(file, screen) {
     await page.goto(url(file, screen));
@@ -51,7 +51,7 @@ const { pathToFileURL } = require('url');
         await page.screenshot({ path: `qa/screenshots/v1-${file}-${screen}-${width}.png`, fullPage: true });
       }
     }
-    checks.push(`${width}px: all 17 active routes, selected navigation, one heading, no overflow or subscription UI`);
+    checks.push(`${width}px: all 18 active routes, selected navigation, one heading, no overflow or subscription UI`);
   }
   for (const file of Object.keys(routes)) {
     await load(file, routes[file][0]);
@@ -136,12 +136,19 @@ const { pathToFileURL } = require('url');
   // Counts are relative: the list is driven by shared state, whose seed may grow.
   const cardsBefore = await page.locator('[data-request-list] .list-card').count();
   const openBefore = Number(await page.locator('[data-request-count]').textContent());
-  await page.getByRole('button', { name: 'Submit request' }).click();
+  // Projects start in the wizard on order.html; this screen links there and
+  // keeps the history list. submit_project refuses an incomplete brief.
+  assert.equal(await page.locator('.request-start a[href="order.html"]').count(), 1);
+  const refused = await page.evaluate(() => supabaseClient.rpc('submit_project', { p_title: '', p_video_type: 'Product Demo', p_duration: 60, p_brief: '' }).then(r => !!r.error));
+  assert.equal(refused, true, 'an incomplete project must not be created');
   assert.equal(await page.locator('[data-request-list] .list-card').count(), cardsBefore,
     'an incomplete request must not be created');
-  await page.locator('#req-name').fill('Northbeam / New onboarding');
-  await page.locator('#req-brief').fill('Explain connecting a data source and exporting the first report.');
-  await page.getByRole('button', { name: 'Submit request' }).click();
+  await page.evaluate(async () => {
+    const result = await supabaseClient.rpc('submit_project', { p_title: 'Northbeam / New onboarding', p_video_type: 'Tutorial / Onboarding', p_duration: 60,
+      p_brief: 'Explain connecting a data source and exporting the first report.', p_purpose: 'Reduce onboarding support tickets.', p_target_audience: 'New customers.' });
+    if (result.error) throw new Error(result.error.message);
+    await FijlyData.load();
+  });
   await page.waitForFunction(n => document.querySelectorAll('[data-request-list] .list-card').length === n, cardsBefore + 1);
   assert.equal(Number(await page.locator('[data-request-count]').textContent()), openBefore + 1);
   // The request is stored in the database, so a reload keeps it.

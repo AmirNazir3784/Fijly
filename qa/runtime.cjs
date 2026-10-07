@@ -21,7 +21,8 @@ if (!playwright) throw new Error('Install Playwright locally or set PLAYWRIGHT_M
    { fijlyAuth: 'admin' | 'admin2' | 'client' | 'noprofile' | null } follows
    the real session token instead (auth.cjs).
    The REST and Storage APIs are served by supabase-emulator.cjs: one in-memory database per
-   launched browser, shared by its contexts and tabs like a real backend. */
+   launched browser, shared by its contexts and tabs like a real backend, with
+   /rest/v1/rpc/* answered by its stand-ins for the four SQL functions. */
 const emulator = require('./supabase-emulator.cjs');
 const SDK = fs.readFileSync(path.join(__dirname, 'vendor', 'supabase-js-2.116.0.js'));
 const SDK_URL = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.116.0/dist/umd/supabase.js';
@@ -65,6 +66,12 @@ async function installSupabaseMock(context, as = 'auto', db = emulator.createDb(
     if (url.pathname === '/auth/v1/logout') return route.fulfill({ status: 204, headers: cors });
     // As on the live project, public sign-up is disabled.
     if (url.pathname === '/auth/v1/signup') return json(route, 422, { code: 422, error_code: 'signup_disabled', msg: 'Signups not allowed for this instance' });
+    // The SECURITY DEFINER functions the portals call (ensure_client_workspace,
+    // submit_project, admin_set_payment_status, review_storyboard).
+    if (url.pathname.startsWith('/rest/v1/rpc/')) {
+      const result = emulator.handleRpc(db, caller, url.pathname.slice('/rest/v1/rpc/'.length), request.postDataJSON());
+      return result.status === 204 ? route.fulfill({ status: 204, headers: cors }) : json(route, result.status, result.body);
+    }
     if (url.pathname.startsWith('/rest/v1/')) {
       const result = emulator.handle(db, caller, method, url, request.headers(), request.postDataJSON());
       return result.status === 204 ? route.fulfill({ status: 204, headers: cors }) : json(route, result.status, result.body);
@@ -125,4 +132,4 @@ function withAuth(browser) {
 const chromium = Object.create(playwright.chromium);
 chromium.launch = async (...args) => withAuth(await playwright.chromium.launch(...args));
 
-module.exports = {...playwright, chromium, qaUsers, qaSession: session, SUPABASE, STORAGE_KEY, base: process.env.QA_BASE_URL || `http://localhost:${process.env.QA_PORT || 8766}/`, widths: [1440,1024,768,390,320], routes: {studio:['overview','projects','requests','assets','scripts','analytics','settings'],admin:['dashboard','orders','clients','requests','videos','revisions','assets','scripts','analytics','settings']}};
+module.exports = {...playwright, chromium, qaUsers, qaSession: session, SUPABASE, STORAGE_KEY, base: process.env.QA_BASE_URL || `http://localhost:${process.env.QA_PORT || 8766}/`, widths: [1440,1024,768,390,320], routes: {studio:['overview','projects','requests','assets','scripts','analytics','settings'],admin:['dashboard','orders','payments','clients','requests','videos','revisions','assets','scripts','analytics','settings']}};

@@ -1,0 +1,24 @@
+{
+  "checks": [
+    "public.pricing: readable by anyone (12 rows), writable only by an admin",
+    "Step 1 validates every field, rejects a bare domain as a website, offers exactly the six accepted video types, and calls ensure_client_workspace on Continue",
+    "Step 2 validates the purpose, audience and reference links, and uploads logo and screenshots to {client_id}/project-files/",
+    "Step 3 offers two independent radio pairs, shows a breakdown read from public.pricing (Included at $0, \"Provided by you\" when supplied), demands the matching upload and refuses the wrong file type",
+    "Submit calls submit_project once (a double click creates one project), which prices it server-side, saves every project field, opens it as Awaiting Payment and writes the 15/45/40 payment rows",
+    "The payment step names the 15% deposit and the email it goes to, lists the saved schedule, keeps PayPal disabled, links to the Studio, and fits 375/768/1280",
+    "A filled honeypot shows the payment step without saving a project",
+    "A failed submit_project shows an inline error with an email fallback, keeps every answer and allows a retry",
+    "Client portal: the stage is the main badge in the projects list and detail, the payments card shows all three milestones with the due one marked, the price breakdown is the saved one, the overview banners the deposit, and the requests screen links to the wizard instead of a form",
+    "Admin Payments: Payments sits after Orders, Due is the default filter, the sidebar badge counts what the stage makes payable, and the status and client filters narrow the table",
+    "Mark paid asks for the method (PayPal by default) and the invoice reference, saves them through admin_set_payment_status with a paid date, and the project stage changes from Awaiting Payment to Project Submitted",
+    "Mark waived (no method asked), Mark refunded (paid date cleared) and Reset to due all go through admin_set_payment_status, and none of them rolls the stage back",
+    "admin_set_payment_status refuses clients, anonymous callers and unknown statuses; clients read only their own payments and can never write one",
+    "An Awaiting Payment project is listed under \"Awaiting deposit\" with its deposit amount, and is excluded from the dashboard action queue and the requests \"Needs review\" filter",
+    "Admin project detail shows the stage, the saved price breakdown, the payments card, every wizard field and signed-URL downloads for the supplied script and voice over; the stage dropdown offers only the non-payment steps and refuses the rest",
+    "Admin pricing: a 3 x 4 grid over public.pricing with the live figures, negative and empty values refused with nothing written, Discard restoring the saved list, and a save that only touches the changed cells",
+    "Admin settings save storyboard_revisions_included and video_revisions_included, and refuse a value outside 0-20",
+    "Admin Payments and Settings fit 375/768/1280 without horizontal overflow",
+    "ensure_client_workspace is client-only and idempotent; submit_project needs a workspace and refuses an unpriced length"
+  ],
+  "errors": []
+}

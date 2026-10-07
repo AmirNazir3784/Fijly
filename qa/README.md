@@ -7,7 +7,7 @@ node qa/run-all.cjs
 ```
 
 The runner starts a local static file server on port 8766, or uses the existing
-server there. It executes all 21 maintained checks, writes per-suite logs to
+server there. It executes all 22 maintained checks, writes per-suite logs to
 `qa/stabilization-logs/`, and exits nonzero if any check fails. Screenshots are regenerated
 under `qa/screenshots/`, `qa/refinement-after/` and `qa/visual-sheets/` on each
 run; they are run artifacts and are not kept in the repository.
@@ -32,6 +32,20 @@ and saves screenshots plus `qa/admin-analytics-visual-results.json`.
 
 ## Maintained checks
 
+- `milestones`: the milestone workflow (part A), end to end — the four-step
+  project wizard on `order.html` (per-step validation, `ensure_client_workspace`,
+  uploads to `{client_id}/project-files/`, a price breakdown read from
+  `public.pricing`, the two script / voice-over choices), `submit_project`
+  (server-side pricing, the project opening as Awaiting Payment, the 15/45/40
+  payment rows, one project per double click, the honeypot, a failed save),
+  the client portal (stage badge, payments card, deposit banner, the retired
+  request form), Admin Payments (Due as the default filter, the stage-aware
+  sidebar badge, Mark paid / waived / refunded / Reset to due through
+  `admin_set_payment_status`, and the stage moving to Project Submitted), the
+  Awaiting deposit group, the admin project detail with signed-URL script and
+  voice-over downloads and the manual stage dropdown, the 3×4 pricing grid,
+  the included-revision settings, and every screen at 375/768/1280. Writes
+  `qa/milestones-results.json`.
 - Seven Studio suites: `studio-v1`, `studio-client`, `studio-admin-sections`,
   `studio-workflow`, `studio-workflow-probe`, `studio-workflow-sweep`,
   `studio-stability`.
@@ -41,11 +55,20 @@ and saves screenshots plus `qa/admin-analytics-visual-results.json`.
   `fixtures/demo-seed.json` (the demo records of the retired session mock),
   with the live project's column names (unknown columns fail as in PostgREST)
   and an RLS stand-in (admins see everything; a client only its workspace).
+  It also serves `/rest/v1/rpc/*` for the four SECURITY DEFINER functions —
+  `ensure_client_workspace`, `submit_project`, `admin_set_payment_status` and
+  `review_storyboard` — mirroring the SQL: the price is read from
+  `public.pricing` server-side, three payment rows are created, and settling a
+  milestone advances `requests.stage`. `pricing` is readable by anyone, while
+  `requests`, `payments` and `storyboards` are select-only for a client, so a
+  direct insert into `requests` fails here exactly as it does live. Roles and
+  workspaces are resolved from the `profiles` table, as `get_user_role()` and
+  `get_user_client_id()` do, so a workspace created mid-test is picked up.
   By default the Admin portal acts as the admin user and the Client portal as
   the Northbeam client user, so one context can drive both portals against the
   same database; tabs refresh (`FijlyData.load()`) to see each other's writes.
   Older suites' `FijlyMock` refers to `FijlyData` in both portals.
-- `orders`: per-video pricing and the landing page sign-up form (validation, sign-up disabled → account request, email confirmation, existing account, signed-in redirect, honeypot, Google once enabled, `login.html?next=order.html`), the signed-in two-step order page (redirect when signed out, workspace pre-fill, no prices before review, validation, hash steps and browser Back, disabled Pay placeholder, failure fallback, honeypot, sign out), and the Admin Orders screen (pending count, price-mismatch flag, filters, detail, status changes, RLS).
+- `orders`: per-video pricing and the landing page sign-up form (validation, sign-up disabled → account request, email confirmation, existing account, signed-in redirect, honeypot, Google once enabled, `login.html?next=order.html`), the signed-in order page shell (redirect when signed out, workspace pre-fill, the four steps, no prices with the video length, the disabled PayPal placeholder, deep links that cannot skip steps, sign out), and the Admin Orders screen for the retired single-payment orders (pending count, price-mismatch flag, filters, detail, status changes, RLS).
 - `round-b`: queue/badge counts, triage, submission feedback, assets, script visibility, deadline links, mobile cards and analytics date boundaries.
 - `studio-polish`: all portal headers, sidebar footer, logo navigation, profile editing/photo handling, shared references, keyboard focus and accessibility at all five widths; protected-file scope guard.
 - `functional`, `accessibility`, `refinement-check`, `final_browser`: current

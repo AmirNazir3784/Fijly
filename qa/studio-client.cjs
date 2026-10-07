@@ -19,12 +19,48 @@ const base = require('./runtime.cjs').base;
   await c.locator('#client-current-video').click(); assert.match(await c.locator('#workflow-detail-title').innerText(),/CloudDesk/); assert.equal(await c.getByRole('button',{name:'Approve video',exact:true}).count(),1); await close();
   for(const link of await c.locator('.project-card:visible .project-card__foot a').all()) { const expected=await link.locator('xpath=../..').locator('.project-card__name').innerText(); await link.click(); assert.equal(await c.locator('#workflow-detail-title').innerText(),expected); await close(); }
   checks.push('Overview metrics derive from owned records; current/recent links open the matching video');
-  await route('requests'); assert.ok(await c.locator('#req-length option').count()>=6);
-  await c.locator('#req-name').fill('Client QA / Product walkthrough'); await c.locator('#req-brief').fill('Show the reporting flow and end with a clear CTA.'); await c.locator('#req-length').selectOption('2–3 min'); await c.locator('#req-platform').selectOption('LinkedIn'); await c.locator('#req-references').fill('https://example.com/reference'); await c.locator('#req-attachments').setInputFiles({name:'brief.txt',mimeType:'text/plain',buffer:Buffer.from('brief')}); await c.getByRole('button',{name:'Submit request',exact:true}).click();
-  await c.waitForFunction(()=>FijlyData.client.records('requests').some(r=>r.title==='Client QA / Product walkthrough')); await sync(a); await a.waitForFunction(()=>FijlyMock.state.requests.some(r=>r.title==='Client QA / Product walkthrough'));
-  const request = await a.evaluate(()=>FijlyMock.state.requests.find(r=>r.title==='Client QA / Product walkthrough')); assert.equal(request.client,'northbeam'); assert.equal(request.length,'2–3 min'); assert.equal(request.attachments[0].name,'brief.txt'); assert.equal(request.platform,'LinkedIn');
+  await route('requests');
+  // The in-portal form is retired: the screen links to the wizard and keeps the history list.
+  assert.equal(await c.locator('[data-request-form]').count(),0);
+  assert.equal(await c.locator('.request-start a[href="order.html"]').count(),1);
+  // A project is created by submit_project, which prices it from public.pricing
+  // and opens it as Awaiting Payment with three milestone payments.
+  const requestId = await c.evaluate(async()=>{
+   const r=await supabaseClient.rpc('submit_project',{p_title:'Client QA / Product walkthrough',p_video_type:'Product Demo',p_duration:90,
+    p_brief:'Show the reporting flow and end with a clear CTA.',p_purpose:'Convert trial users to paid plans.',
+    p_target_audience:'New trial users.',p_video_style:'Screen recording with motion graphics.',p_brand_colors:'#5B4BF5',
+    p_website:'https://northbeam.example',p_reference_urls:['https://example.com/reference'],p_attachment_names:['brief.txt'],
+    p_delivery_date:'2026-11-30'});
+   if(r.error)throw new Error(r.error.message);
+   await FijlyData.load();
+   return r.data;});
+  await c.waitForFunction(()=>FijlyData.client.records('requests').some(r=>r.title==='Client QA / Product walkthrough'));
+  await sync(a); await a.waitForFunction(()=>FijlyMock.state.requests.some(r=>r.title==='Client QA / Product walkthrough'));
+  const request = await a.evaluate(()=>FijlyMock.state.requests.find(r=>r.title==='Client QA / Product walkthrough'));
+  assert.equal(request.client,'northbeam'); assert.equal(request.id,requestId);
+  assert.equal(request.length,'90 seconds'); assert.equal(request.durationSeconds,90);
+  assert.equal(request.attachments[0].name,'brief.txt'); assert.equal(request.website,'https://northbeam.example');
+  assert.equal(request.stage,'Awaiting Payment'); assert.equal(request.status,'Submitted');
+  // The price and the schedule come from the database, never from the browser.
+  assert.deepEqual(request.prices,{base:700,script:0,voiceOver:0,total:700});
+  const schedule = await a.evaluate(id=>FijlyMock.paymentsFor(id).map(p=>[p.milestone,p.percent,p.amount,p.status,p.required]),requestId);
+  assert.deepEqual(schedule,[['start',15,105,'due',true],['storyboard',45,315,'due',false],['final',40,280,'due',false]]);
+  // The client sees the deposit banner and the payments card, and cannot pay here.
+  await route('overview');
+  assert.match(await c.locator('#client-payment-banners').innerText(),/Payment due: Project start — \$105 for Client QA \/ Product walkthrough\./);
+  await route('requests');
+  await c.getByRole('button',{name:'View project',exact:true}).first().click();
+  assert.match(await c.locator('#workflow-detail .payment-rows').innerText(),/Project start · 15%[\s\S]*\$105[\s\S]*Due/);
+  assert.match(await c.locator('#workflow-detail .price-lines').innerText(),/Base video[\s\S]*\$700[\s\S]*Script writing[\s\S]*Included/);
+  assert.match(await c.locator('#workflow-detail').innerText(),/We will email your PayPal invoice/);
+  await close();
   assert.match(await c.locator('[data-request-list]').innerText(),/Client QA \/ Product walkthrough/);
-  await route('projects'); await c.locator('#client-project-search').fill('Client QA'); assert.match(await c.locator('.projects-table tbody').innerText(),/Client QA[\s\S]*Submitted/);
+  // The deposit is marked paid by the studio; the project then starts.
+  const startPayment = await a.evaluate(id=>FijlyMock.paymentsFor(id).find(p=>p.milestone==='start').id,requestId);
+  await a.evaluate(id=>FijlyMock.setPaymentStatus(id,'paid','PayPal','INV-QA-1'),startPayment);
+  await a.waitForFunction(id=>FijlyMock.get('requests',id).stage==='Project Submitted',requestId);
+  await sync(c); await c.waitForFunction(id=>FijlyMock.get('requests',id).stage==='Project Submitted',requestId);
+  await route('projects'); await c.locator('#client-project-search').fill('Client QA'); assert.match(await c.locator('.projects-table tbody').innerText(),/Client QA[\s\S]*Project Submitted/);
   const videoId=await a.evaluate(async id=>(await FijlyMock.produce(id)).id,request.id); await sync(c); await c.waitForFunction(id=>FijlyMock.state.videos.some(v=>v.id===id),videoId);
   await a.evaluate(async id=>{await FijlyMock.addVersion(id,'qa-v1.mp4','First cut');await FijlyMock.setVideoStatus(id,'Draft Ready');await FijlyMock.setVideoStatus(id,'Client Review');},videoId);
   await sync(c); await c.waitForFunction(id=>FijlyMock.get('videos',id).status==='Client Review',videoId); await c.locator('[data-filter="review"]').click(); await c.getByRole('button',{name:request.title,exact:true}).click();
@@ -45,7 +81,7 @@ const base = require('./runtime.cjs').base;
   checks.push('Client request reaches the Admin portal through the database; New Request through Completed with studio steps in the Admin portal; two revision rounds, V1–V3, feedback retained; approval/cancel and final delivery; no Admin controls');
   await route('assets'); await c.locator('#client-asset-search').fill('does-not-exist'); assert.match(await c.locator('[data-client-assets]').innerText(),/No matching/); await c.locator('#client-asset-search').fill('');
   await c.locator('[data-client-assets] button').first().click(); await scan('asset details'); await c.locator('#client-asset-detail .admin-dialog-head button').click();
-  await c.locator('#client-add-asset').click(); await c.locator('#client-asset-file').setInputFiles({name:'client-brand.txt',mimeType:'text/plain',buffer:Buffer.from('brand')}); assert.equal(await c.locator('#client-asset-file-error').innerText(),'This file type is not supported.'); await c.getByRole('button',{name:'Save asset',exact:true}).click(); assert.equal(await c.locator('#client-asset-detail').evaluate(d=>d.open),true); await c.locator('#client-asset-file').setInputFiles({name:'client-brand.png',mimeType:'image/png',buffer:Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==','base64')}); assert.equal(await c.locator('#client-asset-file-error').innerText(),''); await scan('add asset with upload'); await c.getByRole('button',{name:'Save asset',exact:true}).click(); await c.waitForFunction(()=>FijlyData.client.records('assets').some(x=>x.name==='client-brand.png')); await sync(a); await a.waitForFunction(()=>FijlyMock.state.assets.some(x=>x.name==='client-brand.png'&&x.client==='northbeam')); const upload=[...browser.fijlyDb.storage.keys()].find(k=>/^client-assets\/northbeam\/[0-9a-f-]{36}\.png$/.test(k)); assert.ok(upload,'client upload stored in its own folder'); await c.locator('[data-client-assets] button').filter({hasText:'client-brand.png'}).click(); await c.waitForFunction(()=>{const img=document.querySelector('#client-asset-detail .asset-preview img');return img&&img.naturalWidth===1;}); assert.equal(await c.locator('#client-asset-detail button').filter({hasText:/Remove|Delete/}).count(),0,'clients have no delete control'); assert.equal(await c.locator('#client-asset-detail button').filter({hasText:'Download'}).isVisible(),true); await c.keyboard.press('Escape'); const removed=await c.evaluate(async key=>(await supabaseClient.storage.from('client-assets').remove([key])).data.length,upload.slice('client-assets/'.length)); assert.equal(removed,0); assert.ok(browser.fijlyDb.storage.has(upload),'storage refuses a client delete');
+  await c.locator('#client-add-asset').click(); await c.locator('#client-asset-file').setInputFiles({name:'client-brand.rtf',mimeType:'application/rtf',buffer:Buffer.from('brand')}); assert.equal(await c.locator('#client-asset-file-error').innerText(),'This file type is not supported.'); await c.getByRole('button',{name:'Save asset',exact:true}).click(); assert.equal(await c.locator('#client-asset-detail').evaluate(d=>d.open),true); await c.locator('#client-asset-file').setInputFiles({name:'client-brand.png',mimeType:'image/png',buffer:Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==','base64')}); assert.equal(await c.locator('#client-asset-file-error').innerText(),''); await scan('add asset with upload'); await c.getByRole('button',{name:'Save asset',exact:true}).click(); await c.waitForFunction(()=>FijlyData.client.records('assets').some(x=>x.name==='client-brand.png')); await sync(a); await a.waitForFunction(()=>FijlyMock.state.assets.some(x=>x.name==='client-brand.png'&&x.client==='northbeam')); const upload=[...browser.fijlyDb.storage.keys()].find(k=>/^client-assets\/northbeam\/[0-9a-f-]{36}\.png$/.test(k)); assert.ok(upload,'client upload stored in its own folder'); await c.locator('[data-client-assets] button').filter({hasText:'client-brand.png'}).click(); await c.waitForFunction(()=>{const img=document.querySelector('#client-asset-detail .asset-preview img');return img&&img.naturalWidth===1;}); assert.equal(await c.locator('#client-asset-detail button').filter({hasText:/Remove|Delete/}).count(),0,'clients have no delete control'); assert.equal(await c.locator('#client-asset-detail button').filter({hasText:'Download'}).isVisible(),true); await c.keyboard.press('Escape'); const removed=await c.evaluate(async key=>(await supabaseClient.storage.from('client-assets').remove([key])).data.length,upload.slice('client-assets/'.length)); assert.equal(removed,0); assert.ok(browser.fijlyDb.storage.has(upload),'storage refuses a client delete');
   // Another client's asset never reaches this workspace (RLS).
   await a.evaluate(()=>FijlyMock.saveAsset({name:'foreign-only.txt',client:'layerbase',category:'Other',file:new File(['qa'],'qa.pdf')})); await sync(c); assert.equal(await c.evaluate(()=>FijlyMock.state.assets.some(x=>x.name==='foreign-only.txt')),false); assert.doesNotMatch(await c.locator('#screen-assets').innerText(),/foreign-only/);
   await route('scripts'); const scriptId=await c.locator('#client-script-select').inputValue(); await c.locator('#client-script-revision').fill('Lead with the product benefit.'); await c.getByRole('button',{name:'Request script revision',exact:true}).click(); await c.waitForFunction(()=>document.querySelector('#client-script-status').textContent==='Revision Requested'); assert.match(await c.locator('#client-script-feedback').innerText(),/Lead with/); await c.reload({waitUntil:'domcontentloaded'}); assert.equal(await c.evaluate(id=>FijlyMock.client.get('scripts',id).status,scriptId),'Revision Requested');
@@ -64,7 +100,12 @@ const base = require('./runtime.cjs').base;
   await route('settings'); await c.locator('#client-company').fill('Northbeam QA'); await c.locator('#client-contact').fill('Alex QA'); await c.locator('#client-email').fill('alex.qa@example.com'); await c.locator('#set-length').selectOption('30–45 sec'); await c.locator('#client-default-platform').selectOption('YouTube');
   await a.evaluate(()=>FijlyMock.saveAsset({name:'broadcast.txt',client:'northbeam',category:'Other',file:new File(['qa'],'qa.pdf')})); await sync(c); await c.waitForFunction(()=>FijlyMock.state.assets.some(x=>x.name==='broadcast.txt')); assert.equal(await c.locator('#client-company').inputValue(),'Northbeam QA');
   await c.getByRole('button',{name:'Save settings',exact:true}).click(); await c.waitForFunction(()=>/saved/.test(document.querySelector('#client-settings-note').textContent)); await sync(a); await a.waitForFunction(()=>FijlyMock.get('clients','northbeam').name==='Northbeam QA'); await c.reload({waitUntil:'domcontentloaded'}); assert.equal(await c.locator('#client-company').inputValue(),'Northbeam QA'); assert.equal(db.client_settings.find(s=>s.client_id==='northbeam').default_platform,'YouTube');
-  await c.locator('#client-company').fill('Discard me'); await c.locator('#client-discard-settings').click(); assert.equal(await c.locator('#client-company').inputValue(),'Northbeam QA'); await route('requests'); assert.equal(await c.locator('#req-length').inputValue(),'30–45 sec'); assert.equal(await c.locator('#req-platform').inputValue(),'YouTube');
+  await c.locator('#client-company').fill('Discard me'); await c.locator('#client-discard-settings').click(); assert.equal(await c.locator('#client-company').inputValue(),'Northbeam QA'); await route('requests');
+  // The retired request form carried the studio's default length and platform.
+  // The wizard asks for a length itself and the database prices it, so this
+  // screen only keeps the history list and a link to the wizard.
+  assert.equal(await c.locator('#req-length, #req-platform').count(),0);
+  assert.equal(await c.locator('.request-start a[href="order.html"]').count(),1);
   checks.push('Workspace details and request defaults persist in the database; request defaults applied; unsaved settings survive a refresh; discard restores values');
   await route('analytics'); assert.equal(await c.locator('#client-analytics-kpis .stat-card__value').first().innerText(),'2'); assert.doesNotMatch(await c.locator('#client-delivery-chart').innerText(),/Date not recorded/); assert.match(await c.locator('#client-delivery-chart').innerText(),/Sep 2026/); assert.match(await c.locator('#client-production-time').innerText(),/2 deliveries/);
   // Workspace isolation: RLS returns only Northbeam's records, and the client

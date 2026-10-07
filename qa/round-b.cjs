@@ -35,11 +35,34 @@ const assert=require('assert/strict'),fs=require('fs');
   await go(a,'admin','requests');assert.equal(await a.locator('[data-workflow-list="requests"] [data-filter="status"]').inputValue(),'action');assert.equal(await a.locator('#screen-requests tbody tr').count(),3);
   await a.locator('#screen-requests [data-filter="status"]').selectOption('all');assert.equal(await a.locator('#screen-requests tbody tr').count(),seed.requests.length);
   assert.notEqual(await a.evaluate(()=>FijlyMock.statusClass('Submitted')),await a.evaluate(()=>FijlyMock.statusClass('In Production')));
-  await go(c,'studio','requests');await c.getByRole('button',{name:'Submit request',exact:true}).click();assert.equal(await c.locator('#req-name').getAttribute('aria-invalid'),'true');assert.equal(await c.locator('#req-brief-error').isVisible(),true);
-  await c.locator('#req-name').fill('Round B request');await c.locator('#req-brief').fill('A useful walkthrough.');await c.locator('#req-references').fill('example.com');await c.getByRole('button',{name:'Submit request',exact:true}).click();assert.equal(await c.locator('#req-references-error').isVisible(),true);assert.equal(await c.locator('#req-references').evaluate(e=>e.nextElementSibling.id),'req-references-error');await scan(c,'inline submission errors');
-  await c.locator('#req-references').fill('https://example.com/reference');await c.getByRole('button',{name:'Submit request',exact:true}).click();await c.waitForFunction(()=>/Request submitted/.test(document.querySelector('[data-request-note]').textContent));assert.doesNotMatch(await c.locator('[data-request-note]').innerText(),/Admin|internal/);assert.equal(await c.locator('[data-request-note]').getAttribute('class'),'workflow-notice');assert.equal(await c.locator('[aria-invalid="true"]').count(),0);
-  // The Client portal form was validated above (session mock); the same submission reaches the database here.
-  await a.evaluate(()=>FijlyData.load());await a.waitForFunction(()=>FijlyMock.state.requests.some(r=>r.title==='Round B request'));await checkQueue();
+  // The request form is gone: projects start in the wizard on order.html,
+  // which calls submit_project so the database prices them. This screen keeps
+  // the history list and a link to the wizard.
+  await go(c,'studio','requests');
+  assert.equal(await c.locator('[data-request-form]').count(),0,'the in-portal request form is retired');
+  assert.equal(await c.locator('.request-start a[href="order.html"]').count(),1,'the screen links to the project wizard');
+  await scan(c,'start a new project');
+  // submit_project refuses a brief it cannot price or validate, server-side.
+  const guards=await c.evaluate(async()=>{
+   const call=args=>supabaseClient.rpc('submit_project',Object.assign({p_title:'Round B project',p_video_type:'SaaS Explainer',p_duration:60,p_brief:'A useful walkthrough of the product.'},args));
+   const out={};
+   out['unknown video type']=!!(await call({p_video_type:'Explainer'})).error;
+   out['unknown length']=!!(await call({p_duration:45})).error;
+   out['missing title']=!!(await call({p_title:'   '})).error;
+   out['script promised but not uploaded']=!!(await call({p_has_script:true})).error;
+   return out;});
+  assert.ok(Object.values(guards).every(Boolean),JSON.stringify(guards));
+  // A client may not insert into requests at all any more.
+  const direct=await c.evaluate(async()=>(await supabaseClient.from('requests').insert({client_id:'northbeam',title:'Direct insert',video_type:'SaaS Explainer'})).error);
+  assert.ok(direct&&/row-level security|permission denied/i.test(direct.message),'clients cannot insert requests directly');
+  // A project submitted through submit_project opens Awaiting Payment, so the
+  // studio marks its deposit paid before anything moves into production.
+  const roundBId=await c.evaluate(async()=>{const r=await supabaseClient.rpc('submit_project',{p_title:'Round B request',p_video_type:'SaaS Explainer',p_duration:60,p_brief:'A useful walkthrough of the product.',p_purpose:'Explain the product.',p_target_audience:'New users.',p_reference_urls:['https://example.com/reference']});if(r.error)throw new Error(r.error.message);await FijlyData.load();return r.data;});
+  await a.evaluate(()=>FijlyData.load());await a.waitForFunction(()=>FijlyMock.state.requests.some(r=>r.title==='Round B request'));
+  assert.equal(await a.evaluate(id=>FijlyMock.get('requests',id).stage,roundBId),'Awaiting Payment');
+  await a.evaluate(async id=>{const start=FijlyMock.paymentsFor(id).find(p=>p.milestone==='start');await FijlyMock.setPaymentStatus(start.id,'paid','PayPal','INV-ROUNDB');},roundBId);
+  await a.waitForFunction(id=>FijlyMock.get('requests',id).stage==='Project Submitted',roundBId);
+  await checkQueue();
   const produced=await a.evaluate(async()=>(await FijlyMock.produce(FijlyMock.state.requests.find(r=>r.title==='Round B request').id)).id);
   checks.push('Needs-review default and all-record filter; distinct shared status tones; success banner and field-level errors; client submissions reach the Admin queue from the database');
   await go(c,'studio','assets');assert.equal(await c.locator('[data-asset-group]').count(),0);const ownedAssets=await c.evaluate(()=>FijlyMock.client.records('assets').length);assert.equal(await c.locator('[data-client-assets] button').count(),ownedAssets);
@@ -96,5 +119,5 @@ const assert=require('assert/strict'),fs=require('fs');
     }
   }
   checks.push('Desktop tables preserved; 375/390px labelled cards have no horizontal table/page scrolling, open records, and pass accessibility scans');
-  const result={checks,scans,errors};fs.writeFileSync('qa/round-b-results.json',JSON.stringify(result,null,2));await browser.close();assert.deepEqual(errors,[]);assert.ok(scans.every(s=>!s.violations.length),JSON.stringify(scans));console.log(JSON.stringify(result,null,2));
+  const result={checks,scans,errors};fs.writeFileSync('qa/round-b-results.json',JSON.stringify(result,null,2));await browser.close();assert.deepEqual(errors.filter(e=>!/status of (400|403)/.test(e)),[],'only the deliberate refusals (RLS 403, guard 400) may log an error');assert.ok(scans.every(s=>!s.violations.length),JSON.stringify(scans));console.log(JSON.stringify(result,null,2));
 })().catch(e=>{console.error(e);process.exit(1);});

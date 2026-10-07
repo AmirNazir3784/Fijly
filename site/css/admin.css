@@ -758,3 +758,27 @@
 .order-brief { white-space: pre-wrap; }
 .order-status-group { margin-top: 22px; max-width: 260px; }
 .admin-orders-table td.num .badge { margin-left: 4px; }
+
+/* ===== Milestone payments and the price list (Part A) ================== */
+.admin-payments-table td.num { text-align: right; font-variant-numeric: tabular-nums; }
+.admin-payments-table th:nth-child(4), .admin-payments-table th:nth-child(5) { text-align: right; }
+
+/* Several per-row actions (Mark paid, Mark waived, …) stacked in one cell. */
+.admin-row-actions { display: flex; flex-wrap: wrap; gap: var(--space-sm); }
+.admin-row-actions .btn-link { border: 0; background: none; color: var(--primary); font-weight: var(--weight-semibold); text-align: left; cursor: pointer; }
+.admin-row-actions .btn-link:hover { text-decoration: underline; text-underline-offset: 2px; }
+
+/* Method and reference only apply to a payment actually received. */
+#payment-method-group[hidden], #payment-reference-group[hidden] { display: none; }
+#payment-detail-error:empty { display: none; }
+
+/* The 3 x 4 price grid in Settings. */
+.admin-pricing-table th[scope="row"] { white-space: nowrap; font-weight: var(--weight-semibold); }
+.admin-pricing-table td { padding: 10px 12px; }
+.admin-pricing-table .input { width: 100%; min-width: 88px; font-variant-numeric: tabular-nums; }
+#pricing-form { margin-top: var(--space-xl); }
+#pricing-status:empty { display: none; }
+
+@media (max-width: 600px) {
+  .admin-row-actions { flex-direction: column; gap: 4px; }
+}

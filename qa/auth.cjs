@@ -51,7 +51,7 @@ fs.mkdirSync('qa/screenshots',{recursive:true});
     assert.equal(await page.locator('#set-admin-name').inputValue(),'Morgan Blake');
     assert.deepEqual(await page.evaluate(()=>window.FIJLY_AUTH),{userId:qaUsers.admin2.id,role:'admin',clientId:null,fullName:'Morgan Blake',email:'morgan@fijly.example'});
     // Studio data renders from the database.
-    assert.equal(await page.locator('#admin-stats .stat-card').count(),4);
+    assert.equal(await page.locator('#admin-stats .stat-card').count(),5);
     await page.goto(base+'admin.html#requests');await portalReady(page);assert.ok(await page.locator('#screen-requests tbody tr').count()>0);
     // Already signed in: login.html forwards to the portal.
     await page.goto(base+'login.html');await page.waitForURL('**/admin.html');await portalReady(page);

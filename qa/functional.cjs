@@ -60,8 +60,15 @@ fs.mkdirSync('qa/screenshots',{recursive:true});
  checks.push('Client settings: no unsaved notification switches; stored default platform and length present');
  await p.locator('[data-screen="overview"].sidebar-link').click();assert.equal(await p.locator('#preview .canvas, #preview .timeline, [data-play-toggle], [data-fullscreen]').count(),0);assert.match(await p.locator('#preview-message').innerText(),/Draft ready for review/);
  checks.push('Preview play/pause mouse and keyboard, synchronized names, fullscreen');
- await p.locator('[data-screen="requests"].sidebar-link').click();const before=await p.locator('[data-request-list] .list-card').count();await p.locator('[data-request-form] [type="submit"]').click();assert.equal(await p.locator('[data-request-list] .list-card').count(),before);
- await p.locator('#req-name').fill('Functional regression');await p.locator('#req-brief').fill('Show the core workflow.');await p.locator('[data-request-form] [type="submit"]').click();await p.waitForFunction(n=>document.querySelectorAll('[data-request-list] .list-card').length===n,before+1);checks.push('Request validation and database submission');
+ await p.locator('[data-screen="requests"].sidebar-link').click();
+ // Projects now start in the wizard (order.html -> submit_project); this
+ // screen keeps the history list and links there.
+ assert.equal(await p.locator('[data-request-form]').count(),0);
+ assert.equal(await p.locator('.request-start a[href="order.html"]').count(),1);
+ const before=await p.locator('[data-request-list] .list-card').count();
+ await p.evaluate(async()=>{const r=await supabaseClient.rpc('submit_project',{p_title:'Functional regression',p_video_type:'Product Demo',p_duration:60,p_brief:'Show the core workflow from sign-in to the first report.',p_purpose:'Convert trial users.',p_target_audience:'New trial users.'});if(r.error)throw new Error(r.error.message);await FijlyData.load();});
+ await p.waitForFunction(n=>document.querySelectorAll('[data-request-list] .list-card').length===n,before+1);
+ checks.push('Projects are created through submit_project and appear in the request history');
  await p.setViewportSize({width:375,height:800});await p.goto(base+'studio.html#projects');await p.reload();const table=p.locator('#screen-projects .projects-table');assert.equal(await table.evaluate(e=>getComputedStyle(e).display),'block');assert.equal(await table.evaluate(e=>e.scrollWidth>e.clientWidth+1),false);await table.locator('button').first().focus();await p.keyboard.press('Enter');assert.equal(await p.locator('#workflow-detail').evaluate(e=>e.open),true);await p.keyboard.press('Escape');checks.push('Projects mobile cards: no horizontal scrolling; keyboard opens the record');
  for(const width of [1440,1024,768,375,390]){
   await p.setViewportSize({width,height:900});await p.goto(base+'index.html');
