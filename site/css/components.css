@@ -97,15 +97,7 @@
   box-shadow: none;
 }
 
-.btn-dark {
-  background: var(--surface-dark);
-  color: var(--surface-white);
-}
 
-.btn-dark:hover {
-  background: var(--surface-dark-hover);
-  color: var(--surface-white);
-}
 
 .btn-outline {
   padding: 0 24px;
@@ -123,29 +115,9 @@
   color: var(--text-primary);
 }
 
-.btn-white {
-  padding: 0 28px;
-  background: var(--surface-white);
-  color: var(--primary);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, .15);
-}
 
-.btn-white:hover {
-  background: var(--primary-tint-hover);
-  color: var(--primary);
-}
 
-.btn-ghost-light {
-  padding: 0 24px;
-  background: rgba(255, 255, 255, .14);
-  border: 1px solid rgba(255, 255, 255, .4);
-  color: var(--surface-white);
-}
 
-.btn-ghost-light:hover {
-  background: rgba(255, 255, 255, .22);
-  color: var(--surface-white);
-}
 
 /* Pill / badges ---------------------------------------------------------- */
 .pill {
@@ -260,7 +232,7 @@
   margin-top: 5px;
   font-size: 12px;
   font-weight: 600;
-  color: var(--success);
+  color: var(--success-dark);
 }
 
 /* Progress bar (Studio project cards)
@@ -398,22 +370,7 @@
   border-color: var(--border-hover);
 }
 
-.icon-btn--sm {
-  width: 30px;
-  height: 30px;
-  border-radius: var(--radius-sm);
-}
 
-.icon-btn__dot {
-  position: absolute;
-  top: 8px;
-  right: 9px;
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--danger);
-  border: 1.5px solid var(--surface-white);
-}
 
 /* Avatar ------------------------------------------------------------------ */
 .avatar {
@@ -431,37 +388,10 @@
 }
 
 .avatar--sm { width: 26px; height: 26px; font-size: 11px; }
-.avatar--lg { width: 52px; height: 52px; font-size: 18px; }
 
-.avatar--violet { background: var(--grad-violet); }
-.avatar--blue   { background: var(--grad-blue); }
-.avatar--green  { background: var(--grad-green); }
-.avatar--amber  { background: var(--grad-amber); }
-.avatar--ink    { background: var(--grad-ink); }
-.avatar--red    { background: var(--grad-red); }
-.avatar--dark   { background: var(--surface-dark); }
 
 /* Status pill with pulsing dot ("In Production · 72%") -------------------- */
-.status-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 5px 11px;
-  border-radius: var(--radius-full);
-  background: var(--warning-tint);
-  color: var(--warning-dark);
-  font-size: 11.5px;
-  font-weight: 600;
-  white-space: nowrap;
-}
 
-.status-pill__dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--warning);
-  animation: fj-pulse 1.6s infinite;
-}
 
 @keyframes fj-pulse {
   0%, 100% { opacity: 1; }
@@ -506,39 +436,10 @@
 }
 
 /* Choice chips (radio group styled as chips) ------------------------------ */
-.choice-chip {
-  position: relative;
-}
 
-.choice-chip input {
-  position: absolute;
-  opacity: 0;
-  pointer-events: none;
-}
 
-.choice-chip span {
-  display: block;
-  padding: 8px 13px;
-  border: 1px solid var(--border-default);
-  border-radius: 9px;
-  background: var(--surface-white);
-  color: var(--text-muted);
-  font-size: 12.5px;
-  font-weight: 600;
-  cursor: pointer;
-}
 
-.choice-chip input:checked + span {
-  background: var(--primary-tint);
-  border-color: var(--primary-border);
-  color: var(--primary);
-  font-weight: 700;
-}
 
-.choice-chip input:focus-visible + span {
-  outline: 2px solid var(--primary);
-  outline-offset: 2px;
-}
 
 /* Form fields ------------------------------------------------------------- */
 .field-label {
@@ -733,35 +634,14 @@ textarea.input {
 .stat-card--compact .stat-card__unit  { font-size: 13px; font-weight: 800; }
 .stat-card--compact .stat-card__delta { margin-top: 4px; font-size: 11.5px; font-weight: 700; }
 
-.stat-card--dark {
-  background: var(--surface-dark);
-  border-color: var(--surface-dark);
-}
 
-.stat-card--dark .stat-card__label { color: var(--text-lighter); }
-.stat-card--dark .stat-card__value { color: var(--surface-white); }
-.stat-card--dark .stat-card__delta { color: var(--success-light); }
 
 /* Readable text uses the existing darker palette; illustration fills stay unchanged. */
 .stat-card__unit, .table th { color: var(--text-muted); }
-.stat-card__delta { color: var(--success-dark); }
 .input:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
 [aria-disabled="true"] { cursor: not-allowed; }
 
 /* Progress bar colour modifiers ------------------------------------------- */
-.progress-bar__fill--success { background: var(--success); }
-.progress-bar__fill--info    { background: var(--info-dark); }
-.progress-bar__fill--warning { background: var(--warning); }
 
 /* Legend swatch ----------------------------------------------------------- */
-.swatch-dot {
-  flex: none;
-  width: 9px;
-  height: 9px;
-  border-radius: 3px;
-  background: var(--primary);
-}
 
-.swatch-dot--secondary { background: var(--secondary); }
-.swatch-dot--soft      { background: var(--primary-soft-line); }
-.swatch-dot--muted     { background: var(--border-light); }

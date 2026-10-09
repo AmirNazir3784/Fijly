@@ -343,7 +343,102 @@ none of which exist. Noted, not fixed — the QA suites are the user's.
 
 ## Removed
 
-Filled in by commit 2.
+Commit 2, `Cleanup: remove unused functions, CSS and stale comments`.
+Net effect across `site/`: **637 lines deleted, 122 added** — 515 lines net,
+plus two files deleted.
+
+### Files deleted
+
+| File | Why |
+|---|---|
+| `js/studio.js` (15 lines) | Dead — see §2. Its only selector, `.toggle-switch`, exists only on `admin.html`, which never loaded this file. |
+| `css/studio-polish.css` (73 lines) | Merged into the end of `css/dashboard.css`; `<link>` tags removed from `studio.html` and `admin.html`. |
+
+### CSS removed
+
+All 103 unused classes from §3 are gone — verified by re-deriving the defined
+class set and diffing it against the referenced set:
+
+- defined classes 712 → 609 (exactly the 103 listed, no others)
+- classes removed while still referenced: **none**
+- remaining defined-but-unreferenced: **45**, exactly the dynamic ones from §3
+
+Lines removed per file: `dashboard.css` 442, `components.css` 119,
+`admin.css` 10, `base.css` 3, `marketing.css` 2, `workflow.css` 1 — 577 from
+class pruning, before the merges below.
+
+Where an unused class sat inside an `:is(...)` list next to live classes, only
+that entry was removed, never the whole rule — e.g.
+`:is(.btn-primary, .btn-dark, .btn-success, .btn-danger)` became
+`:is(.btn-primary, .btn-success, .btn-danger)`. None of these edits changes the
+selector's specificity, because in every case the removed entry was not the most
+specific argument. Comments above pruned rules were preserved.
+
+Also removed: `--window-red`, `--window-yellow`, `--window-green` in
+`variables.css`. Their only consumer was `.mini-window__dots`, which went with
+the design-system leftovers.
+
+### Duplicate selectors merged
+
+| File | Selector | Action |
+|---|---|---|
+| `admin.css` | `.admin-dialog-head .icon-btn` | `flex: none` folded into the earlier rule |
+| `admin.css` | `.admin-dialog-foot` | `flex-wrap`, `align-items`, `background` folded into the earlier rule |
+| `admin.css` | `#screen-analytics .table` | Declarations were identical; the stray earlier copy deleted, the one inside the analytics block kept |
+| `admin.css` | `.admin-body .studio-layout .table :is(th, td)` | `padding-block: 14px` folded into the existing `@media (min-width: 601px)` rule, after `padding`, so it still wins; the second `@media` block deleted |
+| `components.css` | `.stat-card__delta` | The later `color: var(--success-dark)` folded into the first rule, replacing `var(--success)`, which it already overrode |
+| `marketing.css` | `.footer__grid` (in `@media (max-width: 767px)`) | The later `repeat(2, minmax(0, 1fr))` / `gap: 24px` folded into the first rule, replacing the values it already overrode |
+| `dashboard.css` | `.team-grid` | Both copies removed as unused |
+
+In every merge the later declarations won before and still win, and no rule
+between the two copies set those properties on those elements at equal
+specificity, so the rendered result is unchanged.
+
+### The `studio-polish.css` cascade fix
+
+As predicted in §3, moving the polish rules before `admin.css` would have let
+`.admin-body .btn { border-radius: 9px }` start winning over
+`.studio-body .btn { border-radius: 10px }` on `admin.html`.
+
+**`border-radius: 9px` was removed from `.admin-body .btn` in `admin.css`.** It
+could never take effect before, and removing it keeps every admin button at the
+10px it renders today. `.admin-body .input` keeps its own `border-radius: 9px` —
+that one is live and untouched.
+
+### Dead JS branches collapsed
+
+`persistent: true` was the only value `FijlyData` ever exposed, so these three
+ternaries always took the same branch. Each is now the plain string, and the
+now-unread `persistent` property was removed from the `FijlyData` surface:
+
+| File | Change |
+|---|---|
+| `admin-sections.js` | delete-confirm text: dropped `' in this mock session.'` |
+| `admin-sections.js` | settings status: now always `'Settings saved.'` |
+| `admin.js` | client save status: now always `item.name + ' saved.'` |
+
+`api.capabilities` guards were left alone, as §2 said — that is a live
+feature-flag table.
+
+### Stale comments rewritten
+
+The six mock references in `supabase-data.js` (header, `Formatting`, `State in
+the mock's shapes`, `Read helpers`, the `capabilities` note) now describe what
+the code does rather than what it replaced, and `variables.css`'s "Mock browser
+window dots" went with its tokens.
+
+**`site/` now contains no occurrence of "mock" or "FijlyMock".**
+
+Comments listed in §5 as deliberate were kept: `admin-orders.js:4`,
+`client-portal.js:19`, `order.js:22`, `order.html:700`, `signup.js:118`.
+
+### Not removed
+
+Everything on the keep list, and every legacy feature in §4: `paypalEnabled`
+and the disabled PayPal buttons, the `videoStorage` / Hostinger stub,
+`googleSignIn` and the Google button, the `contact_submissions` fallback, the
+Admin Orders screen and the `orders` table, the client Video Requests list, and
+the OFL font licences.
 
 ## Moved
 
