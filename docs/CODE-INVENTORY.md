@@ -442,4 +442,60 @@ the OFL font licences.
 
 ## Moved
 
-Filled in by commit 3.
+Commit 3, `Restructure: group assets, CSS and JS by area`. Every move used
+`git mv`, so file history is kept. **Page URLs did not change** — all eight
+HTML files, `.htaccess`, `robots.txt` and `sitemap.xml` stay at the `site/`
+root, because the Supabase redirect URLs, `sitemap.xml` and SEO depend on them.
+
+### New layout
+
+| From | To |
+|---|---|
+| `assets/og-image.png`, `assets/concept-*.svg` | `assets/images/` |
+| `assets/favicon.svg`, `assets/favicon.ico` | `assets/icons/` |
+| `assets/fonts/*` | unchanged |
+| `css/variables.css`, `fonts.css`, `base.css`, `components.css` | `css/core/` |
+| `css/marketing.css` | `css/site/` |
+| `css/dashboard.css`, `workflow.css`, `client-portal.css`, `admin.css` | `css/portal/` |
+| `js/config.js`, `supabase-client.js`, `supabase-data.js`, `video-store.js` | `js/core/` |
+| `js/main.js`, `hero.js`, `video-gallery.js`, `signup.js`, `order.js` | `js/site/` |
+| `js/portal-auth.js`, `studio-shell.js`, `workflow.js`, `profile.js` | `js/portal/shared/` |
+| `js/client-portal.js` | `js/portal/client/` |
+| `js/admin.js`, `admin-sections.js`, `admin-orders.js`, `admin-payments.js` | `js/portal/admin/` |
+
+`js/studio.js` was not moved — commit 2 deleted it as dead code, so there was
+nothing to merge into `client-portal.js`.
+
+### References updated
+
+- **All 8 HTML pages** — every `<link>`, `<script>`, `<img>`, `icon`,
+  `apple-touch-icon` and `og:image` path. **Load order is byte-for-byte the
+  order it was**, which the cascade and the `window.*` globals both depend on.
+- **`404.html`** keeps its root-absolute style: `/css/core/fonts.css`,
+  `/assets/icons/favicon.svg`, and so on.
+- **`index.html`** absolute social URLs are now
+  `https://fijly.com/assets/images/og-image.png` for both `og:image` and
+  `twitter:image`.
+- **`css/core/fonts.css`** — all 10 `url()` paths became
+  `../../assets/fonts/...` for the extra directory level.
+- **`js/site/main.js:133`** — the concept illustration path built at runtime is
+  now `'assets/images/concept-' + key + '.svg'`.
+- **Comments** in `js/core/config.js`, `supabase-data.js` and `video-store.js`
+  that named sibling modules now give the new paths.
+- **`.htaccess` needed no change** — it only sets compression, cache headers and
+  MIME types, and references no paths.
+- **`qa/admin-analytics-visual.cjs`, `qa/orders.cjs`, `qa/studio-polish.cjs`**,
+  **`README.md`**, **`DEPLOYMENT.md`** — path find/replace only; nothing was run.
+  The `retired` list in `qa/studio-polish.cjs` was deliberately left pointing at
+  the old `site/js/admin-data.js`, `contact.js` and `mock-service.js`, because it
+  asserts those files do *not* exist.
+- **`qa/polish-baseline-hashes.json`** — keys repointed at the new paths and the
+  `site/js/studio.js` entry dropped. **Its hashes are now stale** for every file
+  commit 2 edited; that suite will fail on content until you re-baseline it. The
+  paths were still fixed so it fails with a readable assertion instead of
+  crashing on a missing file.
+
+Left alone as historical records, not live references: `qa/*-results.json`,
+`qa/stabilization-baseline/*.json` and the `qa/*-AUDIT.md` reports.
+
+`README.md` gained a **Project structure** section with the new tree.

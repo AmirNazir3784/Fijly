@@ -16,10 +16,10 @@ const { execFileSync } = require('child_process');
   const stateBefore = await page.evaluate(() => JSON.stringify(FijlyMock.state));
 
   // Render the original version in an isolated context against identical data/time.
-  const original = execFileSync('git', ['show', 'HEAD:site/js/admin-sections.js'], { encoding: 'utf8' });
+  const original = execFileSync('git', ['show', 'HEAD:site/js/portal/admin/admin-sections.js'], { encoding: 'utf8' });
   const baselineContext = await browser.newContext({ timezoneId: 'UTC' });
   const baseline = await baselineContext.newPage();
-  await baseline.route('**/js/admin-sections.js', route => route.fulfill({ contentType: 'application/javascript', body: original }));
+  await baseline.route('**/js/portal/admin/admin-sections.js', route => route.fulfill({ contentType: 'application/javascript', body: original }));
   await baseline.clock.setFixedTime(new Date('2026-09-22T12:00:00Z'));
   await baseline.goto(base + 'admin.html#analytics');
   async function metrics(p) {

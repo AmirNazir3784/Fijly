@@ -184,7 +184,7 @@
     // A storyboard round, at {client_id}/storyboards/{request_id}/{uuid}.{ext}.
     // Preview and final videos do NOT come through here: they are the one kind
     // of file we expect to move to another host, so they go through
-    // FijlyVideoStore (js/video-store.js) and nothing else.
+    // FijlyVideoStore (js/core/video-store.js) and nothing else.
     async uploadStoryboardFile(clientId, requestId, file) {
       var problem = storyboardFileProblem(file);
       if (problem) fail(problem);
@@ -975,7 +975,7 @@
 
     /* Preview and final video ----------------------------------------------- */
     // Both files are stored through FijlyVideoStore, never Storage directly,
-    // so switching provider is one line in js/config.js.
+    // so switching provider is one line in js/core/config.js.
     canUploadPreview: function (request) { return previewUploadStages.includes(request.stage); },
     canUploadFinal: function (request) { return finalUploadStages.includes(request.stage); },
     // The project's production record, if the studio has created one yet.

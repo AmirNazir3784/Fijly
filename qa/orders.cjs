@@ -129,7 +129,7 @@ let launched = null;
   assert.equal(browser.fijlyDb.contact_submissions.some(x => x.email === 'bot@example.com'), false, 'honeypot sign-ups are not saved');
   await bot.close();
   const google = watch(await guest.newPage(), 'google');
-  await google.route('**/js/config.js', r => r.fulfill({ contentType: 'application/javascript', body: "window.FIJLY_CONFIG={contactEmail:'hello@fijly.com',googleSignIn:true}" }));
+  await google.route('**/js/core/config.js', r => r.fulfill({ contentType: 'application/javascript', body: "window.FIJLY_CONFIG={contactEmail:'hello@fijly.com',googleSignIn:true}" }));
   await google.route('**/auth/v1/authorize**', r => r.fulfill({ status: 200, contentType: 'text/html', body: '<!doctype html><title>Google sign-in (QA stub)</title>' }));
   await google.goto(base + 'index.html');
   assert.equal(await google.locator('#google-signin').isDisabled(), false, 'enabled once configured');

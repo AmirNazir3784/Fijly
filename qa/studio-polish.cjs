@@ -64,17 +64,17 @@ const assert=require('assert/strict'),fs=require('fs'),crypto=require('crypto');
   // The typography pass adds portal-scoped CSS layers and tokens (add-only in
   // variables.css); marketing.css, base.css, components.css and all JS stay guarded.
   const baseline=JSON.parse(fs.readFileSync('qa/polish-baseline-hashes.json','utf8'));
-  const allowed=['site/admin.html','site/studio.html','site/js/studio-shell.js','site/js/mock-service.js','site/js/client-portal.js','site/js/admin-sections.js',
-    'site/css/variables.css','site/css/dashboard.css','site/css/admin.css','site/css/workflow.css','site/css/client-portal.css',
+  const allowed=['site/admin.html','site/studio.html','site/js/portal/shared/studio-shell.js','site/js/mock-service.js','site/js/portal/client/client-portal.js','site/js/portal/admin/admin-sections.js',
+    'site/css/core/variables.css','site/css/portal/dashboard.css','site/css/portal/admin.css','site/css/portal/workflow.css','site/css/portal/client-portal.css',
     // Part 3A: the Admin portal reads Supabase; these controllers now await its writes.
-    'site/js/admin.js','site/js/workflow.js',
+    'site/js/portal/admin/admin.js','site/js/portal/shared/workflow.js',
     // Part 3D: the contact form saves briefs to Supabase.
-    'site/js/config.js','site/js/main.js',
+    'site/js/core/config.js','site/js/site/main.js',
     // Pre-deployment fixes: HTTPS/HSTS, live legal pages in the sitemap, Admin-only
     // cleanup, sign-in icon.
-    'site/.htaccess','site/privacy.html','site/terms.html','site/robots.txt','site/sitemap.xml','site/login.html','site/js/supabase-client.js',
+    'site/.htaccess','site/privacy.html','site/terms.html','site/robots.txt','site/sitemap.xml','site/login.html','site/js/core/supabase-client.js',
     // Per-video pricing replaced the plans section; order CTAs link to order.html.
-    'site/index.html','site/css/marketing.css'];
+    'site/index.html','site/css/site/marketing.css'];
   const bytes=file=>fs.readFileSync(file);
   // Retired files must be gone (the session mock in Part 3B, then contact.js).
   // The sign-up form (signup.js) replaced the contact form script.

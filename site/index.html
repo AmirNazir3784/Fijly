@@ -2,9 +2,9 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
-  <link rel="icon" href="assets/favicon.ico" sizes="32x32">
-  <link rel="apple-touch-icon" href="assets/favicon.svg">
+  <link rel="icon" type="image/svg+xml" href="assets/icons/favicon.svg">
+  <link rel="icon" href="assets/icons/favicon.ico" sizes="32x32">
+  <link rel="apple-touch-icon" href="assets/icons/favicon.svg">
   <meta name="theme-color" content="#5B4BF5">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>FIJLY Studio — Video Production for SaaS</title>
@@ -17,24 +17,24 @@
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="FIJLY — Video Production for SaaS">
   <meta name="twitter:description" content="From 'What is this?' to 'I need this.' Premium video production for SaaS companies.">
-  <meta name="twitter:image" content="https://fijly.com/assets/og-image.png">
+  <meta name="twitter:image" content="https://fijly.com/assets/images/og-image.png">
   <meta name="twitter:image:alt" content="FIJLY — Video production for SaaS, done right">
   <meta property="og:image:alt" content="FIJLY — Video production for SaaS, done right">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://fijly.com/">
-  <meta property="og:image" content="https://fijly.com/assets/og-image.png">
+  <meta property="og:image" content="https://fijly.com/assets/images/og-image.png">
 
 
 
 
-  <link rel="stylesheet" href="css/fonts.css">
+  <link rel="stylesheet" href="css/core/fonts.css">
 
-  <link rel="stylesheet" href="css/variables.css">
-  <link rel="stylesheet" href="css/base.css">
-  <link rel="stylesheet" href="css/components.css">
-  <link rel="stylesheet" href="css/marketing.css">
+  <link rel="stylesheet" href="css/core/variables.css">
+  <link rel="stylesheet" href="css/core/base.css">
+  <link rel="stylesheet" href="css/core/components.css">
+  <link rel="stylesheet" href="css/site/marketing.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.116.0/dist/umd/supabase.js" integrity="sha384-iLddHTLokph6Omwoyid4XKxHaWa6w41BnoEj0q5oOrzmYPpHIKt1wyjReA7s//pP" crossorigin="anonymous" defer></script>
 </head>
 <body>
@@ -304,7 +304,7 @@
         <p class="work__note">Concept showcase: illustrative projects and sample outcomes, not published client films. Open a preview to explore the visual direction.</p>
         <div class="work__grid">
           <article class="card card--hover work-card">
-            <button class="work-card__media work-card__media--aiflow" type="button" data-concept="aiflow" aria-label="View AIFlow concept preview"><img src="assets/concept-aiflow.svg" alt="" width="800" height="500" loading="lazy"><span class="work-card__view">View concept <span aria-hidden="true">↗</span></span></button>
+            <button class="work-card__media work-card__media--aiflow" type="button" data-concept="aiflow" aria-label="View AIFlow concept preview"><img src="assets/images/concept-aiflow.svg" alt="" width="800" height="500" loading="lazy"><span class="work-card__view">View concept <span aria-hidden="true">↗</span></span></button>
             <div class="work-card__body">
               <h3 class="work-card__title">AIFlow — Launch film</h3>
               <p class="work-card__line">A 70-second launch video for an AI support platform.</p>
@@ -313,7 +313,7 @@
           </article>
 
           <article class="card card--hover work-card">
-            <button class="work-card__media work-card__media--clouddesk" type="button" data-concept="clouddesk" aria-label="View CloudDesk concept preview"><img src="assets/concept-clouddesk.svg" alt="" width="800" height="500" loading="lazy"><span class="work-card__view">View concept <span aria-hidden="true">↗</span></span></button>
+            <button class="work-card__media work-card__media--clouddesk" type="button" data-concept="clouddesk" aria-label="View CloudDesk concept preview"><img src="assets/images/concept-clouddesk.svg" alt="" width="800" height="500" loading="lazy"><span class="work-card__view">View concept <span aria-hidden="true">↗</span></span></button>
             <div class="work-card__body">
               <h3 class="work-card__title">CloudDesk — Homepage</h3>
               <p class="work-card__line">Hero explainer that finally made the product click.</p>
@@ -322,7 +322,7 @@
           </article>
 
           <article class="card card--hover work-card">
-            <button class="work-card__media work-card__media--finly" type="button" data-concept="finly" aria-label="View Finly concept preview"><img src="assets/concept-finly.svg" alt="" width="800" height="500" loading="lazy"><span class="work-card__view">View concept <span aria-hidden="true">↗</span></span></button>
+            <button class="work-card__media work-card__media--finly" type="button" data-concept="finly" aria-label="View Finly concept preview"><img src="assets/images/concept-finly.svg" alt="" width="800" height="500" loading="lazy"><span class="work-card__view">View concept <span aria-hidden="true">↗</span></span></button>
             <div class="work-card__body">
               <h3 class="work-card__title">Finly — Tutorial series</h3>
               <p class="work-card__line">Six-part onboarding series that cut support tickets.</p>
@@ -558,11 +558,11 @@
 
 <dialog class="concept-dialog" id="concept-dialog" aria-labelledby="concept-title">
   <div class="concept-dialog__head"><h2 id="concept-title">Concept preview</h2><button class="concept-dialog__close" type="button" aria-label="Close concept preview" autofocus>×</button></div>
-  <img id="concept-image" src="assets/concept-aiflow.svg" alt="AIFlow product interface concept" width="800" height="500">
+  <img id="concept-image" src="assets/images/concept-aiflow.svg" alt="AIFlow product interface concept" width="800" height="500">
   <div class="concept-dialog__body"><p id="concept-description"></p><p class="concept-dialog__note">A designed concept still, not a playable client film. Real portfolio videos will be added when available.</p><a class="btn btn-primary btn--md" href="#contact" data-close-concept>Discuss a video like this</a></div>
 </dialog>
 
-<!-- Category video gallery. Panels are built by js/video-gallery.js on first
+<!-- Category video gallery. Panels are built by js/site/video-gallery.js on first
      open, so no player or poster is fetched until a category is opened. -->
 <dialog class="vgal" id="video-gallery" aria-labelledby="vgal-title">
   <div class="vgal__head">
@@ -590,11 +590,11 @@
   </div>
 </dialog>
 
-<script src="js/config.js"></script>
-<script src="js/supabase-client.js"></script>
-<script src="js/main.js"></script>
-<script src="js/signup.js"></script>
-<script src="js/hero.js"></script>
-<script src="js/video-gallery.js"></script>
+<script src="js/core/config.js"></script>
+<script src="js/core/supabase-client.js"></script>
+<script src="js/site/main.js"></script>
+<script src="js/site/signup.js"></script>
+<script src="js/site/hero.js"></script>
+<script src="js/site/video-gallery.js"></script>
 </body>
 </html>

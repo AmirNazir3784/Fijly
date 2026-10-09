@@ -4,7 +4,7 @@
    Preview and final videos are the one kind of file we expect to move off
    Supabase (large files, bandwidth), so every call goes through this module and
    nothing else in the app touches Storage for a video. Switching provider is
-   then one line in js/config.js: FIJLY_CONFIG.videoStorage.
+   then one line in js/core/config.js: FIJLY_CONFIG.videoStorage.
 
    Methods (each returns a Promise):
      upload(kind, clientId, requestId, file) -> { path, fileName, size }
@@ -17,7 +17,7 @@
    payment is paid or waived. So a failing getUrl('final', …) is a normal
    "still locked" answer, not a bug — callers show the locked card instead.
 
-   Load this before js/supabase-data.js; it uses the shared supabaseClient. */
+   Load this before js/core/supabase-data.js; it uses the shared supabaseClient. */
 (function () {
   'use strict';
 

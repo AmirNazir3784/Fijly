@@ -13,7 +13,7 @@ Only the contents of `site/` are deployed. Keep `qa/`, the root `README.md`, `se
 - **Enable public sign-up in Supabase before launch** (Authentication → Sign In / Providers → "Allow new users to sign up" on). The landing page sign-up form creates the customer's account, and `order.html` requires one. While sign-up stays off, every sign-up is saved as an account request instead (see "Sign-up and orders") and the customer can't reach the order page until you create their account. The `handle_new_user` trigger now always creates `client` profiles, so open sign-up can't create admins. New accounts have no workspace until you link one; the Client portal shows "workspace being set up" meanwhile.
 - Portfolio stills, product brands, results, and the testimonial are explicitly marked as sample/concept content. Supply approved films and verified client evidence before representing these as real engagements. Prices and existing sample metrics have been preserved.
 - Unavailable About, Careers, LinkedIn, X / Twitter, and YouTube links have been removed. Add social links only when real URLs are supplied.
-- The OG image is included at `assets/og-image.png` (1200 × 630), derived from the existing homepage; no replacement is required unless the owner prefers another image.
+- The OG image is included at `assets/images/og-image.png` (1200 × 630), derived from the existing homepage; no replacement is required unless the owner prefers another image.
 
 ## Hosting checks
 
@@ -56,7 +56,7 @@ Browser tests use locally available Playwright tooling solely for QA; it is not 
 4. In the Supabase dashboard → Authentication → Providers → Google → Enable.
 5. Paste the Client ID and Secret, and save.
 6. Make sure `https://fijly.com/order.html` is in Authentication → URL Configuration → Redirect URLs (Google sign-in returns there).
-7. In `site/js/config.js`, set `googleSignIn: true` and upload the file.
+7. In `site/js/core/config.js`, set `googleSignIn: true` and upload the file.
 
 Until step 7, the "Continue with Google" button is disabled with the note "Google sign-in will be available soon. Please use email for now." Google sign-in also needs public sign-up enabled for new customers.
 
