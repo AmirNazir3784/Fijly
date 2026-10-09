@@ -135,10 +135,6 @@
   --success-light: #34D399;
   --orange: #F97316;
 
-  /* Mock browser window dots */
-  --window-red: #FF5F57;
-  --window-yellow: #FEBC2E;
-  --window-green: #28C840;
 
   /* Thumbnail / avatar gradients */
   --grad-violet: linear-gradient(135deg, var(--primary), var(--secondary));

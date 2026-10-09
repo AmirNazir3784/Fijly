@@ -274,7 +274,7 @@
     var item = state.assets.find(function (record) { return record.id === selectedAsset; });
     if (!item) return;
     document.getElementById('asset-confirm-text').textContent =
-      'Remove "' + item.name + '" from ' + clientName(item.client) + '? This cannot be undone' + (api.persistent ? '.' : ' in this mock session.');
+      'Remove "' + item.name + '" from ' + clientName(item.client) + '? This cannot be undone.';
     assetDetail.close();
     assetConfirm.showModal();
   });
@@ -838,7 +838,7 @@
       await api.saveSettings(values);
       settingsDirty = false;
       loadSettings();
-      settingsStatus.textContent = api.persistent ? 'Settings saved.' : 'Settings saved for this mock session.';
+      settingsStatus.textContent = 'Settings saved.';
     } catch (error) {
       settingsStatus.textContent = error.message;
       var field = /studio email/i.test(error.message) ? settingsForm.elements.studioEmail : settingsForm.elements.adminEmail;

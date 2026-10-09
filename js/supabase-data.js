@@ -1,13 +1,12 @@
 'use strict';
 
 // FIJLY Studio — Supabase Data Service
-// The data layer of both portals: real database queries in place of the
-// retired session mock.
+// The data layer of both portals: every database query lives here.
 //
 // Two layers:
 //   FijlyData.admin.*  thin async queries against the live schema (raw rows).
-//   FijlyData itself   the surface the Admin UI already uses: `state` in the
-//                      mock's shapes, the same read helpers and workflow rules,
+//   FijlyData itself   the surface the Admin UI uses: `state` grouped by
+//                      collection, the read helpers and workflow rules,
 //                      and async writes that persist, reload and notify.
 //   FijlyData.client   the Client portal's view: the signed-in client's own
 //                      workspace (window.FIJLY_AUTH.clientId), same shapes.
@@ -73,7 +72,7 @@
     { key: 'delivery', label: 'Delivery', stages: ['Completed'] }
   ];
 
-  /* Formatting (same output as the mock) --------------------------------- */
+  /* Formatting -------------------------------------------------------------- */
   function toDate(value) {
     var day = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(value || ''));
     return day ? new Date(+day[1], +day[2] - 1, +day[3]) : new Date(value);
@@ -411,7 +410,7 @@
   };
 
   /* ======================================================================
-     State in the mock's shapes
+     State, grouped by collection
      ====================================================================== */
   var state = { clients: [], requests: [], videos: [], revisions: [], assets: [], scripts: [], storyboards: [], videoFeedback: [], payments: [], pricing: {}, activity: [], settings: {}, clientSettings: {} };
   var profile = null, loaded = false;
@@ -612,7 +611,7 @@
     load().catch(function (error) { showDataError('Couldn’t refresh studio data', friendly(error)); });
   });
 
-  /* Read helpers and workflow rules (ported from the retired session mock) - */
+  /* Read helpers and workflow rules --------------------------------------- */
   function get(collection, identifier) {
     var item = state[collection].find(function (record) { return record.id === identifier; });
     if (!item) fail('This record is no longer available.');
@@ -896,8 +895,7 @@
       if (!Object.keys(patch).length) return Promise.resolve(me);
       return mutate(async function () { var user = await admin.me(); await admin.updateProfile(user.id, patch); return function () { return me; }; });
     },
-    persistent: true,
-    // Fields the mock offered that the live schema has no column for. The UI
+    // Fields the UI can render but the live schema has no column for. The UI
     // hides these controls rather than accepting edits it cannot save.
     capabilities: { clientIndustry: false, studioLocation: false, weeklyDigest: false, adminRole: false, adminPhone: false, adminEmailEditable: false, scriptVersion: true, scriptFeedback: true, requestEditorBeforeProduction: false, attachmentSizes: false },
     videoStatuses: videoStatuses, revisionStatuses: revisionStatuses, requestStatuses: requestStatuses, scriptStatuses: scriptStatuses, assetCategories: assetCategories,

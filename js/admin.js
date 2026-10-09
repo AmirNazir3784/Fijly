@@ -295,7 +295,7 @@
     catch (error) { var target = /website/i.test(error.message) ? form.elements.website : form.elements.company; target.setCustomValidity(error.message); form.reportValidity(); return; }
     finally { saving = false; submit.disabled = false; submit.removeAttribute('aria-busy'); }
     if (!editingId) { search.value = ''; status.value = 'all'; renderClients(); }
-    document.getElementById('admin-save-status').textContent = item.name + (api.persistent ? ' saved.' : ' saved in this mock workspace. Changes are shared in this mock session.');
+    document.getElementById('admin-save-status').textContent = item.name + ' saved.';
     editor.close();
   });
   search.addEventListener('input', renderClients);
