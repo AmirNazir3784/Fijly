@@ -21,11 +21,51 @@ function goToLogin() {
   window.location.replace('login.html');
 }
 
+// Where the session is kept. "local" survives closing the browser ("Keep me
+// signed in", the default and the behaviour every page had before); "session"
+// ends with the tab. The preference itself always lives in localStorage so the
+// adapter can find it again.
+const PERSIST_KEY = 'fijly.auth.persist';
+
+function keepSignedIn() {
+  try { return window.localStorage.getItem(PERSIST_KEY) !== 'session'; } catch (_) { return true; }
+}
+
+// Called by the sign-in page before signIn(), so the very first token write
+// already lands in the right place.
+function setKeepSignedIn(keep) {
+  try { window.localStorage.setItem(PERSIST_KEY, keep ? 'local' : 'session'); } catch (_) { /* private mode */ }
+}
+
+function authStore() {
+  return keepSignedIn() ? window.localStorage : window.sessionStorage;
+}
+
+// Every read and write follows the current preference. Removal clears both
+// stores, so switching the preference can never strand an old session.
+const fijlyAuthStorage = {
+  getItem: function (key) { try { return authStore().getItem(key); } catch (_) { return null; } },
+  setItem: function (key, value) { try { authStore().setItem(key, value); } catch (_) { /* private mode */ } },
+  removeItem: function (key) {
+    try { window.localStorage.removeItem(key); } catch (_) { /* ignore */ }
+    try { window.sessionStorage.removeItem(key); } catch (_) { /* ignore */ }
+  }
+};
+
 // Initialize after the Supabase CDN script loads
 function initSupabase() {
   if (supabaseClient) return supabaseClient;
   if (window.supabase && window.supabase.createClient) {
-    supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      auth: {
+        storage: fijlyAuthStorage,
+        persistSession: true,
+        autoRefreshToken: true,
+        // Needed so the password-recovery link signs the browser in long
+        // enough to set a new password.
+        detectSessionInUrl: true
+      }
+    });
     return supabaseClient;
   }
   console.error('Supabase SDK not loaded');
