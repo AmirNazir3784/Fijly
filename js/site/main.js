@@ -130,7 +130,7 @@
       document.getElementById('concept-title').textContent = concepts[key][0];
       document.getElementById('concept-description').textContent = concepts[key][1];
       var img = document.getElementById('concept-image');
-      img.src = 'assets/concept-' + key + '.svg';
+      img.src = 'assets/images/concept-' + key + '.svg';
       img.alt = concepts[key][0] + ' — designed product interface concept';
       dialog.showModal();
       document.body.classList.add('concept-open');

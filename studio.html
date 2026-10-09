@@ -3,9 +3,9 @@
 <html lang="en">
 <head>
 <meta charset="utf-8"/>
-<link href="assets/favicon.svg" rel="icon" type="image/svg+xml"/>
-<link href="assets/favicon.ico" rel="icon" sizes="32x32"/>
-<link href="assets/favicon.svg" rel="apple-touch-icon"/>
+<link href="assets/icons/favicon.svg" rel="icon" type="image/svg+xml"/>
+<link href="assets/icons/favicon.ico" rel="icon" sizes="32x32"/>
+<link href="assets/icons/favicon.svg" rel="apple-touch-icon"/>
 <meta content="#5B4BF5" name="theme-color"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>FIJLY Studio — Client Portal</title>
@@ -13,13 +13,13 @@
 <meta content="noindex, nofollow" name="robots"/>
 
 
-<link rel="stylesheet" href="css/fonts.css">
-<link href="css/variables.css" rel="stylesheet"/>
-<link href="css/base.css" rel="stylesheet"/>
-<link href="css/components.css" rel="stylesheet"/>
-<link href="css/dashboard.css" rel="stylesheet"/>
-<link href="css/admin.css" rel="stylesheet"/>
-<link href="css/workflow.css" rel="stylesheet"/><link href="css/client-portal.css" rel="stylesheet"/>
+<link rel="stylesheet" href="css/core/fonts.css">
+<link href="css/core/variables.css" rel="stylesheet"/>
+<link href="css/core/base.css" rel="stylesheet"/>
+<link href="css/core/components.css" rel="stylesheet"/>
+<link href="css/portal/dashboard.css" rel="stylesheet"/>
+<link href="css/portal/admin.css" rel="stylesheet"/>
+<link href="css/portal/workflow.css" rel="stylesheet"/><link href="css/portal/client-portal.css" rel="stylesheet"/>
 <style>
   /* Auth check overlay: painted with the first frame so the portal never flashes. */
   .auth-loading { position: fixed; inset: 0; z-index: 9999; display: flex; align-items: center; justify-content: center; padding: var(--space-lg); background: var(--surface-white); }
@@ -212,7 +212,7 @@
 <article class="project-card proj proj--aiflow">
 <div class="project-card__media bg-grad-violet">
 <span class="media-tag">SaaS Launch</span>
-<img alt="" class="project-concept" height="500" loading="lazy" src="assets/concept-aiflow.svg" width="800"/>
+<img alt="" class="project-concept" height="500" loading="lazy" src="assets/images/concept-aiflow.svg" width="800"/>
 </div>
 <div class="project-card__body">
 <h3 class="project-card__name">AIFlow</h3>
@@ -226,7 +226,7 @@
 <article class="project-card proj proj--clouddesk">
 <div class="project-card__media bg-grad-blue">
 <span class="media-tag">Homepage Video</span>
-<img alt="" class="project-concept" height="500" loading="lazy" src="assets/concept-clouddesk.svg" width="800"/>
+<img alt="" class="project-concept" height="500" loading="lazy" src="assets/images/concept-clouddesk.svg" width="800"/>
 </div>
 <div class="project-card__body">
 <h3 class="project-card__name">CloudDesk</h3>
@@ -240,7 +240,7 @@
 <article class="project-card proj proj--taskpilot">
 <div class="project-card__media bg-grad-green">
 <span class="media-tag">Product Demo</span>
-<img alt="" class="project-concept" height="500" loading="lazy" src="assets/concept-taskpilot.svg" width="800"/>
+<img alt="" class="project-concept" height="500" loading="lazy" src="assets/images/concept-taskpilot.svg" width="800"/>
 </div>
 <div class="project-card__body">
 <h3 class="project-card__name">TaskPilot</h3>
@@ -254,7 +254,7 @@
 <article class="project-card proj proj--finly">
 <div class="project-card__media bg-grad-amber">
 <span class="media-tag">Tutorial</span>
-<img alt="" class="project-concept" height="500" loading="lazy" src="assets/concept-finly.svg" width="800"/>
+<img alt="" class="project-concept" height="500" loading="lazy" src="assets/images/concept-finly.svg" width="800"/>
 </div>
 <div class="project-card__body">
 <h3 class="project-card__name">Finly</h3>
@@ -368,14 +368,14 @@
 </div>
 <!-- Auth: pinned SDK with subresource integrity, then the guard, before any portal JS -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.116.0/dist/umd/supabase.js" integrity="sha384-iLddHTLokph6Omwoyid4XKxHaWa6w41BnoEj0q5oOrzmYPpHIKt1wyjReA7s//pP" crossorigin="anonymous"></script>
-<script src="js/supabase-client.js"></script>
-<script src="js/config.js"></script>
-<script src="js/video-store.js"></script>
-<script src="js/supabase-data.js"></script>
-<script src="js/portal-auth.js"></script>
-<script src="js/studio-shell.js"></script>
-<script src="js/workflow.js"></script>
-<script src="js/client-portal.js"></script><dialog id="profile-dialog" class="admin-dialog profile-dialog"></dialog>
-<script src="js/profile.js"></script>
+<script src="js/core/supabase-client.js"></script>
+<script src="js/core/config.js"></script>
+<script src="js/core/video-store.js"></script>
+<script src="js/core/supabase-data.js"></script>
+<script src="js/portal/shared/portal-auth.js"></script>
+<script src="js/portal/shared/studio-shell.js"></script>
+<script src="js/portal/shared/workflow.js"></script>
+<script src="js/portal/client/client-portal.js"></script><dialog id="profile-dialog" class="admin-dialog profile-dialog"></dialog>
+<script src="js/portal/shared/profile.js"></script>
 </body>
 </html>

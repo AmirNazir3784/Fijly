@@ -2,9 +2,9 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
-  <link rel="icon" href="assets/favicon.ico" sizes="32x32">
-  <link rel="apple-touch-icon" href="assets/favicon.svg">
+  <link rel="icon" type="image/svg+xml" href="assets/icons/favicon.svg">
+  <link rel="icon" href="assets/icons/favicon.ico" sizes="32x32">
+  <link rel="apple-touch-icon" href="assets/icons/favicon.svg">
   <meta name="theme-color" content="#5B4BF5">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>FIJLY Studio - Admin Portal</title>
@@ -14,14 +14,14 @@
 
 
 
-  <link rel="stylesheet" href="css/fonts.css">
+  <link rel="stylesheet" href="css/core/fonts.css">
 
-  <link rel="stylesheet" href="css/variables.css">
-  <link rel="stylesheet" href="css/base.css">
-  <link rel="stylesheet" href="css/components.css">
-  <link rel="stylesheet" href="css/dashboard.css">
-  <link rel="stylesheet" href="css/admin.css">
-  <link rel="stylesheet" href="css/workflow.css">
+  <link rel="stylesheet" href="css/core/variables.css">
+  <link rel="stylesheet" href="css/core/base.css">
+  <link rel="stylesheet" href="css/core/components.css">
+  <link rel="stylesheet" href="css/portal/dashboard.css">
+  <link rel="stylesheet" href="css/portal/admin.css">
+  <link rel="stylesheet" href="css/portal/workflow.css">
 <style>
   /* Auth check overlay: painted with the first frame so the portal never flashes. */
   .auth-loading { position: fixed; inset: 0; z-index: 9999; display: flex; align-items: center; justify-content: center; padding: var(--space-lg); background: var(--surface-white); }
@@ -403,18 +403,18 @@
 </dialog>
 <!-- Auth: pinned SDK with subresource integrity, then the guard, before any portal JS -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.116.0/dist/umd/supabase.js" integrity="sha384-iLddHTLokph6Omwoyid4XKxHaWa6w41BnoEj0q5oOrzmYPpHIKt1wyjReA7s//pP" crossorigin="anonymous"></script>
-<script src="js/supabase-client.js"></script>
-<script src="js/config.js"></script>
-<script src="js/video-store.js"></script>
-<script src="js/supabase-data.js"></script>
-<script src="js/portal-auth.js"></script>
-<script src="js/studio-shell.js"></script>
-<script src="js/admin.js"></script>
-<script src="js/workflow.js"></script>
-<script src="js/admin-sections.js"></script>
-<script src="js/admin-orders.js"></script>
-<script src="js/admin-payments.js"></script>
+<script src="js/core/supabase-client.js"></script>
+<script src="js/core/config.js"></script>
+<script src="js/core/video-store.js"></script>
+<script src="js/core/supabase-data.js"></script>
+<script src="js/portal/shared/portal-auth.js"></script>
+<script src="js/portal/shared/studio-shell.js"></script>
+<script src="js/portal/admin/admin.js"></script>
+<script src="js/portal/shared/workflow.js"></script>
+<script src="js/portal/admin/admin-sections.js"></script>
+<script src="js/portal/admin/admin-orders.js"></script>
+<script src="js/portal/admin/admin-payments.js"></script>
 <dialog id="profile-dialog" class="admin-dialog profile-dialog"></dialog>
-<script src="js/profile.js"></script>
+<script src="js/portal/shared/profile.js"></script>
 </body>
 </html>
