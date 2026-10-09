@@ -12,7 +12,7 @@
 /* Accessible secondary copy, using colors already in the design palette. */
 .page :is(.work-card__metric-label, .testimonial__role,
   .price-card:not(.card-dark) .price-card__per, .price-card:not(.card-dark) .price-card__desc,
-  .footer__about, .footer__heading, .footer__bottom, .footer__bottom a) {
+  .footer__about, .footer__bottom, .footer__bottom a) {
   color: var(--text-muted);
 }
 .page .work-card__metric-value { color: var(--success-dark); }
@@ -965,17 +965,106 @@ section[id] {
 }
 
 /* 12. Footer ============================================================= */
+/* Three parts: the .footer-cta conversion banner, the four-column
+   .footer__grid, and the .footer__bottom copyright bar. Colours come from the
+   shared tokens; the two lavender stops below are the only footer-local ones. */
 .footer {
+  --footer-cta-from: #F4F2FF;
+  --footer-cta-to: #EAE9FF;
+  /* The banner is a padded card, so its text sits further in than the columns
+     below it. --footer-inset matches that padding and is applied to the grid
+     and the copyright bar, so all three sections' content shares one left
+     edge. It tracks the banner's padding at every breakpoint; 0 on mobile,
+     where the columns should use the full gutter. */
+  --footer-inset: 48px;
   background: var(--surface-white);
   border-top: 1px solid var(--border-light);
 }
 
+/* Section A: CTA banner -------------------------------------------------- */
+.footer-cta {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-lg) 36px;
+  margin-top: var(--space-2xl);
+  padding: 48px;
+  overflow: hidden;
+  border-radius: var(--radius-panel);
+  background: linear-gradient(120deg, var(--footer-cta-from), var(--footer-cta-to));
+}
+
+/* Grows into whatever the button and the decoration leave, so the heading has
+   the most room possible before it has to wrap. */
+.footer-cta__text {
+  flex: 1 1 420px;
+  min-width: 0;
+}
+
+.footer-cta__title {
+  max-width: 26ch;
+  font-size: 30px;
+  font-weight: 800;
+  line-height: 1.18;
+  letter-spacing: -.02em;
+  color: var(--text-primary);
+  text-wrap: balance;
+}
+
+.footer-cta__sub {
+  margin-top: 10px;
+  max-width: 44ch;
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--text-muted);
+}
+
+.footer-cta__action {
+  flex: none;
+}
+
+/* Slightly taller than .btn--md, with a lighter shadow than the hero CTA so it
+   reads as a footer action rather than the page's primary call. */
+.footer-cta__btn {
+  height: 48px;
+  padding-inline: 24px;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-primary-sm);
+}
+
+.footer-cta__btn:hover {
+  box-shadow: var(--shadow-primary-md);
+}
+
+/* Decorative only, and only where there is room for it beside the button.
+   Vertically centred and fully inside the banner's padding, so the rounded
+   corner never clips it. */
+.footer-cta__decor {
+  display: none;
+  position: absolute;
+  top: 50%;
+  right: 28px;
+  width: 92px;
+  height: 92px;
+  transform: translateY(-50%);
+  color: var(--primary);
+  pointer-events: none;
+}
+
+/* Section B: navigation -------------------------------------------------- */
 .footer__grid {
   display: grid;
-  grid-template-columns: 1.5fr 1fr 1fr;
+  grid-template-columns: 1.7fr 1fr 1fr 1.2fr;
   gap: var(--space-xl);
-  padding-top: 36px;
-  padding-bottom: 22px;
+  padding-inline: calc(var(--gutter) + var(--footer-inset));
+  padding-top: 52px;
+  padding-bottom: 36px;
+}
+
+.footer__col {
+  min-width: 0;
 }
 
 .footer .logo {
@@ -996,19 +1085,47 @@ section[id] {
 }
 
 .footer__about {
-  max-width: 310px;
+  max-width: 34ch;
   font-size: 13.5px;
-  line-height: 1.6;
-  color: var(--text-light);
+  line-height: 1.65;
+  color: var(--text-muted);
+}
+
+.footer__social {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 22px;
+}
+
+.footer__social-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-full);
+  background: var(--primary-tint);
+  color: var(--text-muted);
+  transition: background-color .15s ease, color .15s ease;
+}
+
+.footer__social-link:hover {
+  background: var(--primary);
+  color: var(--surface-white);
+}
+
+.footer__social-link:focus-visible {
+  outline-offset: 3px;
 }
 
 .footer__heading {
-  margin-bottom: 8px;
+  margin-bottom: 14px;
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: 11.5px;
   font-weight: 700;
-  letter-spacing: normal;
-  color: var(--text-lightest);
+  letter-spacing: .06em;
+  color: var(--text-primary);
 }
 
 .footer__links {
@@ -1018,32 +1135,199 @@ section[id] {
   font-size: 13.5px;
 }
 
-.footer__links a { color: var(--text-muted); display: inline-block; padding-block: 7px; }
-
-.footer__links a:hover {
-  color: var(--text-primary);
+.footer__links a {
+  display: inline-block;
+  padding-block: 8px;
+  color: var(--text-muted);
+  transition: color .15s ease;
 }
 
+.footer__links a:hover {
+  color: var(--primary);
+}
+
+/* A hairline rule separates the contact column from the link columns. */
+.footer__connect {
+  padding-left: var(--space-xl);
+  border-left: 1px solid var(--border-light);
+}
+
+.footer__connect-text {
+  max-width: 26ch;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--text-muted);
+}
+
+.footer__connect-btn {
+  margin-top: 16px;
+  padding-inline: 18px;
+  background: var(--primary-tint-hover);
+  border: 1px solid var(--primary-border);
+  color: var(--primary);
+}
+
+.footer__connect-btn:hover {
+  background: var(--primary-tint);
+  border-color: var(--primary-soft-line);
+  color: var(--primary-hover);
+}
+
+/* Section C: copyright --------------------------------------------------- */
 .footer__bottom {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   justify-content: space-between;
-  gap: 10px;
-  margin-top: var(--space-sm);
-  padding-top: 26px;
-  padding-bottom: 34px;
+  gap: 10px var(--space-lg);
+  padding-inline: calc(var(--gutter) + var(--footer-inset));
+  padding-block: 20px;
   border-top: 1px solid var(--border-light);
   font-size: 12.5px;
-  color: var(--text-lightest);
-  padding-block: 20px;
+  color: var(--text-muted);
+}
+
+.footer__legal {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.footer__legal-sep {
+  color: var(--border-default);
 }
 
 .footer__bottom a {
-  color: var(--text-lightest);
+  color: var(--text-muted);
+  transition: color .15s ease;
 }
 
 .footer__bottom a:hover {
-  color: var(--text-muted);
+  color: var(--primary);
+}
+
+/* Footer responsive ------------------------------------------------------ */
+/* The decoration only appears where there is room for it beside the button,
+   and the content reserves that space so the two never overlap. */
+@media (min-width: 1200px) {
+  .footer {
+    --footer-inset: 52px;
+  }
+
+  .footer-cta {
+    padding: 52px;
+    column-gap: 32px;
+  }
+
+  /* No cap here: the heading takes one line when the width allows it. */
+  .footer-cta__title {
+    max-width: none;
+  }
+
+  .footer-cta__decor {
+    display: block;
+    right: 20px;
+  }
+
+  /* 92px of artwork + its 20px inset + 12px of clearance from the button. */
+  .footer-cta__action {
+    margin-right: 124px;
+  }
+}
+
+/* Laptop and tablet: two columns, brand across the top. */
+@media (max-width: 1023px) {
+  .footer {
+    --footer-inset: 36px;
+  }
+
+  .footer-cta {
+    padding: 36px;
+  }
+
+  .footer-cta__title {
+    font-size: 26px;
+  }
+
+  .footer__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-lg) var(--space-xl);
+    padding-top: 44px;
+    padding-bottom: 32px;
+  }
+
+  .footer__brand {
+    grid-column: 1 / -1;
+  }
+
+  /* With two columns the vertical rule no longer lines up with a boundary. */
+  .footer__connect {
+    padding-left: 0;
+    border-left: 0;
+  }
+}
+
+/* Mobile: one stacked column, everything left-aligned. */
+@media (max-width: 767px) {
+  .footer {
+    --footer-inset: 0px;
+  }
+
+  .footer-cta {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-lg);
+    margin-top: var(--space-xl);
+    padding: 28px 24px;
+  }
+
+  .footer-cta__title {
+    max-width: none;
+    font-size: 23px;
+  }
+
+  .footer-cta__sub {
+    font-size: 14.5px;
+  }
+
+  .footer__grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-lg);
+    padding-top: 36px;
+    padding-bottom: 28px;
+  }
+
+  .footer__about,
+  .footer__connect-text {
+    max-width: none;
+  }
+
+  .footer__links a {
+    padding-block: 10px;
+  }
+
+  .footer__bottom {
+    font-size: 11.5px;
+  }
+}
+
+@media (max-width: 479px) {
+  .footer-cta {
+    padding: 24px 20px;
+  }
+
+  .footer-cta__title {
+    font-size: 21px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .footer__social-link,
+  .footer__links a,
+  .footer__bottom a {
+    transition: none;
+  }
 }
 
 /* Responsive ============================================================= */
@@ -1069,15 +1353,6 @@ section[id] {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     max-width: 680px;
     margin-inline: auto;
-  }
-
-
-  .footer__grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
-  .footer__brand {
-    grid-column: 1 / -1;
   }
 }
 
@@ -1130,11 +1405,6 @@ section[id] {
   .testimonial__role { font-size: 13px; }
 
   .faq { padding-block: 64px; }
-
-  .footer__grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 24px;
-  }
 }
 
 /* Production refinements: compact composition and an actionable project brief. */
@@ -1346,9 +1616,6 @@ section[id] {
   .contact .form-field input, .contact button { transition: none; }
 }
 
-.footer__brand { grid-column: auto; }
-
-
 .concept-open { overflow: hidden; }
 .concept-dialog { width: min(880px, calc(100% - 32px)); max-height: calc(100dvh - 32px); padding: 0; margin: auto; border: 1px solid var(--border-default); border-radius: 16px; color: var(--text-primary); background: var(--surface-white); overflow-y: auto; box-shadow: var(--shadow-frame); }
 .concept-dialog::backdrop { background: #0C0E13bd; backdrop-filter: blur(5px); }
@@ -1372,9 +1639,6 @@ section[id] {
   .work-card__media { aspect-ratio: 8 / 5; }
   .work-card__body { padding: 20px; }
   .form-field :is(input,select,textarea) { font-size: 16px; }
-  .footer__brand { grid-column: 1 / -1; }
-  .footer__links a { padding-block: 10px; }
-  .footer__bottom { font-size: 11px; }
   .concept-dialog__head { padding: 12px 16px; }
   .concept-dialog__head h2 { font-size: 16px; }
   .concept-dialog__body { padding: 18px; font-size: 14px; }
