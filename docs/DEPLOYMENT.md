@@ -15,6 +15,48 @@ Only the contents of `site/` are deployed. Keep `qa/`, `docs/`, `scripts/`, `sup
 - Unavailable About, Careers, LinkedIn, X / Twitter, and YouTube links have been removed. Add social links only when real URLs are supplied.
 - The OG image is included at `assets/images/og-image.png` (1200 × 630), derived from the existing homepage; no replacement is required unless the owner prefers another image.
 
+## Deploying with Git (Hostinger)
+
+The repository is not the website: the live site is only the contents of
+`site/`. A GitHub Actions workflow keeps a separate **`deploy`** branch whose
+root *is* the website root, so Hostinger can pull it straight into
+`public_html` without the `qa/`, `docs/` or `supabase/` folders coming with it.
+
+**How it runs.** Every push to `main` that touches `site/**` runs
+`.github/workflows/deploy.yml`, which does a `git subtree split --prefix site`
+and force-pushes the result to `deploy`. Pushes that only change `qa/`, `docs/`
+or the README do not rebuild it. The branch is rewritten each time, so never
+commit to `deploy` by hand — anything added there is lost on the next run.
+
+**One-time Hostinger setup**
+
+1. **Activate SSL first.** `.htaccess` forces HTTPS, so deploying before the
+   certificate is live redirects every visitor to an address that does not work
+   yet. See "Hosting checks" below.
+2. **Empty `public_html`.** Hostinger refuses to attach a repository to a
+   directory that already has files in it.
+3. hPanel → **Advanced → Git** → Create a new repository:
+   - Repository: `https://github.com/AmirNazir3784/Fijly.git`
+     (private repo: use `git@github.com:AmirNazir3784/Fijly.git` and add the
+     deploy key Hostinger shows you to GitHub → Settings → Deploy keys)
+   - Branch: `deploy`
+   - Directory: leave **empty** — that means `public_html`
+4. Click **Deploy** once to pull the current `deploy` branch.
+
+**Automatic deploys.** In the same Git panel, turn on **Auto Deployment** and
+copy the webhook URL it gives you into GitHub → Settings → Webhooks → Add
+webhook (content type `application/json`, "Just the push event"). After that a
+push to `main` rebuilds `deploy` and Hostinger pulls it on its own.
+
+**Redeploying by hand.** GitHub → Actions → "Publish site to deploy branch" →
+**Run workflow** (it also accepts `workflow_dispatch`). Then hit **Deploy** in
+hPanel if the webhook is not set up.
+
+**Checking what shipped.** The `deploy` branch root should look exactly like
+the website root: `index.html`, `.htaccess`, `robots.txt`, `sitemap.xml`,
+`assets/`, `css/`, `js/`. If `site/` appears as a folder on `deploy`, the
+subtree split did not run and Hostinger is serving the wrong level.
+
 ## Hosting checks
 
 **The HTTPS redirect is now in `.htaccess`.** Activate the domain's SSL certificate in Hostinger *before* uploading `.htaccess`; otherwise every visit is redirected to an HTTPS address that doesn't work yet. Hostinger's own "Force HTTPS" setting is not needed as well.

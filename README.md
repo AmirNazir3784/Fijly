@@ -8,6 +8,8 @@ Production website and client/admin portals for FIJLY, a premium video productio
 FIJLY/
 ├── .gitignore
 ├── README.md               This file
+├── .github/
+│   └── workflows/          deploy.yml — publishes site/ to the deploy branch
 ├── docs/
 │   ├── DEPLOYMENT.md       Hosting, Supabase setup, redirect URLs, Google sign-in
 │   ├── CODE-INVENTORY.md   File, function and CSS class map
