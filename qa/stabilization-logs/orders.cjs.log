@@ -1,11 +1,15 @@
-page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:8766/index.html
-Call log:
-[2m  - navigating to "http://localhost:8766/index.html", waiting until "load"[22m
-
-    at page.<computed> (C:\Users\Mister Naveed\OneDrive\Desktop\FIJLY\qa\runtime.cjs:104:30)
-    at C:\Users\Mister Naveed\OneDrive\Desktop\FIJLY\qa\orders.cjs:38:11 {
-  log: [
-    '  - navigating to "http://localhost:8766/index.html", waiting until "load"'
+{
+  "checks": [
+    "Landing: Start Your Video (nav, menu, hero) and every pricing card lead to the sign-up form, cards keep their length, no direct order links; 4/2/1 pricing columns, no overflow at 1280/768/375",
+    "Sign-up: GET STARTED panel, name/email/password with show/hide, Google disabled with a note, sign-in and email links; validation; with sign-up disabled the request is saved to contact_submissions (length kept, no password) and the visitor is told to expect their login",
+    "Sign-up outcomes: email confirmation (name only, link back to order.html with the length), existing account (sign-in link), signed-in (straight to order.html), honeypot (nothing saved); Google redirects to the Google provider and back to order.html once enabled",
+    "order.html sends signed-out visitors to the sign-up form; login.html?next=order.html returns there after signing in, and no other destination is accepted",
+    "Order page (signed in): account menu, company from the workspace, four steps, no account fields, lengths without prices, disabled PayPal placeholder with paypalEnabled false, deep links cannot skip steps",
+    "Steps: company and target audience are optional, reference links sit on \"Look & feel\", the brief leads \"Brief, script & voice over\" with the notes last, a project needs a brief OR a script (neither is blocked, either one passes), and the review lists every field in its new order",
+    "Left brand panel keeps its editor and payment milestones visible at 1920×1080, 1600×900, 1440×900 and 1366×768",
+    "No overflow at 375/768/1280; Sign out returns to fijly.com",
+    "Admin Orders: sidebar link between Dashboard and Clients with a pending count, newest-first table with every column, status badges, price-mismatch flag, search/filter/clear, detail with full brief and email link, status updates saved (processing, completed, cancelled), no overflow at 375"
   ],
-  name: 'Error'
+  "scans": 6,
+  "errors": []
 }

@@ -1,17 +1,15 @@
-node:internal/process/promises:394
-    triggerUncaughtException(err, true /* fromPromise */);
-    ^
-
-page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:8766/index.html
-Call log:
-[2m  - navigating to "http://localhost:8766/index.html", waiting until "load"[22m
-
-    at page.<computed> (C:\Users\Mister Naveed\OneDrive\Desktop\FIJLY\qa\runtime.cjs:104:30)
-    at C:\Users\Mister Naveed\OneDrive\Desktop\FIJLY\qa\accessibility.cjs:4:10 {
-  log: [
-    '  - navigating to "http://localhost:8766/index.html", waiting until "load"'
-  ],
-  name: 'Error'
+[
+  { screen: 'marketing', violations: [] },
+  { screen: 'overview', violations: [] },
+  { screen: 'projects', violations: [] },
+  { screen: 'requests', violations: [] },
+  { screen: 'assets', violations: [] },
+  { screen: 'scripts', violations: [] },
+  { screen: 'analytics', violations: [] },
+  { screen: 'settings', violations: [] }
+]
+Focus after mobile navigation: {
+  active: '<h1 id="h-projects" tabindex="-1">Projects</h1>',
+  visible: true
 }
-
-Node.js v24.14.1
+Hash change visible screen: settings

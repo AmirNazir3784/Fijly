@@ -44,7 +44,7 @@ const assert=require('assert/strict'),fs=require('fs');
   await scan(c,'start a new project');
   // submit_project refuses a brief it cannot price or validate, server-side.
   const guards=await c.evaluate(async()=>{
-   const call=args=>supabaseClient.rpc('submit_project',Object.assign({p_title:'Round B project',p_video_type:'SaaS Explainer',p_duration:60,p_brief:'A useful walkthrough of the product.'},args));
+   const call=args=>supabaseClient.rpc('submit_project',Object.assign({p_title:'Round B project',p_video_type:'SaaS Explainer',p_duration:60,p_brief:'A useful walkthrough of the product.',p_brief_link:'https://example.com/round-b-brief'},args));
    const out={};
    out['unknown video type']=!!(await call({p_video_type:'Explainer'})).error;
    out['unknown length']=!!(await call({p_duration:45})).error;
@@ -57,7 +57,7 @@ const assert=require('assert/strict'),fs=require('fs');
   assert.ok(direct&&/row-level security|permission denied/i.test(direct.message),'clients cannot insert requests directly');
   // A project submitted through submit_project opens Awaiting Payment, so the
   // studio marks its deposit paid before anything moves into production.
-  const roundBId=await c.evaluate(async()=>{const r=await supabaseClient.rpc('submit_project',{p_title:'Round B request',p_video_type:'SaaS Explainer',p_duration:60,p_brief:'A useful walkthrough of the product.',p_purpose:'Explain the product.',p_target_audience:'New users.',p_reference_urls:['https://example.com/reference']});if(r.error)throw new Error(r.error.message);await FijlyData.load();return r.data;});
+  const roundBId=await c.evaluate(async()=>{const r=await supabaseClient.rpc('submit_project',{p_title:'Round B request',p_video_type:'SaaS Explainer',p_duration:60,p_brief:'A useful walkthrough of the product.',p_brief_link:'https://example.com/round-b-brief',p_purpose:'Explain the product.',p_target_audience:'New users.',p_reference_urls:['https://example.com/reference']});if(r.error)throw new Error(r.error.message);await FijlyData.load();return r.data;});
   await a.evaluate(()=>FijlyData.load());await a.waitForFunction(()=>FijlyMock.state.requests.some(r=>r.title==='Round B request'));
   assert.equal(await a.evaluate(id=>FijlyMock.get('requests',id).stage,roundBId),'Awaiting Payment');
   await a.evaluate(async id=>{const start=FijlyMock.paymentsFor(id).find(p=>p.milestone==='start');await FijlyMock.setPaymentStatus(start.id,'paid','PayPal','INV-ROUNDB');},roundBId);

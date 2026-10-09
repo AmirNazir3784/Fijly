@@ -1,6 +1,6 @@
 /* Shared QA runtime. Prefer PLAYWRIGHT_MODULE, a local install, then the
    existing workstation cache. No package installation or app dependencies. */
-const path = require('path'), fs = require('fs'), os = require('os');
+const path = require('path'), fs = require('fs'), os = require('os'), http = require('http');
 let playwright;
 const candidates = [process.env.PLAYWRIGHT_MODULE, 'playwright', 'playwright-core'];
 const cache = path.join(process.env.LOCALAPPDATA || path.join(os.homedir(), 'AppData', 'Local'), 'npm-cache', '_npx');
@@ -129,7 +129,47 @@ function withAuth(browser) {
   };
   return browser;
 }
+
+/* The local static server, for a suite run on its own ----------------------
+   qa/run-all.cjs already serves site/ on QA_PORT for the whole run, so a
+   suite that starts its own must not take that one down. serveSite() starts a
+   server and hands back a stop function; if the port is already taken it
+   assumes run-all (or a developer) is serving and the stop function does
+   nothing. Either way `node qa/<suite>.cjs` works on its own. */
+const MEDIA = { '.html': 'text/html', '.js': 'application/javascript', '.css': 'text/css', '.svg': 'image/svg+xml',
+  '.png': 'image/png', '.ico': 'image/x-icon', '.woff2': 'font/woff2', '.json': 'application/json', '.txt': 'text/plain', '.xml': 'application/xml' };
+function serveSite() {
+  // An explicit base URL means the caller is pointing at a server of its own.
+  if (process.env.QA_BASE_URL) return Promise.resolve(() => {});
+  const root = path.resolve('site'), port = Number(process.env.QA_PORT || 8766);
+  const server = http.createServer((request, response) => {
+    let file;
+    try { file = path.resolve(root, '.' + decodeURIComponent(new URL(request.url, 'http://localhost').pathname)); }
+    catch (_) { response.writeHead(400).end(); return; }
+    if (file !== root && !file.startsWith(root + path.sep)) { response.writeHead(403).end(); return; }
+    if (file === root) file = path.join(root, 'index.html');
+    fs.readFile(file, (error, data) => {
+      if (error) { response.writeHead(404).end(); return; }
+      response.setHeader('Content-Type', MEDIA[path.extname(file)] || 'application/octet-stream');
+      response.end(data);
+    });
+  });
+  return new Promise((resolve, reject) => {
+    server.once('error', error => {
+      // Someone is already serving this port: use it and leave it running.
+      if (error.code === 'EADDRINUSE') resolve(() => {});
+      else reject(error);
+    });
+    server.listen(port, '127.0.0.1', () => resolve(() => {
+      // Chromium keeps its connection alive, so close() alone would hang the
+      // process after the browser is gone.
+      if (server.closeAllConnections) server.closeAllConnections();
+      return new Promise(done => server.close(done));
+    }));
+  });
+}
+
 const chromium = Object.create(playwright.chromium);
 chromium.launch = async (...args) => withAuth(await playwright.chromium.launch(...args));
 
-module.exports = {...playwright, chromium, qaUsers, qaSession: session, SUPABASE, STORAGE_KEY, base: process.env.QA_BASE_URL || `http://localhost:${process.env.QA_PORT || 8766}/`, widths: [1440,1024,768,390,320], routes: {studio:['overview','projects','requests','assets','scripts','analytics','settings'],admin:['dashboard','orders','payments','clients','requests','videos','revisions','assets','scripts','analytics','settings']}};
+module.exports = {...playwright, chromium, serveSite, qaUsers, qaSession: session, SUPABASE, STORAGE_KEY, base: process.env.QA_BASE_URL || `http://localhost:${process.env.QA_PORT || 8766}/`, widths: [1440,1024,768,390,320], routes: {studio:['overview','projects','requests','assets','scripts','analytics','settings'],admin:['dashboard','orders','payments','clients','requests','videos','revisions','assets','scripts','analytics','settings']}};

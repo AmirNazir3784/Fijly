@@ -1,115 +1,115 @@
 {
-  "at": "2026-10-07T09:45:51.025Z",
+  "at": "2026-10-08T06:13:19.745Z",
   "results": [
     {
       "suite": "qa/static_check.py",
       "exitCode": 0,
-      "seconds": 2.609
+      "seconds": 1.636
     },
     {
       "suite": "qa/studio-v1.cjs",
       "exitCode": 0,
-      "seconds": 164.622
+      "seconds": 113.87
     },
     {
       "suite": "qa/studio-workflow.cjs",
       "exitCode": 0,
-      "seconds": 31.393
+      "seconds": 35.452
     },
     {
       "suite": "qa/studio-workflow-probe.cjs",
       "exitCode": 0,
-      "seconds": 7.128
+      "seconds": 11.779
     },
     {
       "suite": "qa/studio-workflow-sweep.cjs",
       "exitCode": 0,
-      "seconds": 7.08
+      "seconds": 11.663
     },
     {
       "suite": "qa/studio-admin-sections.cjs",
       "exitCode": 0,
-      "seconds": 21.831
+      "seconds": 27.714
     },
     {
       "suite": "qa/studio-client.cjs",
       "exitCode": 0,
-      "seconds": 22.131
+      "seconds": 25.981
     },
     {
       "suite": "qa/studio-stability.cjs",
       "exitCode": 0,
-      "seconds": 7.632
+      "seconds": 9.658
     },
     {
       "suite": "qa/round-b.cjs",
       "exitCode": 0,
-      "seconds": 36.808
+      "seconds": 50.644
     },
     {
       "suite": "qa/studio-polish.cjs",
       "exitCode": 0,
-      "seconds": 81.205
+      "seconds": 116.296
     },
     {
       "suite": "qa/auth.cjs",
-      "exitCode": 1,
-      "seconds": 13.963
+      "exitCode": 0,
+      "seconds": 12.749
     },
     {
       "suite": "qa/functional.cjs",
-      "exitCode": 1,
-      "seconds": 3.45
+      "exitCode": 0,
+      "seconds": 48.29
     },
     {
       "suite": "qa/accessibility.cjs",
-      "exitCode": 1,
-      "seconds": 3.431
+      "exitCode": 0,
+      "seconds": 9.489
     },
     {
       "suite": "qa/refinement-check.cjs",
-      "exitCode": 1,
-      "seconds": 4.161
+      "exitCode": 0,
+      "seconds": 30.06
     },
     {
       "suite": "qa/final_browser.cjs",
-      "exitCode": 1,
-      "seconds": 3.79
+      "exitCode": 0,
+      "seconds": 21.478
     },
     {
       "suite": "qa/render.cjs",
-      "exitCode": 1,
-      "seconds": 3.751
+      "exitCode": 0,
+      "seconds": 32.369
     },
     {
       "suite": "qa/refinement-render.cjs",
-      "exitCode": 1,
-      "seconds": 3.854
+      "exitCode": 0,
+      "seconds": 62.786
     },
     {
       "suite": "qa/visual-sheets.cjs",
       "exitCode": 0,
-      "seconds": 7.635
+      "seconds": 12
     },
     {
       "suite": "qa/compare.cjs",
-      "exitCode": 1,
-      "seconds": 3.878
+      "exitCode": 0,
+      "seconds": 3.454
     },
     {
       "suite": "qa/performance.cjs",
-      "exitCode": 1,
-      "seconds": 3.682
+      "exitCode": 0,
+      "seconds": 6.077
     },
     {
       "suite": "qa/orders.cjs",
-      "exitCode": 1,
-      "seconds": 4.189
+      "exitCode": 0,
+      "seconds": 20.356
     },
     {
       "suite": "qa/milestones.cjs",
-      "exitCode": 1,
-      "seconds": 3.745
+      "exitCode": 0,
+      "seconds": 26.544
     }
   ]
 }

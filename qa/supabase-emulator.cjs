@@ -29,7 +29,7 @@ const COLUMNS = {
   profiles: 'id email full_name role client_id avatar_url created_at updated_at',
   clients: 'id name status contact_name contact_email website notes created_at updated_at',
   client_settings: 'id client_id default_length default_platform created_at updated_at',
-  requests: 'id client_id title status priority deadline video_type platform brief reference_urls attachment_names length submitted_by created_at updated_at duration_seconds website purpose target_audience video_style brand_colors has_script has_voice_over script_file_path voice_over_file_path base_price script_price voice_over_price total_price stage',
+  requests: 'id client_id title status priority deadline video_type platform brief reference_urls attachment_names length submitted_by created_at updated_at duration_seconds website purpose target_audience video_style brand_colors has_script has_voice_over script_file_path voice_over_file_path base_price script_price voice_over_price total_price stage attachment_paths brief_link brief_file_path',
   videos: 'id client_id request_id title video_type status deadline assigned_editor completed_at created_at updated_at',
   versions: 'id video_id version_number filename notes file_url revision_id created_at',
   feedback: 'id video_id version_id author_id author_role content created_at',
@@ -81,7 +81,7 @@ function createDb(users) {
   });
   // Seeded requests predate the wizard: they carry the table's default stage
   // and no per-item pricing, exactly like the rows already in the live project.
-  s.requests.forEach(r => db.requests.push({ id: r.id, client_id: r.client, title: r.title, status: r.status, priority: r.priority, deadline: r.deadline, video_type: r.videoType, platform: r.platform, brief: r.instructions, reference_urls: r.references, attachment_names: r.attachments.map(a => a.name), length: r.length, submitted_by: null, created_at: r.requestedAt, updated_at: r.requestedAt, duration_seconds: null, website: null, purpose: null, target_audience: null, video_style: null, brand_colors: null, has_script: false, has_voice_over: false, script_file_path: null, voice_over_file_path: null, base_price: null, script_price: null, voice_over_price: null, total_price: null, stage: 'Project Submitted' }));
+  s.requests.forEach(r => db.requests.push({ id: r.id, client_id: r.client, title: r.title, status: r.status, priority: r.priority, deadline: r.deadline, video_type: r.videoType, platform: r.platform, brief: r.instructions, reference_urls: r.references, attachment_names: r.attachments.map(a => a.name), length: r.length, submitted_by: null, created_at: r.requestedAt, updated_at: r.requestedAt, duration_seconds: null, website: null, purpose: null, target_audience: null, video_style: null, brand_colors: null, has_script: false, has_voice_over: false, script_file_path: null, voice_over_file_path: null, base_price: null, script_price: null, voice_over_price: null, total_price: null, stage: 'Project Submitted', attachment_paths: [], brief_link: null, brief_file_path: null }));
   // The published price list (the live project's seed values).
   const prices = { base: { 30: 300, 60: 500, 90: 700, 120: 950 }, script: { 30: 0, 60: 0, 90: 0, 120: 0 }, voice_over: { 30: 0, 60: 0, 90: 0, 120: 0 } };
   Object.keys(prices).forEach(item => [30, 60, 90, 120].forEach(seconds => db.pricing.push({
@@ -262,7 +262,16 @@ const RPC = {
     const clientId = profile && profile.client_id;
     if (!clientId) return rpcError('Set up your workspace before submitting a project.');
     if (!String(args.p_title || '').trim()) return rpcError('Project name is required.');
-    if (!String(args.p_brief || '').trim()) return rpcError('Project details are required.');
+    // A project must say what the video should say: a brief link or a brief
+    // file. p_brief (the notes) is optional.
+    const briefLink = String(args.p_brief_link || '').trim() || null;
+    const briefFile = String(args.p_brief_file_path || '').trim() || null;
+    if (!briefLink && !briefFile) return rpcError('Add a link to your brief document or upload it as a PDF.');
+    if (briefLink && !/^https?:\/\//i.test(briefLink)) return rpcError('The brief link must start with http:// or https://.');
+    if (briefFile && String(briefFile).split('/')[0] !== clientId) return rpcError('Invalid brief file.');
+    const attachmentPaths = args.p_attachment_paths || [];
+    if (attachmentPaths.length > 20) return rpcError('Too many attachments.');
+    if (attachmentPaths.some(path => String(path).split('/')[0] !== clientId)) return rpcError('Invalid attachment file.');
     if (!VIDEO_TYPES.includes(args.p_video_type)) return rpcError('Unknown video type.');
     if (![30, 60, 90, 120].includes(Number(args.p_duration))) return rpcError('Unknown video length.');
     const hasScript = !!args.p_has_script, hasVoice = !!args.p_has_voice_over;
@@ -287,9 +296,13 @@ const RPC = {
 
     const now = new Date().toISOString(), id = crypto.randomUUID();
     db.requests.push({ id, client_id: clientId, submitted_by: caller.id, title: String(args.p_title).trim().slice(0, 200),
-      video_type: args.p_video_type, brief: clip(args.p_brief, 5000), length: seconds + ' seconds', duration_seconds: seconds,
+      video_type: args.p_video_type,
+      // The notes are optional; without them the brief column points at the document.
+      brief: String(args.p_brief || '').trim() ? clip(args.p_brief, 5000) : 'See the attached brief document.',
+      length: seconds + ' seconds', duration_seconds: seconds,
       deadline: args.p_delivery_date || null, platform: null, priority: 'Normal',
-      reference_urls: args.p_reference_urls || [], attachment_names: args.p_attachment_names || [], status: 'Submitted',
+      reference_urls: args.p_reference_urls || [], attachment_names: args.p_attachment_names || [],
+      attachment_paths: attachmentPaths, brief_link: clip(briefLink, 1000), brief_file_path: briefFile, status: 'Submitted',
       website: clip(args.p_website, 300), purpose: clip(args.p_purpose, 2000), target_audience: clip(args.p_target_audience, 2000),
       video_style: clip(args.p_video_style, 2000), brand_colors: clip(args.p_brand_colors, 500),
       has_script: hasScript, has_voice_over: hasVoice, script_file_path: scriptPath, voice_over_file_path: voicePath,

@@ -5,12 +5,17 @@
    the Supabase emulator: sign-up answers "disabled" as on the live project
    unless a test stubs it, orders and account requests are inserted as anyone,
    and only admins read or update orders. */
-const { chromium, base, qaUsers, qaSession, SUPABASE } = require('./runtime.cjs');
+const { chromium, base, qaUsers, qaSession, SUPABASE, serveSite } = require('./runtime.cjs');
 const assert = require('assert/strict'), fs = require('fs');
 fs.mkdirSync('qa/screenshots', { recursive: true });
 
+// Serve site/ so this suite runs on its own as well as under run-all, which
+// already has a server on this port (serveSite then leaves it alone).
+let stopServer = () => {};
+let launched = null;
 (async () => {
-  const browser = await chromium.launch();
+  stopServer = await serveSite();
+  const browser = launched = await chromium.launch();
   const errors = [], checks = [], scans = [];
   const watch = (page, label) => {
     page.setDefaultTimeout(10000);
@@ -163,9 +168,18 @@ fs.mkdirSync('qa/screenshots', { recursive: true });
   await o.goto(base + 'order.html?duration=90');
   await o.locator('#order-card[data-state="ready"]').waitFor();
   assert.equal(await o.locator('#order-account-email').innerText(), qaUsers.client.email);
+  assert.equal(await o.locator('#order-profile-menu').isHidden(), true, 'the account email is not persistently visible');
+  await o.locator('#order-profile-button').click();
+  assert.equal(await o.locator('#order-profile-menu').isVisible(), true);
+  assert.match(await o.locator('#order-profile-menu').innerText(), new RegExp('Account\\s+' + qaUsers.client.email + '\\s+Sign out'));
+  await o.locator('.order__title').click();
+  assert.equal(await o.locator('#order-profile-menu').isHidden(), true, 'clicking outside closes the account menu');
+  await o.locator('#order-profile-button').click();
+  await o.keyboard.press('Escape');
+  assert.equal(await o.locator('#order-profile-menu').isHidden(), true, 'Escape closes the account menu');
   assert.equal(await o.locator('#order-company').inputValue(), 'Northbeam', 'company pre-filled from the workspace');
-  assert.deepEqual(await o.locator('.order__progress li').allInnerTexts(), ['1. Project basics', '2. Creative details', '3. Script & voice over', '4. Review']);
-  assert.equal(await o.locator('[data-step="1"] .order__step-label').innerText(), 'STEP 1 OF 4');
+  assert.deepEqual(await o.locator('.order__progress li').allInnerTexts(), ['01\nProject basics', '02\nLook & feel', '03\nBrief, script & voice over', '04\nReview']);
+  assert.equal(await o.locator('[data-step="1"] .order__step-label').count(), 0, 'the connected stepper communicates the current step');
   assert.equal(await o.locator('#order-name, #order-email, #order-password').count(), 0, 'no account fields on the order page');
   assert.deepEqual(await o.locator('.order__duration').allInnerTexts(), ['30 seconds', '60 seconds', '90 seconds\nMost popular', '120 seconds']);
   assert.doesNotMatch(await o.locator('[data-step="1"]').innerText(), /\$/, 'no prices with the video length');
@@ -181,7 +195,61 @@ fs.mkdirSync('qa/screenshots', { recursive: true });
   await fresh.waitForFunction(() => !document.querySelector('[data-step="1"]').hidden);
   assert.equal(await fresh.evaluate(() => location.hash), '#step-1', 'the review needs the earlier steps first');
   await fresh.close();
-  checks.push('Order page (signed in): account line, company from the workspace, four steps, no account fields, lengths without prices, disabled PayPal placeholder with paypalEnabled false, deep links cannot skip steps');
+  checks.push('Order page (signed in): account menu, company from the workspace, four steps, no account fields, lengths without prices, disabled PayPal placeholder with paypalEnabled false, deep links cannot skip steps');
+
+  /* Where each field lives, and the brief-or-script rule ------------------ */
+  {
+    const steps = watch(await clientCtx.newPage(), 'steps');
+    await steps.setViewportSize({ width: 1280, height: 900 });
+    await steps.goto(base + 'order.html?duration=60');
+    await steps.locator('#order-card[data-state="ready"]').waitFor();
+    // Company and audience are optional; only the purpose is starred on step 2.
+    assert.equal(await steps.locator('#order-company').evaluate(e => e.required), false, 'company is optional');
+    await steps.locator('#order-title').fill('Step layout check');
+    await steps.locator('#order-type').selectOption('Product Demo');
+    await steps.locator('[data-next="2"]').click();
+    await steps.waitForFunction(() => !document.querySelector('[data-step="2"]').hidden);
+    assert.equal(await steps.locator('#step-2-title').innerText(), 'Look & feel');
+    // Reference links moved to step 2, directly under the video style.
+    assert.equal(await steps.locator('[data-step="2"] #order-references').count(), 1);
+    assert.equal(await steps.locator('[data-step="2"] #order-brief-link, [data-step="2"] #order-brief').count(), 0, 'the brief is not on step 2');
+    assert.equal(await steps.locator('#order-audience').evaluate(e => e.required), false, 'target audience is optional');
+    // Only the purpose holds the step.
+    await steps.locator('[data-next="3"]').click();
+    assert.equal(await steps.locator('#order-purpose-error').innerText(), 'Tell us what this video should achieve.');
+    assert.equal(await steps.evaluate(() => location.hash), '#step-2');
+    await steps.locator('#order-purpose').fill('Explain the product and lift trial sign-ups for the QA suite.');
+    await steps.locator('[data-next="3"]').click();
+    await steps.waitForFunction(() => !document.querySelector('[data-step="3"]').hidden);
+    assert.equal(await steps.locator('#step-3-title').innerText(), 'Brief, script & voice over');
+    assert.equal(await steps.locator('[data-step="3"] #order-brief-link').count(), 1, 'the brief leads step 3');
+    assert.equal(await steps.locator('[data-step="3"] #order-brief').count(), 1, 'the notes close step 3');
+
+    // Neither a brief nor a script: blocked, with one message naming both.
+    await steps.locator('[data-next="4"]').click();
+    assert.equal(await steps.locator('#order-brief-doc-error').innerText(), 'Add a brief or write your script so we know what the video should say.');
+    assert.equal(await steps.evaluate(() => location.hash), '#step-3');
+    // A brief alone passes.
+    await steps.locator('#order-brief-link').fill('https://example.com/brief');
+    await steps.locator('[data-next="4"]').click();
+    await steps.waitForFunction(() => !document.querySelector('[data-step="4"]').hidden);
+    await steps.locator('[data-back="3"]').click();
+    await steps.waitForFunction(() => !document.querySelector('[data-step="3"]').hidden);
+    // A script alone passes too.
+    await steps.locator('#order-brief-link').fill('');
+    await steps.locator('label:has(input[name="scriptChoice"][value="own"])').click();
+    await steps.locator('#order-script-file').setInputFiles({ name: 'script.txt', mimeType: 'text/plain', buffer: Buffer.from('script') });
+    await steps.locator('[data-next="4"]').click();
+    await steps.waitForFunction(() => !document.querySelector('[data-step="4"]').hidden);
+    // The review lists every field in its new order.
+    assert.deepEqual(await steps.locator('.order__summary-facts dt').allInnerTexts(),
+      ['Project', 'Company', 'Website', 'Video', 'Delivery', 'Purpose', 'Audience', 'Style', 'References', 'Brand colors', 'Files', 'Brief', 'Script', 'Voice over', 'Notes', 'Account']);
+    await scan(steps, 'order step 3');
+    await steps.setViewportSize({ width: 375, height: 900 });
+    assert.equal(await overflow(steps), false, '375: review overflow');
+    await steps.close();
+    checks.push('Steps: company and target audience are optional, reference links sit on "Look & feel", the brief leads "Brief, script & voice over" with the notes last, a project needs a brief OR a script (neither is blocked, either one passes), and the review lists every field in its new order');
+  }
 
   for (const width of [375, 768, 1280]) {
     const r = watch(await clientCtx.newPage(), 'responsive');
@@ -193,9 +261,23 @@ fs.mkdirSync('qa/screenshots', { recursive: true });
     if (width === 375) await scan(r, 'order step 1 / 375');
     await r.close();
   }
+  for (const [width, height] of [[1920, 1080], [1600, 900], [1440, 900], [1366, 768]]) {
+    const desktop = watch(await clientCtx.newPage(), 'desktop-fit');
+    await desktop.setViewportSize({ width, height });
+    await desktop.goto(base + 'order.html?duration=120');
+    await desktop.locator('#order-card[data-state="ready"]').waitFor();
+    const visual = await desktop.locator('.order__studio-visual').boundingBox();
+    const milestones = await desktop.locator('.order__milestones').boundingBox();
+    assert.ok(visual && visual.y >= 0 && visual.y + visual.height <= height, width + 'x' + height + ': editor fits the viewport');
+    assert.ok(milestones && milestones.y >= 0 && milestones.y + milestones.height <= height, width + 'x' + height + ': payment milestones fit the viewport');
+    assert.equal(await overflow(desktop), false, width + 'x' + height + ': order page overflow');
+    await desktop.close();
+  }
+  checks.push('Left brand panel keeps its editor and payment milestones visible at 1920×1080, 1600×900, 1440×900 and 1366×768');
   const leave = watch(await clientCtx.newPage(), 'sign-out');
   await leave.goto(base + 'order.html');
   await leave.locator('#order-card[data-state="ready"]').waitFor();
+  await leave.locator('#order-profile-button').click();
   await leave.locator('#order-signout').click();
   await leave.waitForURL('**/index.html');
   await leave.close();
@@ -264,7 +346,8 @@ fs.mkdirSync('qa/screenshots', { recursive: true });
   checks.push('Admin Orders: sidebar link between Dashboard and Clients with a pending count, newest-first table with every column, status badges, price-mismatch flag, search/filter/clear, detail with full brief and email link, status updates saved (processing, completed, cancelled), no overflow at 375');
 
   fs.writeFileSync('qa/orders-results.json', JSON.stringify({ checks, scans, errors }, null, 2));
-  await browser.close();
   assert.deepEqual(errors, []);
   console.log(JSON.stringify({ checks, scans: scans.length, errors }, null, 2));
-})().catch(error => { console.error(error); process.exit(1); });
+})().catch(error => { console.error(error); process.exitCode = 1; })
+  // Tear down even when an assertion stops the run part-way.
+  .finally(async () => { if (launched) await launched.close().catch(() => {}); await stopServer(); });

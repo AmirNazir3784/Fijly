@@ -11,13 +11,25 @@
 
    It also covers the Admin pricing grid, the included-revision settings, and
    that the browser never decides the price that is saved. */
-const { chromium, base, qaUsers } = require('./runtime.cjs');
+const { chromium, base, qaUsers, serveSite } = require('./runtime.cjs');
 const assert = require('assert/strict'), fs = require('fs');
 const emulator = require('./supabase-emulator.cjs');
 fs.mkdirSync('qa/screenshots', { recursive: true });
 
 (async () => {
+  // Serve site/ so this suite runs on its own as well as under run-all, which
+  // already has a server on this port (serveSite then leaves it alone).
+  const stopServer = await serveSite();
   const browser = await chromium.launch();
+  try {
+    await runSuite(browser);
+  } finally {
+    await browser.close().catch(() => {});
+    await stopServer();
+  }
+})();
+
+async function runSuite(browser) {
   const errors = [], checks = [], scans = [];
   const watch = (page, label) => {
     page.setDefaultTimeout(15000);
@@ -94,7 +106,13 @@ fs.mkdirSync('qa/screenshots', { recursive: true });
   assert.equal(db.profiles.find(p => p.id === qaUsers.unlinked.id).client_id, workspace.id, 'the profile is linked to it');
   checks.push('Step 1 validates every field, rejects a bare domain as a website, offers exactly the six accepted video types, and calls ensure_client_workspace on Continue');
 
-  /* Step 2: creative details and the project-file uploads ----------------- */
+  /* Step 2 "Look & feel": the creative direction and the brand files ------ */
+  assert.equal(await w.locator('#step-2-title').innerText(), 'Look & feel');
+  // The brief moved to step 3, so nothing about it is on this step.
+  assert.equal(await w.locator('[data-step="2"] #order-brief-link, [data-step="2"] #order-brief').count(), 0);
+  // Reference links sit directly under the video style.
+  assert.deepEqual(await w.locator('[data-step="2"] .order__fields > div .order__label').allInnerTexts(),
+    ['Video purpose *', 'Target audience', 'Video style', 'Reference links', 'Brand colors', 'Logo, product screenshots and recordings']);
   await w.locator('[data-next="3"]').click();
   assert.equal(await w.locator('#order-purpose-error').innerText(), 'Tell us what this video should achieve.');
   await w.locator('#order-purpose').fill('Explain the product on the homepage and lift trial sign-ups.');
@@ -102,20 +120,54 @@ fs.mkdirSync('qa/screenshots', { recursive: true });
   await w.locator('#order-style').fill('Clean motion graphics over product screens.');
   await w.locator('#order-colors').fill('#5B4BF5, #0C0E13');
   await w.locator('#order-references').fill('example.com/not-a-link');
-  await w.locator('#order-brief').fill('Open on the problem, show the dashboard, close on a clear call to action.');
   await w.locator('[data-next="3"]').click();
   assert.equal(await w.locator('#order-references-error').innerText(), 'Enter complete http(s) links, one per line.');
   await w.locator('#order-references').fill('https://example.com/reference\nhttps://example.com/second');
   await w.locator('#order-attachments').setInputFiles([file('logo.png', 'image/png'), file('dashboard.png', 'image/png')]);
+  // Each pick is listed with a way to take it back out.
+  assert.deepEqual(await w.locator('#order-attachments-files .order__file-name').allInnerTexts(), ['logo.png', 'dashboard.png']);
   const storedBefore = db.storage.size;
   await w.locator('[data-next="3"]').click();
   await w.waitForFunction(() => location.hash === '#step-3' && !document.querySelector('[data-step="3"]').hidden);
   assert.equal(db.storage.size, storedBefore + 2, 'both project files were uploaded');
   const uploaded = [...db.storage.keys()].slice(-2);
   uploaded.forEach(key => assert.match(key, new RegExp('^client-assets/' + workspace.id + '/project-files/'), 'uploads land in project-files'));
-  checks.push('Step 2 validates the purpose, audience and reference links, and uploads logo and screenshots to {client_id}/project-files/');
+  checks.push('Step 2 "Look & feel" holds purpose, audience, style, reference links, brand colors and the uploads in that order, validates the purpose and the links, lists each picked file, and uploads to {client_id}/project-files/');
 
-  /* Step 3: script and voice over, with the live breakdown ---------------- */
+  /* Step 3: a project needs a brief document or the client's own script --- */
+  assert.equal(await w.locator('#step-3-title').innerText(), 'Brief, script & voice over');
+  // Neither given: Continue is refused with one message that names both ways out.
+  await w.locator('[data-next="4"]').click();
+  assert.equal(await w.locator('#order-brief-doc-error').innerText(), 'Add a brief or write your script so we know what the video should say.');
+  assert.equal(await w.evaluate(() => location.hash), '#step-3', 'neither a brief nor a script blocks the step');
+  // A malformed brief link is its own problem, not a missing brief.
+  await w.locator('#order-brief-link').fill('docs.google.com/document/d/abc');
+  await w.locator('[data-next="4"]').click();
+  assert.equal(await w.locator('#order-brief-doc-error').innerText(), 'Enter the brief link as a full address, starting with https://');
+  // A brief alone is enough.
+  await w.locator('#order-brief-link').fill('https://docs.google.com/document/d/qa-brief');
+  await w.locator('[data-next="4"]').click();
+  await w.waitForFunction(() => !document.querySelector('[data-step="4"]').hidden);
+  await w.locator('[data-back="3"]').click();
+  await w.waitForFunction(() => !document.querySelector('[data-step="3"]').hidden);
+  // A script alone is enough too: clear the brief and supply the script.
+  await w.locator('#order-brief-link').fill('');
+  await w.locator('[data-next="4"]').click();
+  assert.equal(await w.locator('#order-brief-doc-error').innerText(), 'Add a brief or write your script so we know what the video should say.');
+  await pick(w, 'scriptChoice', 'own');
+  await w.locator('#order-script-file').setInputFiles(file('script-only.txt', 'text/plain'));
+  await w.locator('[data-next="4"]').click();
+  await w.waitForFunction(() => !document.querySelector('[data-step="4"]').hidden);
+  assert.equal(await w.locator('#summary-brief-doc').innerText(), 'Your script stands in for the brief');
+  await w.locator('[data-back="3"]').click();
+  await w.waitForFunction(() => !document.querySelector('[data-step="3"]').hidden);
+  // Back to the brief for the rest of the run.
+  await pick(w, 'scriptChoice', 'need');
+  await w.locator('#order-brief-link').fill('https://docs.google.com/document/d/qa-brief');
+  await w.locator('#order-brief').fill('Open on the problem, show the dashboard, close on a clear call to action.');
+  checks.push('Step 3 requires a brief document or the client\'s own script: neither is refused with "Add a brief or write your script…", a bad link reports separately, and either one on its own lets the step pass');
+
+  /* Step 3: the live breakdown beside the script and voice over ----------- */
   // The defaults are "we write it" / "we record it", so the add-ons show as
   // Included while the price list has them at zero.
   assert.equal(await w.locator('#order-script-upload').isVisible(), false);
@@ -147,10 +199,12 @@ fs.mkdirSync('qa/screenshots', { recursive: true });
     await w.locator('#order-style').fill('Clean motion graphics over product screens.');
     await w.locator('#order-colors').fill('#5B4BF5, #0C0E13');
     await w.locator('#order-references').fill('https://example.com/reference\nhttps://example.com/second');
-    await w.locator('#order-brief').fill('Open on the problem, show the dashboard, close on a clear call to action.');
     await w.locator('#order-attachments').setInputFiles([file('logo.png', 'image/png')]);
     await w.locator('[data-next="3"]').click();
     await w.waitForFunction(() => !document.querySelector('[data-step="3"]').hidden);
+    // The brief and the notes live on step 3 now.
+    await w.locator('#order-brief-link').fill('https://docs.google.com/document/d/qa-brief');
+    await w.locator('#order-brief').fill('Open on the problem, show the dashboard, close on a clear call to action.');
   };
   await refill();
   assert.equal(await w.locator('#line-script').innerText(), '$150', 'a non-zero add-on shows its price');
@@ -179,6 +233,7 @@ fs.mkdirSync('qa/screenshots', { recursive: true });
   /* Step 4: review, the schedule, and submit_project ---------------------- */
   assert.equal(await w.locator('#summary-title').innerText(), 'Milestone QA / Homepage video');
   assert.equal(await w.locator('#summary-item').innerText(), 'Homepage Video · 90 seconds');
+  assert.equal(await w.locator('#summary-brief-doc').innerText(), 'https://docs.google.com/document/d/qa-brief');
   assert.equal(await w.locator('#summary-script').innerText(), 'Provided by you · script.docx');
   assert.equal(await w.locator('#summary-voice').innerText(), 'Provided by you · voice.mp3');
   assert.equal(await w.locator('#summary-delivery').innerText(), '2026-12-15');
@@ -207,6 +262,8 @@ fs.mkdirSync('qa/screenshots', { recursive: true });
   assert.deepEqual([project.purpose !== null, project.target_audience !== null, project.video_style !== null, project.brand_colors],
     [true, true, true, '#5B4BF5, #0C0E13']);
   assert.deepEqual(project.reference_urls, ['https://example.com/reference', 'https://example.com/second']);
+  assert.equal(project.brief_link, 'https://docs.google.com/document/d/qa-brief', 'the brief link is saved');
+  assert.equal(project.brief_file_path, null, 'a linked brief stores no file');
   assert.deepEqual(project.attachment_names, ['logo.png']);
   assert.equal(project.has_script, true); assert.equal(project.has_voice_over, true);
   assert.match(project.script_file_path, new RegExp('^' + workspace.id + '/project-files/.*\\.docx$'));
@@ -249,9 +306,10 @@ fs.mkdirSync('qa/screenshots', { recursive: true });
     await bot.waitForFunction(() => !document.querySelector('[data-step="2"]').hidden);
     await bot.locator('#order-purpose').fill('Spam purpose for the honeypot test.');
     await bot.locator('#order-audience').fill('Nobody at all.');
-    await bot.locator('#order-brief').fill('Automated spam brief with enough characters to pass.');
     await bot.locator('[data-next="3"]').click();
     await bot.waitForFunction(() => !document.querySelector('[data-step="3"]').hidden);
+    await bot.locator('#order-brief-link').fill('https://spam.example/brief');
+    await bot.locator('#order-brief').fill('Automated spam brief with enough characters to pass.');
     await bot.locator('[data-next="4"]').click();
     await bot.waitForFunction(() => !document.querySelector('[data-step="4"]').hidden);
     const count = db.requests.length;
@@ -275,16 +333,20 @@ fs.mkdirSync('qa/screenshots', { recursive: true });
     await down.waitForFunction(() => !document.querySelector('[data-step="2"]').hidden);
     await down.locator('#order-purpose').fill('Check that a failed save is recoverable.');
     await down.locator('#order-audience').fill('The QA suite.');
-    await down.locator('#order-brief').fill('A brief long enough to pass validation on this step.');
     await down.locator('[data-next="3"]').click();
     await down.waitForFunction(() => !document.querySelector('[data-step="3"]').hidden);
+    await down.locator('#order-brief-link').fill('https://example.com/retry-brief');
+    await down.locator('#order-brief').fill('A brief long enough to pass validation on this step.');
     await down.locator('[data-next="4"]').click();
     await down.waitForFunction(() => !document.querySelector('[data-step="4"]').hidden);
     await down.locator('#order-submit').click();
     await down.locator('#order-error').waitFor({ state: 'visible' });
     assert.match(decodeURIComponent(await down.locator('#order-error a').getAttribute('href')), /^mailto:hello@fijly\.com/);
     assert.equal(await down.locator('#order-submit').isDisabled(), false, 'a failed submit can be retried');
+    await down.locator('[data-back="3"]').click();
+    await down.waitForFunction(() => !document.querySelector('[data-step="3"]').hidden);
     assert.equal(await down.locator('#order-brief').inputValue(), 'A brief long enough to pass validation on this step.', 'the answers are kept');
+    assert.equal(await down.locator('#order-brief-link').inputValue(), 'https://example.com/retry-brief');
     await down.close();
     checks.push('A failed submit_project shows an inline error with an email fallback, keeps every answer and allows a retry');
   }
@@ -577,16 +639,24 @@ fs.mkdirSync('qa/screenshots', { recursive: true });
     assert.equal(again.body, workspace.id, 'an existing workspace is returned unchanged');
     assert.equal(db.clients.filter(row => row.name === 'Another name').length, 0);
     // submit_project needs a workspace first.
-    const noWorkspace = emulator.handleRpc(db, qaUsers.noprofile, 'submit_project', { p_title: 'x', p_video_type: 'Product Demo', p_duration: 60, p_brief: 'y' });
+    const brief = { p_brief_link: 'https://example.com/brief' };
+    const noWorkspace = emulator.handleRpc(db, qaUsers.noprofile, 'submit_project', { p_title: 'x', p_video_type: 'Product Demo', p_duration: 60, ...brief });
     assert.match(noWorkspace.body.message, /sign in|workspace/i);
+    // A project with no brief document and no script is refused server-side too.
+    const noBrief = emulator.handleRpc(db, qaUsers.unlinked, 'submit_project', { p_title: 'x', p_video_type: 'Product Demo', p_duration: 60 });
+    assert.match(noBrief.body.message, /Add a link to your brief document or upload it as a PDF/);
+    const badLink = emulator.handleRpc(db, qaUsers.unlinked, 'submit_project', { p_title: 'x', p_video_type: 'Product Demo', p_duration: 60, p_brief_link: 'example.com/brief' });
+    assert.match(badLink.body.message, /must start with http/);
+    // A brief file has to sit in this client's own folder.
+    const strayBrief = emulator.handleRpc(db, qaUsers.unlinked, 'submit_project', { p_title: 'x', p_video_type: 'Product Demo', p_duration: 60, p_brief_file_path: 'someone-else/project-files/brief.pdf' });
+    assert.match(strayBrief.body.message, /Invalid brief file/);
     // A length the price list does not cover is refused rather than guessed.
-    const unpriced = emulator.handleRpc(db, qaUsers.unlinked, 'submit_project', { p_title: 'x', p_video_type: 'Product Demo', p_duration: 45, p_brief: 'y' });
+    const unpriced = emulator.handleRpc(db, qaUsers.unlinked, 'submit_project', { p_title: 'x', p_video_type: 'Product Demo', p_duration: 45, ...brief });
     assert.match(unpriced.body.message, /Unknown video length/);
-    checks.push('ensure_client_workspace is client-only and idempotent; submit_project needs a workspace and refuses an unpriced length');
+    checks.push('ensure_client_workspace is client-only and idempotent; submit_project needs a workspace, a brief document (http(s) link or a file under the client folder) and a priced length');
   }
 
-  await browser.close();
   fs.writeFileSync('qa/milestones-results.json', JSON.stringify({ checks, scans, errors }, null, 2));
   assert.deepEqual(errors, [], 'page errors');
   console.log(JSON.stringify({ checks, errors }, null, 2));
-})();
+}

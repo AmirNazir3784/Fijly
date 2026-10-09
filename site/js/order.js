@@ -3,9 +3,14 @@
 
    Four steps, then the payment step:
      1. Project basics   — calls ensure_client_workspace() and keeps client_id.
-     2. Creative details — uploads logo/screenshots to project-files.
-     3. Script & voice over — two choices, each with its own upload.
+     2. Look & feel      — purpose, audience, style, references, brand, uploads.
+     3. Brief, script & voice over — the brief document, then the two choices.
      4. Review & submit  — calls submit_project().
+
+   A project has to tell us what the video should say, so step 3 needs either a
+   brief document or the client's own script. submit_project() insists on a
+   brief link or a brief file, so when only a script is supplied its storage
+   path is sent as the brief file: that script IS the brief for that project.
 
    The browser never calculates the price that gets charged. The breakdown on
    screen is read from public.pricing (readable by anyone) purely to show the
@@ -67,6 +72,9 @@
   function hasVoice() { return (form.querySelector('input[name="voiceChoice"]:checked') || {}).value === 'own'; }
   // 'link' or 'upload': the brief document arrives one way or the other.
   function briefIsLink() { return (form.querySelector('input[name="briefChoice"]:checked') || {}).value !== 'upload'; }
+  // The brief document the client gave us, if any.
+  function briefPath() { return uploaded.brief ? uploaded.brief.path : null; }
+  function briefLinkValue() { return briefIsLink() ? text('briefLink') : ''; }
   function references() {
     return text('references').split(/\n/).map(function (line) { return line.trim(); }).filter(Boolean);
   }
@@ -135,9 +143,9 @@
     deliveryDate: { invalid: 'Choose a valid delivery date.' },
     purpose: { valueMissing: 'Tell us what this video should achieve.', tooShort: 'Please add at least 10 characters.' },
     references: { invalid: 'Enter complete http(s) links, one per line.' },
-    // The brief document is required as a link or a file; which one is missing
-    // depends on the card that is selected.
-    briefDoc: { valueMissing: 'Add a link to your brief document or upload it.' },
+    // A project needs a brief document or the client's own script. Which
+    // control the problem lands on depends on the card that is selected.
+    briefDoc: { valueMissing: 'Add a brief or write your script so we know what the video should say.' },
     briefLink: { invalid: 'Enter the brief link as a full address, starting with https://' },
     briefFile: { invalid: 'The brief must be a PDF, DOC or DOCX file under 50MB.' },
     scriptFile: { valueMissing: 'Upload your script file.', invalid: 'Scripts must be a PDF, DOC, DOCX or TXT file under 50MB.' },
@@ -147,8 +155,8 @@
   // The fields each step validates, in the order their problems are reported.
   var stepFields = {
     1: ['title', 'companyWebsite', 'videoType', 'duration', 'deliveryDate'],
-    2: ['purpose', 'references', 'attachments', 'briefDoc'],
-    3: ['scriptFile', 'voiceFile'],
+    2: ['purpose', 'references', 'attachments'],
+    3: ['briefDoc', 'scriptFile', 'voiceFile'],
     4: []
   };
   function errorFor(name) {
@@ -169,14 +177,16 @@
     if (name === 'references') return references().some(badLink) ? note.invalid : '';
     if (name === 'attachments') return Array.from(control.files).some(function (file) { return fileProblem(file, attachmentTypes); }) ? note.invalid : '';
     // Checked as one field, so a missing brief reports once rather than twice.
+    // Bringing your own script covers the same ground, so the brief is only
+    // required when we are the ones writing the script.
     if (name === 'briefDoc') {
       if (briefIsLink()) {
         var link = text('briefLink');
-        if (!link) return (messages.briefDoc || {}).valueMissing;
+        if (!link) return hasScript() ? '' : messages.briefDoc.valueMissing;
         return badLink(link) ? messages.briefLink.invalid : '';
       }
       var picked = field('briefFile').files[0];
-      if (!picked) return uploaded.brief ? '' : (messages.briefDoc || {}).valueMissing;
+      if (!picked) return (uploaded.brief || hasScript()) ? '' : messages.briefDoc.valueMissing;
       return fileProblem(picked, briefTypes) ? messages.briefFile.invalid : '';
     }
     if (name === 'scriptFile' || name === 'voiceFile') {
@@ -222,7 +232,7 @@
   }
   function clearField(name) {
     mark(name, '');
-    if (['briefLink', 'briefFile', 'briefChoice'].includes(name)) mark('briefDoc', '');
+    if (['briefLink', 'briefFile', 'briefChoice', 'scriptChoice', 'scriptFile'].includes(name)) mark('briefDoc', '');
   }
   form.addEventListener('input', function (event) { if (event.target.name) clearField(event.target.name); });
   form.addEventListener('change', function (event) { if (event.target.name) clearField(event.target.name); });
@@ -240,6 +250,8 @@
   }
   form.addEventListener('change', function (event) {
     if (['scriptChoice', 'voiceChoice'].includes(event.target.name)) syncChoices();
+    // The script choice feeds the brief-or-script rule, so clear its message.
+    if (event.target.name === 'scriptChoice') mark('briefDoc', '');
     if (event.target.name === 'briefChoice') syncBrief();
     if (event.target.name === 'briefFile') uploaded.brief = null;
     if (event.target.name === 'duration') renderPrices();
@@ -316,14 +328,6 @@
   // Uploads this step's files, reusing anything already stored for them.
   async function uploadStep(step) {
     if (step === 2) {
-      // The brief document, when it was uploaded rather than linked.
-      var briefFile = briefIsLink() ? null : field('briefFile').files[0];
-      if (!briefFile) { if (briefIsLink()) uploaded.brief = null; }
-      else if (!uploaded.brief || uploaded.brief.key !== signature(briefFile)) {
-        busyUpload('order-brief-progress', 'Uploading ' + briefFile.name + '…');
-        try { uploaded.brief = { key: signature(briefFile), name: briefFile.name, path: await upload(briefFile, briefTypes) }; }
-        finally { busyUpload('order-brief-progress', ''); }
-      }
       var files = Array.from(field('attachments').files), key = files.map(signature).join(',');
       if (!files.length) { uploaded.attachments = null; return; }
       if (uploaded.attachments && uploaded.attachments.key === key) return;
@@ -336,6 +340,14 @@
       return;
     }
     if (step === 3) {
+      // The brief document, when it was uploaded rather than linked.
+      var briefFile = briefIsLink() ? null : field('briefFile').files[0];
+      if (briefIsLink()) uploaded.brief = null;
+      else if (briefFile && (!uploaded.brief || uploaded.brief.key !== signature(briefFile))) {
+        busyUpload('order-brief-progress', 'Uploading ' + briefFile.name + '…');
+        try { uploaded.brief = { key: signature(briefFile), name: briefFile.name, path: await upload(briefFile, briefTypes) }; }
+        finally { busyUpload('order-brief-progress', ''); }
+      }
       var slots = [['script', 'scriptFile', scriptTypes, hasScript(), 'order-script-progress'],
         ['voice', 'voiceFile', voiceTypes, hasVoice(), 'order-voice-progress']];
       for (var s = 0; s < slots.length; s += 1) {
@@ -366,10 +378,10 @@
       item.classList.toggle('is-done', n < step);
       if (n === step) item.setAttribute('aria-current', 'step'); else item.removeAttribute('aria-current');
     });
-    if (step === 3) syncChoices();
+    if (step === 3) { syncChoices(); syncBrief(); }
     if (step === LAST_STEP) summarize();
     errorBox.hidden = true;
-    var labels = { 1: '', 2: 'Creative details — ', 3: 'Script & voice over — ', 4: 'Review — ' };
+    var labels = { 1: '', 2: 'Look & feel — ', 3: 'Brief, script & voice over — ', 4: 'Review — ' };
     document.title = labels[step] + baseTitle;
     if (focus) {
       document.getElementById('step-' + step + '-title').focus({ preventScroll: true });
@@ -446,8 +458,8 @@
     set('summary-attachments', attachments.length ? attachments.join(', ') : 'None');
     set('summary-script', hasScript() ? 'Provided by you' + (uploaded.script ? ' · ' + uploaded.script.name : '') : 'FIJLY writes the script');
     set('summary-voice', hasVoice() ? 'Provided by you' + (uploaded.voice ? ' · ' + uploaded.voice.name : '') : 'FIJLY records the voice over');
-    set('summary-brief-doc', briefIsLink() ? (text('briefLink') || 'Not provided')
-      : (uploaded.brief ? uploaded.brief.name : (field('briefFile').files[0] || {}).name || 'Not provided'));
+    set('summary-brief-doc', briefIsLink() ? (text('briefLink') || 'Your script stands in for the brief')
+      : (uploaded.brief ? uploaded.brief.name : (field('briefFile').files[0] || {}).name || 'Your script stands in for the brief'));
     var notes = text('brief');
     set('summary-brief', notes ? '“' + clip(notes, 240) + '”' : 'None');
     set('summary-account', (account.name ? account.name + ' · ' : '') + account.email);
@@ -512,8 +524,11 @@
         p_video_type: text('videoType'),
         p_duration: duration(),
         p_brief: text('brief') || null,
-        p_brief_link: briefIsLink() ? text('briefLink') : null,
-        p_brief_file_path: briefIsLink() ? null : (uploaded.brief ? uploaded.brief.path : null),
+        p_brief_link: briefLinkValue() || null,
+        // submit_project() requires a brief link or a brief file. When the
+        // client supplied a script instead, that file is the brief document.
+        p_brief_file_path: briefLinkValue() ? null
+          : (briefPath() || (hasScript() && uploaded.script ? uploaded.script.path : null)),
         p_purpose: text('purpose'),
         p_target_audience: text('targetAudience') || null,
         p_video_style: text('videoStyle') || null,
@@ -538,6 +553,30 @@
   document.getElementById('order-signout').addEventListener('click', async function () {
     await signOut({ redirect: false });
     window.location.replace('index.html');
+  });
+
+  /* Account menu: the account remains available without keeping personal
+     details in the page header. It uses the same session data and sign-out
+     path as the original inline account control. */
+  var profileButton = document.getElementById('order-profile-button');
+  var profileMenu = document.getElementById('order-profile-menu');
+  function closeProfileMenu() {
+    profileMenu.hidden = true;
+    profileButton.setAttribute('aria-expanded', 'false');
+  }
+  profileButton.addEventListener('click', function () {
+    var opening = profileMenu.hidden;
+    profileMenu.hidden = !opening;
+    profileButton.setAttribute('aria-expanded', String(opening));
+  });
+  document.addEventListener('click', function (event) {
+    if (!profileMenu.hidden && !document.getElementById('order-account').contains(event.target)) closeProfileMenu();
+  });
+  document.addEventListener('keydown', function (event) {
+    if (event.key === 'Escape' && !profileMenu.hidden) {
+      closeProfileMenu();
+      profileButton.focus();
+    }
   });
 
   /* Start: signed in? Then pre-fill and open the step in the URL ----------- */
@@ -575,6 +614,7 @@
     await loadPricing();
     try { await prefillWorkspace(); } catch (_) { /* The wizard still works from the session. */ }
     document.getElementById('order-account-email').textContent = account.email;
+    document.getElementById('order-profile-initial').textContent = (account.name || account.email || '?').trim().charAt(0).toUpperCase();
     document.getElementById('order-account').hidden = false;
     // The length picked on a pricing card, carried here as ?duration=.
     var wanted = new URLSearchParams(location.search).get('duration');

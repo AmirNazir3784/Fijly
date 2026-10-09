@@ -1,11 +1,13 @@
-page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:8766/index.html
-Call log:
-[2m  - navigating to "http://localhost:8766/index.html", waiting until "domcontentloaded"[22m
-
-    at page.<computed> (C:\Users\Mister Naveed\OneDrive\Desktop\FIJLY\qa\runtime.cjs:104:30)
-    at C:\Users\Mister Naveed\OneDrive\Desktop\FIJLY\qa\refinement-check.cjs:9:55 {
-  log: [
-    '  - navigating to "http://localhost:8766/index.html", waiting until "domcontentloaded"'
+{
+  "checks": [
+    "1440: hero bounds, CTA to the sign-up form, all concept dialogs, sign-up validation, button label fits, contact focus",
+    "1280: hero bounds, CTA to the sign-up form, all concept dialogs, sign-up validation, button label fits, contact focus",
+    "1024: hero bounds, CTA to the sign-up form, all concept dialogs, sign-up validation, button label fits, contact focus",
+    "768: hero bounds, CTA to the sign-up form, all concept dialogs, sign-up validation, button label fits, contact focus",
+    "390: hero bounds, CTA to the sign-up form, all concept dialogs, sign-up validation, button label fits, contact focus",
+    "375: hero bounds, CTA to the sign-up form, all concept dialogs, sign-up validation, button label fits, contact focus",
+    "Overview preview is a clear placeholder, not a simulated player"
   ],
-  name: 'Error'
+  "errors": [],
+  "accessibility": []
 }

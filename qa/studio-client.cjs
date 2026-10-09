@@ -27,7 +27,7 @@ const base = require('./runtime.cjs').base;
   // and opens it as Awaiting Payment with three milestone payments.
   const requestId = await c.evaluate(async()=>{
    const r=await supabaseClient.rpc('submit_project',{p_title:'Client QA / Product walkthrough',p_video_type:'Product Demo',p_duration:90,
-    p_brief:'Show the reporting flow and end with a clear CTA.',p_purpose:'Convert trial users to paid plans.',
+    p_brief:'Show the reporting flow and end with a clear CTA.',p_brief_link:'https://example.com/client-qa-brief',p_purpose:'Convert trial users to paid plans.',
     p_target_audience:'New trial users.',p_video_style:'Screen recording with motion graphics.',p_brand_colors:'#5B4BF5',
     p_website:'https://northbeam.example',p_reference_urls:['https://example.com/reference'],p_attachment_names:['brief.txt'],
     p_delivery_date:'2026-11-30'});

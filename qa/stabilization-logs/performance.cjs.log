@@ -1,11 +1,1 @@
-page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:8766/studio.html
-Call log:
-[2m  - navigating to "http://localhost:8766/studio.html", waiting until "load"[22m
-
-    at page.<computed> (C:\Users\Mister Naveed\OneDrive\Desktop\FIJLY\qa\runtime.cjs:104:30)
-    at C:\Users\Mister Naveed\OneDrive\Desktop\FIJLY\qa\performance.cjs:9:18 {
-  log: [
-    '  - navigating to "http://localhost:8766/studio.html", waiting until "load"'
-  ],
-  name: 'Error'
-}
+[{"portal":"studio","samples":[{"domReadyMs":870.4000000001397,"loadMs":870.7000000001863,"domNodes":736,"resources":45},{"domReadyMs":646.1999999999534,"loadMs":646.4000000001397,"domNodes":736,"resources":45},{"domReadyMs":496.19999999995343,"loadMs":496.30000000004657,"domNodes":736,"resources":45,"noopUpdates":{"tenNoopSavesMs":12.399999999906868,"domMutations":0}}]},{"portal":"admin","samples":[{"domReadyMs":480.60000000009313,"loadMs":480.70000000018626,"domNodes":2047,"resources":44},{"domReadyMs":445.69999999995343,"loadMs":445.89999999990687,"domNodes":2047,"resources":44},{"domReadyMs":457.39999999990687,"loadMs":457.5,"domNodes":2047,"resources":44,"noopUpdates":{"tenNoopSavesMs":1.1999999999534339,"domMutations":0}}]}]

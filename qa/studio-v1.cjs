@@ -137,15 +137,15 @@ const { pathToFileURL } = require('url');
   const cardsBefore = await page.locator('[data-request-list] .list-card').count();
   const openBefore = Number(await page.locator('[data-request-count]').textContent());
   // Projects start in the wizard on order.html; this screen links there and
-  // keeps the history list. submit_project refuses an incomplete brief.
+  // keeps the history list. submit_project refuses a project with no name.
   assert.equal(await page.locator('.request-start a[href="order.html"]').count(), 1);
-  const refused = await page.evaluate(() => supabaseClient.rpc('submit_project', { p_title: '', p_video_type: 'Product Demo', p_duration: 60, p_brief: '' }).then(r => !!r.error));
+  const refused = await page.evaluate(() => supabaseClient.rpc('submit_project', { p_title: '', p_video_type: 'Product Demo', p_duration: 60, p_brief_link: 'https://example.com/brief' }).then(r => !!r.error));
   assert.equal(refused, true, 'an incomplete project must not be created');
   assert.equal(await page.locator('[data-request-list] .list-card').count(), cardsBefore,
     'an incomplete request must not be created');
   await page.evaluate(async () => {
     const result = await supabaseClient.rpc('submit_project', { p_title: 'Northbeam / New onboarding', p_video_type: 'Tutorial / Onboarding', p_duration: 60,
-      p_brief: 'Explain connecting a data source and exporting the first report.', p_purpose: 'Reduce onboarding support tickets.', p_target_audience: 'New customers.' });
+      p_brief: 'Explain connecting a data source and exporting the first report.', p_brief_link: 'https://example.com/v1-brief', p_purpose: 'Reduce onboarding support tickets.', p_target_audience: 'New customers.' });
     if (result.error) throw new Error(result.error.message);
     await FijlyData.load();
   });

@@ -13,11 +13,13 @@ const {chromium,base,routes,widths}=require('./runtime.cjs'),assert=require('ass
    const rejects=async(name,fn)=>{try{await fn();out[name]=false;}catch(e){out[name]=!!e.message;}};
    // Clients may no longer insert requests: every project goes through submit_project.
    await rejects('in-portal request creation retired',()=>f.createRequest(input));
-   const submit=args=>supabaseClient.rpc('submit_project',Object.assign({p_title:'Guard test',p_video_type:'Tutorial / Onboarding',p_duration:60,p_brief:'A clear brief for the guard test.'},args));
+   const submit=args=>supabaseClient.rpc('submit_project',Object.assign({p_title:'Guard test',p_video_type:'Tutorial / Onboarding',p_duration:60,p_brief:'A clear brief for the guard test.',p_brief_link:'https://example.com/guard-brief'},args));
    const refuses=async(name,args)=>{out[name]=!!(await submit(args)).error;};
    await refuses('unknown video type',{p_video_type:'Tutorial'});
    await refuses('unknown length',{p_duration:45});
-   await refuses('empty brief',{p_brief:'   '});
+   await refuses('no brief document',{p_brief_link:null});
+   await refuses('brief link without a scheme',{p_brief_link:'example.com/brief'});
+   await refuses('brief file outside the client folder',{p_brief_link:null,p_brief_file_path:'someone-else/project-files/brief.pdf'});
    await refuses('script promised but not uploaded',{p_has_script:true});
    await refuses('voice over promised but not uploaded',{p_has_voice_over:true});
    await refuses('file outside the client folder',{p_has_script:true,p_script_file_path:'someone-else/project-files/x.pdf'});
@@ -58,7 +60,7 @@ const {chromium,base,routes,widths}=require('./runtime.cjs'),assert=require('ass
   // Two tabs submitting at the same time: submit_project is the only way in,
   // and each call must produce exactly one project with its own payments.
   await Promise.all([p,q].map((page,i)=>page.evaluate(async i=>{
-   const r=await supabaseClient.rpc('submit_project',{p_title:'Concurrent tab '+i,p_video_type:'Tutorial / Onboarding',p_duration:30,p_brief:'A brief for the concurrent submission test.',p_purpose:'Check concurrency.',p_target_audience:'The QA suite.'});
+   const r=await supabaseClient.rpc('submit_project',{p_title:'Concurrent tab '+i,p_video_type:'Tutorial / Onboarding',p_duration:30,p_brief:'A brief for the concurrent submission test.',p_brief_link:'https://example.com/concurrent-brief',p_purpose:'Check concurrency.',p_target_audience:'The QA suite.'});
    if(r.error)throw new Error(r.error.message);
    await FijlyData.load();
   },i)));
@@ -80,7 +82,7 @@ const {chromium,base,routes,widths}=require('./runtime.cjs'),assert=require('ass
  checks.push('New client filters refresh, profile asset count updates on refresh, a deletion made elsewhere closes the stale asset editor');
  // Long text must wrap in cards and dialogs without page overflow.
  await load(q,'studio','requests');
-  const longId=await q.evaluate(async()=>{const r=await supabaseClient.rpc('submit_project',{p_title:'LongTitle'.repeat(13),p_video_type:'Tutorial / Onboarding',p_duration:120,p_brief:'Instructions'.repeat(250),p_purpose:'Purpose'.repeat(80),p_target_audience:'Audience'.repeat(80),p_brand_colors:'Colour'.repeat(40)});if(r.error)throw new Error(r.error.message);await FijlyData.load();return r.data;});
+  const longId=await q.evaluate(async()=>{const r=await supabaseClient.rpc('submit_project',{p_title:'LongTitle'.repeat(13),p_video_type:'Tutorial / Onboarding',p_duration:120,p_brief:'Instructions'.repeat(250),p_brief_link:'https://example.com/long-brief',p_purpose:'Purpose'.repeat(80),p_target_audience:'Audience'.repeat(80),p_brand_colors:'Colour'.repeat(40)});if(r.error)throw new Error(r.error.message);await FijlyData.load();return r.data;});
   await q.waitForFunction(()=>FijlyData.client.records('requests').some(r=>r.title.startsWith('LongTitle')));
   assert.equal(b.fijlyDb.requests.filter(r=>r.title.startsWith('LongTitle')).length,1,'one project per submission');
   await p.evaluate(()=>FijlyData.load());await p.evaluate(id=>FijlyWorkflow.open('requests',id),longId);
