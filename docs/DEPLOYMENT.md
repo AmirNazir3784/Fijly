@@ -48,6 +48,31 @@ Browser tests use locally available Playwright tooling solely for QA; it is not 
 - Sign-up and orders have honeypots and field-length limits but **no CAPTCHA or rate limit**; with open sign-up, consider Supabase Auth's CAPTCHA (Authentication → Attack Protection) and watch for spam accounts and orders.
 - General questions now go to email: the sign-up form links to hello@fijly.com.
 
+## Supabase redirect URLs
+
+Supabase only honours a `redirectTo` that is on the allow-list, so every page an
+auth email or OAuth flow can return to has to be listed in **Supabase →
+Authentication → URL Configuration → Redirect URLs**. Site URL: `https://fijly.com`.
+
+| URL | Used by |
+|---|---|
+| `https://fijly.com/order.html` | Sign-up confirmation email, and Google sign-in from the landing page |
+| `https://fijly.com/reset-password.html` | "Forgot password?" recovery email from `login.html` |
+| `https://fijly.com/login.html` | Google sign-in from the sign-in page |
+
+Add the local equivalents too, so the same flows can be tested before deploying:
+
+```
+http://localhost:8000/order.html
+http://localhost:8000/reset-password.html
+http://localhost:8000/login.html
+```
+
+Use whatever port `scripts/serve.sh` / `scripts/serve.bat` prints if you changed
+it from 8000. **Until `reset-password.html` is on this list the recovery email
+still sends, but its link lands on the Site URL instead of the reset form**, and
+the customer cannot set a new password.
+
 ## Google sign-in setup
 
 1. Go to Google Cloud Console → APIs & Services → Credentials → Create credentials → OAuth client ID (Web application).
@@ -55,9 +80,9 @@ Browser tests use locally available Playwright tooling solely for QA; it is not 
 3. Copy the Client ID and Client Secret.
 4. In the Supabase dashboard → Authentication → Providers → Google → Enable.
 5. Paste the Client ID and Secret, and save.
-6. Make sure `https://fijly.com/order.html` is in Authentication → URL Configuration → Redirect URLs (Google sign-in returns there).
+6. Make sure `https://fijly.com/order.html` and `https://fijly.com/login.html` are in Authentication → URL Configuration → Redirect URLs (Google sign-in returns to whichever page it started from).
 7. In `site/js/core/config.js`, set `googleSignIn: true` and upload the file.
 
-Until step 7, the "Continue with Google" button is disabled with the note "Google sign-in will be available soon. Please use email for now." Google sign-in also needs public sign-up enabled for new customers.
+Until step 7, the "Continue with Google" button on both the landing page sign-up form and `login.html` is disabled with the note "Google sign-in will be available soon. Please use email for now." Google sign-in also needs public sign-up enabled for new customers.
 
 Current interaction evidence: `qa/refinement-check-results.json` and `qa/functional-results.json`. The refinement covers 1440, 1280, 1024, 768, 390, and 375 pixel layouts. Files in `qa/` are not deployment files.
