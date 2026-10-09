@@ -215,4 +215,4 @@ hash keeps the fallback check, and no nav item is deferred.
 
 ## Current stabilization status
 
-The milestone notes above describe their original phases. Current state recovery, record-level tab synchronization, derived activity and completion-date calculations are documented in [STABILIZATION-AUDIT.md](STABILIZATION-AUDIT.md). Run all maintained QA with `node qa/run-all.cjs`; configuration is documented in [qa/README.md](README.md). This is stabilization only, not a freeze.
+The milestone notes above describe their original phases. Current state recovery, record-level tab synchronization, derived activity and completion-date calculations are documented in [STABILIZATION-AUDIT.md](STABILIZATION-AUDIT.md). Run all maintained QA with `node qa/run-all.cjs`; configuration is documented in [qa/README.md](../../qa/README.md). This is stabilization only, not a freeze.

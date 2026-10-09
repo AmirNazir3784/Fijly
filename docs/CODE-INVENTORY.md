@@ -485,7 +485,7 @@ nothing to merge into `client-portal.js`.
 - **`.htaccess` needed no change** — it only sets compression, cache headers and
   MIME types, and references no paths.
 - **`qa/admin-analytics-visual.cjs`, `qa/orders.cjs`, `qa/studio-polish.cjs`**,
-  **`README.md`**, **`DEPLOYMENT.md`** — path find/replace only; nothing was run.
+  **`README.md`**, **`docs/DEPLOYMENT.md`** — path find/replace only; nothing was run.
   The `retired` list in `qa/studio-polish.cjs` was deliberately left pointing at
   the old `site/js/admin-data.js`, `contact.js` and `mock-service.js`, because it
   asserts those files do *not* exist.

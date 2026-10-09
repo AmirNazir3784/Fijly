@@ -8,7 +8,7 @@ backend, database, authentication, billing, account management or app API was ad
 
 All existing Studio suites were run before changes. The prior audit and every QA
 script were inspected. The final maintained command is `node qa/run-all.cjs`;
-its machine-readable result is [stabilization-results.json](stabilization-results.json).
+its machine-readable result is [stabilization-results.json](../../qa/stabilization-results.json).
 All 17 maintained checks passed in the final complete run. A separate four-suite
 regression pass also passed after the final mobile table/filter adjustments,
 recorded in `stabilization-logs/post-visual-*.log` and the aggregate result's
@@ -81,8 +81,8 @@ text; and independent empty client/video/request/asset scenarios.
 Reports include axe scans across active screens and important dialogs, console
 and page errors, failed resources, reference preservation, overflow and readable
 table row checks. Desktop/mobile screenshots were visually reviewed as well as
-checked programmatically. See [studio-stability-results.json](studio-stability-results.json)
-and the other per-suite `*-results.json` files.
+checked programmatically. See [studio-stability-results.json](../../qa/studio-stability-results.json)
+and the other per-suite `qa/*-results.json` files.
 
 ## Optimization and cleanup
 
@@ -107,7 +107,7 @@ and the other per-suite `*-results.json` files.
   migration script. Historical QA evidence and reference files were preserved.
 
 Detailed measurements, asset sizes and duplicate hashes are in
-[performance-results.json](performance-results.json); the original measurements
+[performance-results.json](../../qa/performance-results.json); the original measurements
 remain in `stabilization-baseline/performance.json`. Local browser timings are
 diagnostic and vary with host load; they are not a production SLA.
 

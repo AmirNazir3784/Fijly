@@ -100,7 +100,7 @@ Application files (8):
 QA scripts, documentation and regenerated evidence:
 
 - `qa/README.md`
-- `qa/ROUND-B-AUDIT.md`
+- `docs/audits/ROUND-B-AUDIT.md`
 - `qa/compare.cjs`
 - `qa/functional-results.json`
 - `qa/functional.cjs`

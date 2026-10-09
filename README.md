@@ -4,13 +4,34 @@ Production website and client/admin portals for FIJLY, a premium video productio
 
 ## Project structure
 
+```
+FIJLY/
+├── .gitignore
+├── README.md               This file
+├── docs/
+│   ├── DEPLOYMENT.md       Hosting, Supabase setup, redirect URLs, Google sign-in
+│   ├── CODE-INVENTORY.md   File, function and CSS class map
+│   └── audits/             Historical QA and milestone reports
+├── scripts/
+│   ├── serve.bat           Local server (Windows)
+│   └── serve.sh            Local server (Mac/Linux)
+├── qa/                     Test scripts, fixtures, results and qa/README.md
+├── site/                   Everything that gets deployed
+└── supabase/               seed-data.sql and schema notes
+```
+
+Only the contents of `site/` are uploaded to the web host; `docs/`, `scripts/`,
+`qa/` and `supabase/` stay out of the web root.
+
+### Inside `site/`
+
 CSS and JS are grouped by the area they serve: `core/` is loaded by everything,
 `site/` is the public marketing pages, `portal/` is the signed-in Client and
 Admin portals. Every page keeps its URL at the `site/` root, because the
 Supabase redirect URLs, `sitemap.xml` and SEO depend on those URLs.
 
 ```
-site/                      Production files (upload the contents to the web host)
+site/
 ├── *.html                 index, login, order, studio, admin, privacy, terms, 404
 ├── .htaccess              Compression and cache headers
 ├── robots.txt             Crawler rules
@@ -30,10 +51,6 @@ site/                      Production files (upload the contents to the web host
         ├── shared/        Used by both portals: portal-auth, studio-shell, workflow, profile
         ├── client/        Client portal: client-portal
         └── admin/         Admin portal: admin, admin-sections, admin-orders, admin-payments
-
-qa/                        QA test scripts and results
-supabase/                  SQL schema and seed data
-docs/                      CODE-INVENTORY.md — file, function and CSS class map
 ```
 
 Pages load `css/core/*` first, then their area's stylesheets; the load order
@@ -46,22 +63,24 @@ Fonts are self-hosted. The landing page makes no external calls; the portals and
 sign-in page load the pinned Supabase JS SDK from jsDelivr (with subresource integrity)
 and authenticate against Supabase. The Admin portal reads and writes the Supabase
 database (`js/core/supabase-data.js`); so does the Client portal, scoped to the signed-in
-client's workspace (`profiles.client_id`). Starter data: `supabase/seed-data.sql` (run in the Supabase SQL Editor).
+client's workspace (`profiles.client_id`). Starter data and schema notes: [supabase/README.md](supabase/README.md).
 
-## Local Development
+## Run locally
+
+Run `scripts/serve.bat` (Windows) or `./scripts/serve.sh` (Mac/Linux), then
+open http://localhost:8000. Either script works from any directory.
+
+Or serve `site/` yourself:
 
 ```bash
 cd site
 python -m http.server 8000
-# Open http://localhost:8000
 ```
-
-Or use `serve.bat` (Windows) / `serve.sh` (Mac/Linux).
 
 ## Deployment
 
 Upload the **contents** of `site/` to the web root on Hostinger.
-See `DEPLOYMENT.md` for detailed instructions.
+See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for detailed instructions.
 
 ## Domain
 

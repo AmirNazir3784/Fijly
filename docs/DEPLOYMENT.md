@@ -2,7 +2,7 @@
 
 Upload **the contents of `site/`**, including the hidden `.htaccess` file, into the domain's `public_html/` directory. `index.html` must be directly inside `public_html`, with `css/`, `js/`, and `assets/` alongside it. No installation, build, npm, or server application is required.
 
-Only the contents of `site/` are deployed. Keep `qa/`, the root `README.md`, `serve.bat`, `serve.sh`, and this document outside the web root.
+Only the contents of `site/` are deployed. Keep `qa/`, `docs/`, `scripts/`, `supabase/` and the root `README.md` outside the web root.
 
 ## Owner checks before public launch
 
