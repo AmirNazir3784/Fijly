@@ -126,6 +126,8 @@
       background: var(--border-default);
     }
 
+    .order__progress-short { display: none; }
+
     .order__progress li.is-done,
     .order__progress li[aria-current="step"] { color: var(--text-primary); }
     .order__progress li.is-done::before,
@@ -513,12 +515,186 @@
     .order__card[data-state="checking"] .order__checking { display: flex; }
     .order__card[data-state="checking"] :is(.order__account, .order__progress, #order-form) { display: none; }
 
+    /* =====================================================================
+       Step 1 — Project basics
+       A studio-style first impression. Step content after this point keeps
+       its existing layout, fields, validation and interaction styles.
+       ===================================================================== */
+    .order {
+      grid-template-columns: minmax(340px, 39fr) minmax(0, 61fr);
+      background: #F8F9FC;
+      overflow: clip;
+    }
+
+    .order__brand {
+      isolation: isolate;
+      justify-content: flex-start;
+      gap: 0;
+      overflow: hidden;
+      padding: clamp(24px, 3vw, 46px);
+      background: linear-gradient(150deg, #111126 0%, #0C0D1B 58%, #121026 100%);
+    }
+
+    .order__brand::before,
+    .order__brand::after {
+      position: absolute;
+      z-index: -1;
+      inset: 0;
+      width: auto;
+      height: auto;
+      border-radius: 0;
+      content: "";
+      filter: blur(18px);
+      pointer-events: none;
+    }
+
+    .order__brand::before { background: radial-gradient(ellipse 42% 27% at 91% 12%, rgba(111, 82, 255, .20), transparent 80%); }
+    .order__brand::after { background: radial-gradient(ellipse 56% 20% at 48% 68%, rgba(77, 62, 190, .18), transparent 78%); }
+
+    .order__logo,
+    .order__pitch,
+    .order__studio-visual,
+    .order__milestones { position: relative; z-index: 1; }
+
+    .order__mark { width: 36px; height: 36px; border-radius: 11px; background: #6557FF; box-shadow: 0 7px 20px rgba(101, 87, 255, .42); }
+    .order__word { font-size: 15px; letter-spacing: .16em; }
+    .order__sub { color: #9E9ABF; }
+
+    .order__pitch { max-width: 400px; margin-top: clamp(32px, 5vh, 56px); }
+    .order__eyebrow { margin-bottom: 10px; color: #A69DFF; }
+    .order__tagline { max-width: 320px; font-size: clamp(54px, 4.1vw, 58px); line-height: 1; letter-spacing: -.052em; }
+    .order__intro { max-width: 355px; margin-top: 12px; color: #B9BACB; line-height: 1.58; }
+    .order__includes { gap: 8px; margin-top: 20px; color: #D7D8E4; }
+    .order__includes li { gap: 10px; }
+    .order__check { display: inline-flex; flex: none; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 50%; background: rgba(53, 216, 160, .16); color: #35D8A0; }
+    .order__includes svg { color: currentColor; }
+
+    .order__studio-visual { width: min(80%, 420px); margin-top: clamp(24px, 3.7vh, 34px); color: #B6B2E7; }
+    .order__visual-glow { position: absolute; inset: 15% 3% 22%; border-radius: 42%; background: rgba(101, 87, 255, .30); filter: blur(42px); }
+    .order__visual-window { position: relative; overflow: hidden; border: 1px solid rgba(216, 211, 255, .20); border-radius: 16px; background: #17172A; box-shadow: 0 24px 52px rgba(1, 1, 12, .42); transform: perspective(1000px) rotateX(3deg) rotateY(-5deg); }
+    .order__visual-toolbar { display: flex; align-items: center; gap: 5px; height: 32px; padding: 0 13px; border-bottom: 1px solid rgba(219, 215, 255, .12); background: #22213A; }
+    .order__visual-toolbar span { width: 6px; height: 6px; border-radius: 50%; background: #5A527F; }
+    .order__visual-toolbar span:first-child { background: #A99EFF; }
+    .order__visual-toolbar i { width: 32%; height: 5px; margin-left: auto; border-radius: 50px; background: rgba(217, 212, 255, .12); }
+    .order__visual-stage { position: relative; display: grid; place-items: center; min-height: clamp(200px, 23vh, 225px); overflow: hidden; padding-left: 30px; background: linear-gradient(135deg, #242047, #17172C 58%, #282051); }
+    .order__visual-stage::before { position: absolute; inset: 16% 13% 15% 20%; border: 1px solid rgba(226, 223, 255, .24); border-radius: 12px; content: ""; transform: rotate(-8deg); }
+    .order__visual-orb { position: absolute; width: 88px; height: 88px; border-radius: 38% 62% 54% 46%; background: linear-gradient(145deg, rgba(169,162,255,.82), rgba(101,87,255,.72) 57%, rgba(57,48,143,.62)); box-shadow: inset 12px 9px 18px rgba(255,255,255,.14), 0 0 36px rgba(114, 91, 255, .38); opacity: .78; transform: rotate(28deg); }
+    .order__visual-frame { position: absolute; border: 1px solid rgba(255,255,255,.36); border-radius: 9px; }
+    .order__visual-frame--one { width: 52%; height: 68%; transform: translateX(-35%) rotate(-8deg); background: rgba(14, 13, 33, .14); }
+    .order__visual-frame--two { width: 43%; height: 54%; transform: translateX(44%) translateY(11%) rotate(9deg); background: rgba(52, 201, 154, .08); }
+    .order__visual-play { position: relative; display: grid; place-items: center; width: 45px; height: 45px; border: 1px solid rgba(255,255,255,.62); border-radius: 50%; background: rgba(255,255,255,.17); color: #FFF; box-shadow: 0 6px 20px rgba(8, 7, 36, .34); }
+    .order__visual-play svg { margin-left: 2px; }
+    .order__visual-side-tools { position: absolute; z-index: 2; top: 0; bottom: 0; left: 0; display: grid; align-content: center; gap: 10px; width: 30px; border-right: 1px solid rgba(219, 215, 255, .12); background: rgba(12, 12, 28, .34); }
+    .order__visual-side-tools i { width: 11px; height: 11px; margin-inline: auto; border: 1px solid #8D83FF; border-radius: 3px; opacity: .82; }
+    .order__visual-side-tools i:nth-child(2) { border-radius: 50%; background: #8D83FF; }
+    .order__visual-side-tools i:nth-child(3) { height: 2px; border: 0; border-radius: 2px; background: #A9A2FF; }
+    .order__visual-timeline { position: relative; display: grid; grid-template-rows: repeat(4, 1fr); gap: 4px; height: 70px; padding: 9px 14px 9px 42px; background: #121222; }
+    .order__visual-track { position: relative; height: 10px; border-radius: 3px; background: #282741; }
+    .order__visual-track span { position: absolute; top: 0; height: 100%; border-radius: 3px; background: linear-gradient(90deg, #6557FF, #A9A2FF); }
+    .order__visual-track:nth-child(1) span { left: 3%; width: 44%; }
+    .order__visual-track:nth-child(2) span { left: 28%; width: 55%; background: linear-gradient(90deg, #8D83FF, #6557FF); }
+    .order__visual-track:nth-child(3) span { left: 7%; width: 35%; background: linear-gradient(90deg, #35C99A, #55D8B0); }
+    .order__visual-track:nth-child(4) span { left: 50%; width: 34%; background: linear-gradient(90deg, #7064ED, #B3ACFF); }
+    .order__visual-timeline > i { position: absolute; z-index: 2; top: 6px; bottom: 6px; left: 52%; width: 2px; background: #F4F2FF; box-shadow: 0 0 9px #F4F2FF; }
+    .order__studio-visual > p { position: absolute; top: 56%; left: 9px; margin: 0; font-family: var(--font-mono); font-size: 10px; font-weight: 500; line-height: 1.45; letter-spacing: .02em; color: rgba(191, 186, 230, .70); }
+    .order__studio-visual > p span { display: block; margin-left: 42px; color: #A9A2FF; font-size: 16px; }
+    .order__visual-flow { position: absolute; right: -6px; bottom: 4px; display: grid; gap: 3px; font-family: var(--font-mono); font-size: 9px; letter-spacing: .04em; color: rgba(185, 181, 216, .62); transform: translateX(100%); }
+    .order__visual-flow b { display: none; }
+
+    .order__milestones { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); width: min(100%, 432px); min-height: 68px; margin-top: 24px; border: 1px solid rgba(255,255,255, .10); border-radius: 14px; background: rgba(255,255,255, .055); backdrop-filter: blur(12px); }
+    .order__milestones li { display: grid; grid-template-columns: 15px 1fr; column-gap: 8px; align-content: center; padding: 12px; color: #A9A2FF; }
+    .order__milestones li + li { border-left: 1px solid rgba(218, 214, 255, .14); }
+    .order__milestones svg { margin-top: 3px; }
+    .order__milestones strong { color: #FFF; font-size: 17px; line-height: 1.15; letter-spacing: -.03em; }
+    .order__milestones span { grid-column: 2; margin-top: 2px; font-size: 10px; line-height: 1.3; color: #AEAAC6; }
+
+    .order__panel { align-items: flex-start; padding: clamp(32px, 5vw, 68px) clamp(24px, 6vw, 104px); background: #F8F9FC; }
+    .order__card { max-width: 800px; }
+    .order__header { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; }
+    .order__title { color: #11131A; font-size: clamp(32px, 3vw, 41px); letter-spacing: -.045em; }
+    .order__account { position: relative; flex: none; margin: 0; }
+    .order__profile-button { display: grid; place-items: center; width: 42px; height: 42px; border: 1px solid #E3E6EE; border-radius: 50%; background: #FFF; box-shadow: 0 3px 10px rgba(16,24,40,.05); color: #6557FF; font-size: 15px; font-weight: 700; transition: border-color .15s ease, box-shadow .15s ease, background-color .15s ease; }
+    .order__account .order__profile-button { cursor: pointer; text-decoration: none; }
+    .order__profile-button:hover, .order__profile-button[aria-expanded="true"] { border-color: #CFC9FF; background: #F8F7FF; box-shadow: 0 5px 14px rgba(101,87,255,.12); }
+    .order__profile-menu { position: absolute; z-index: 20; top: calc(100% + 10px); right: 0; width: min(252px, calc(100vw - 40px)); padding: 11px; border: 1px solid #E5E7EE; border-radius: 12px; background: #FFF; box-shadow: 0 12px 35px rgba(20,20,40,.10); }
+    .order__profile-menu-title { color: #202331; font-size: 13px; font-weight: 700; }
+    .order__profile-email { margin-top: 5px; overflow-wrap: anywhere; color: #687080; font-size: 12px; line-height: 1.45; }
+    .order__profile-menu hr { margin: 10px 0; border: 0; border-top: 1px solid #EDF0F4; }
+    .order__profile-menu button { display: flex; align-items: center; width: 100%; min-height: 36px; padding: 0 9px; border: 0; border-radius: 8px; background: transparent; color: #363B47; font-size: 13px; font-weight: 600; text-align: left; }
+    .order__profile-menu button:hover { background: #F5F3FF; color: #5546EB; }
+
+    .order__progress { grid-template-columns: repeat(4, max-content); gap: 24px; width: max-content; max-width: 100%; margin-top: 36px; overflow: visible; }
+    .order__progress li { position: relative; display: flex; flex-direction: column; gap: 9px; min-width: 0; color: #626879; font-size: 12px; font-weight: 600; line-height: 1.35; }
+    .order__progress li::before { display: none; }
+    .order__progress li:not(:last-child)::after { position: absolute; top: 20px; left: 40px; width: calc(100% + 24px - 40px); height: 2px; border-radius: 2px; background: #DDE1E9; content: ""; }
+    .order__progress-number { position: relative; z-index: 1; display: grid; place-items: center; width: 40px; height: 40px; border: 1px solid #D9DDE7; border-radius: 50%; background: #FFF; color: #626879; font-family: var(--font-mono); font-size: 12px; font-weight: 600; }
+    .order__progress li.is-done,
+    .order__progress li[aria-current="step"] { color: #202331; }
+    .order__progress li.is-done .order__progress-number,
+    .order__progress li[aria-current="step"] .order__progress-number { border-color: #6557FF; background: #6557FF; color: #FFF; box-shadow: 0 4px 12px rgba(101, 87, 255, .24); }
+    .order__progress li.is-done::after { background: #6557FF; }
+
+    .order__step[data-step="1"] { max-width: 800px; margin-top: 40px; }
+    .order__step[data-step="1"] .order__step-title { margin-top: 0; color: #11131A; font-size: 30px; letter-spacing: -.04em; }
+    .order__step[data-step="1"] .order__step-intro { max-width: 560px; margin-top: 10px; color: #626879; }
+    .order__step-one-fields { gap: 20px; margin-top: 30px; }
+    .order__step[data-step="1"] .order__label { margin-bottom: 8px; color: #262A35; font-size: 14px; }
+    .order__optional { margin-left: 6px; color: #626879; font-size: 12px; font-weight: 500; }
+    .order__step[data-step="1"] .order__field { position: relative; }
+    .order__field-icon { position: absolute; z-index: 1; top: 39px; left: 18px; width: 19px; height: 19px; color: #718096; pointer-events: none; }
+    .order__field--duration .order__field-icon { position: static; display: inline-flex; width: 17px; height: 17px; margin-right: 6px; vertical-align: -3px; }
+    .order__step[data-step="1"] .order__input { min-height: 56px; height: 56px; padding: 0 16px 0 50px; border-color: #E1E5ED; border-radius: 12px; background: #FFF; box-shadow: 0 1px 2px rgba(16,24,40,.02); }
+    .order__step[data-step="1"] select.order__input { padding-right: 42px; }
+    .order__step[data-step="1"] .order__input:hover { border-color: #C8CDDA; }
+    .order__step[data-step="1"] .order__input:focus { border-color: #6557FF; box-shadow: 0 0 0 3px rgba(101, 87, 255, .08); }
+    .order__step[data-step="1"] .order__durations { margin-top: 2px; }
+    .order__step[data-step="1"] .order__duration-grid { gap: 10px; }
+    .order__step[data-step="1"] .order__duration { min-height: 76px; justify-content: center; padding: 12px; border-color: #E2E5EC; border-radius: 11px; }
+    .order__step[data-step="1"] .order__duration:hover { border-color: #C8CDDA; }
+    .order__step[data-step="1"] .order__duration:has(input:checked) { border-color: #6557FF; background: #F2F0FF; box-shadow: 0 0 0 1px #6557FF; }
+    .order__step[data-step="1"] .order__duration-tag { color: #5546EB; }
+    .order__step[data-step="1"] .order__actions { justify-content: flex-end; margin-top: 32px; padding-top: 24px; border-top: 1px solid #E7E9EF; }
+    .order__step[data-step="1"] .order__button { min-width: 146px; min-height: 54px; border-radius: 11px; background: #6557FF; box-shadow: 0 8px 18px rgba(101, 87, 255, .22); }
+    .order__step[data-step="1"] .order__button:hover { background: #5546EB; }
+
+    @media (max-height: 820px) and (min-width: 900px) {
+      .order__brand { padding-block: 20px 22px; }
+      .order__pitch { margin-top: 24px; }
+      .order__eyebrow { margin-bottom: 8px; }
+      .order__tagline { font-size: 54px; }
+      .order__intro { margin-top: 9px; font-size: 14px; }
+      .order__includes { gap: 6px; margin-top: 15px; font-size: 13px; }
+      .order__check { width: 18px; height: 18px; }
+      .order__studio-visual { width: min(76%, 370px); margin-top: 18px; }
+      .order__visual-toolbar { height: 28px; }
+      .order__visual-stage { min-height: 188px; }
+      .order__visual-orb { width: 70px; height: 70px; }
+      .order__visual-play { width: 38px; height: 38px; }
+      .order__visual-timeline { height: 57px; padding-block: 7px; }
+      .order__milestones { width: min(100%, 392px); min-height: 62px; margin-top: 20px; }
+      .order__milestones li { padding: 9px; }
+      .order__milestones strong { font-size: 15px; }
+      .order__milestones span { font-size: 9px; }
+    }
+
     @media (max-width: 899px) {
       .order { grid-template-columns: minmax(0, 1fr); align-content: start; }
       .order__brand { position: static; height: auto; gap: var(--space-lg); padding: var(--space-lg) var(--gutter); }
       .order__tagline { font-size: var(--text-section-heading); }
       .order__intro, .order__includes, .order__foot, .order__eyebrow { display: none; }
       .order__panel { padding: var(--space-xl) var(--gutter) var(--space-2xl); }
+    }
+
+    @media (max-width: 899px) {
+      .order__brand { gap: 0; padding: 24px var(--gutter); }
+      .order__brand::before, .order__brand::after { display: none; }
+      .order__pitch { margin-top: 28px; }
+      .order__tagline { font-size: 38px; }
+      .order__intro, .order__eyebrow { display: block; }
+      .order__intro { max-width: 510px; margin-top: 10px; font-size: 14px; }
+      .order__includes, .order__studio-visual { display: none; }
+      .order__milestones { width: 100%; max-width: 560px; margin-top: 22px; }
+      .order__panel { padding-top: 36px; }
     }
 
     /* Payment step (manual PayPal invoices for now) */
@@ -528,10 +704,21 @@
     .order__payment-actions { display: grid; gap: var(--space-sm); margin-top: var(--space-lg); }
 
     @media (max-width: 899px) {
-      .order__progress { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .order__progress { grid-template-columns: repeat(2, minmax(0, 1fr)); width: 100%; gap: 18px 10px; overflow: clip; }
+    }
+
+    /* "Brief, script & voice over" is too long for a narrow column. */
+    @media (max-width: 1099px) {
+      .order__progress-long { display: none; }
+      .order__progress-short { display: inline; }
     }
 
     @media (max-width: 559px) {
+      .order__header { align-items: flex-start; flex-direction: row; gap: 16px; }
+      .order__progress { gap: 18px 8px; margin-top: 28px; }
+      .order__progress li:not(:last-child)::after { width: calc(100% - 32px); }
+      .order__step[data-step="1"] { margin-top: 30px; }
+      .order__step-one-fields { gap: 18px; margin-top: 24px; }
       .order__duration-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .order__choice-grid { grid-template-columns: minmax(0, 1fr); }
       /* One column, and nothing that can push the page sideways. */
@@ -541,6 +728,8 @@
       .order__file-size { order: 3; }
       .order__link-button { width: 100%; text-align: center; }
       .order__actions .order__button { width: 100%; }
+      .order__step[data-step="1"] .order__actions { padding-top: 20px; }
+      .order__step[data-step="1"] .order__button { width: 100%; }
       .order__summary { padding: var(--space-md); }
       .order__summary-facts div { grid-template-columns: minmax(0, 1fr); gap: 2px; }
     }
@@ -562,58 +751,91 @@
       </a>
       <div class="order__pitch">
         <p class="order__eyebrow">NEW PROJECT</p>
-        <p class="order__tagline">Your video project</p>
+        <p class="order__tagline">Your video<br>project</p>
         <p class="order__intro">Tell us about your product and the video you need. We’ll take it from script to final delivery.</p>
         <ul class="order__includes" aria-label="Every video includes">
-          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>Scriptwriting, or bring your own</li>
-          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>Custom motion design</li>
-          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>Storyboard approval before production</li>
-          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>All source files delivered</li>
+          <li><span class="order__check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg></span>Scriptwriting, or bring your own</li>
+          <li><span class="order__check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg></span>Custom motion design</li>
+          <li><span class="order__check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg></span>Storyboard approval before production</li>
+          <li><span class="order__check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg></span>All source files delivered</li>
         </ul>
       </div>
-      <p class="order__foot">15% TO START · 45% AT STORYBOARD · 40% ON DELIVERY</p>
+      <div class="order__studio-visual" aria-hidden="true">
+        <div class="order__visual-glow"></div>
+        <div class="order__visual-window">
+          <div class="order__visual-toolbar"><span></span><span></span><span></span><i></i></div>
+          <div class="order__visual-stage">
+            <div class="order__visual-side-tools"><i></i><i></i><i></i></div>
+            <div class="order__visual-orb"></div>
+            <div class="order__visual-frame order__visual-frame--one"></div>
+            <div class="order__visual-frame order__visual-frame--two"></div>
+            <button class="order__visual-play" type="button" tabindex="-1"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg></button>
+          </div>
+          <div class="order__visual-timeline"><div class="order__visual-track"><span></span></div><div class="order__visual-track"><span></span></div><div class="order__visual-track"><span></span></div><div class="order__visual-track"><span></span></div><i></i></div>
+        </div>
+        <p>From idea<br>to final video <span>↘</span></p>
+        <div class="order__visual-flow"><span>Script</span><b></b><span>Storyboard</span><b></b><span>Design</span><b></b><span>Deliver</span></div>
+      </div>
+      <ul class="order__milestones" aria-label="Payment milestones">
+        <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path d="M12 3v18M17 7.5c0-1.8-2.2-3-5-3s-5 1.2-5 3 2.2 3 5 3 5 1.2 5 3-2.2 3-5 3-5-1.2-5-3"/></svg><strong>15%</strong><span>To start</span></li>
+        <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path d="M7 3v4M17 3v4M4 10h16M5 5h14a1 1 0 011 1v13a1 1 0 01-1 1H5a1 1 0 01-1-1V6a1 1 0 011-1z"/></svg><strong>45%</strong><span>At storyboard</span></li>
+        <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path d="M5 12l4 4L19 6"/></svg><strong>40%</strong><span>On delivery</span></li>
+      </ul>
     </aside>
 
     <main class="order__panel" id="order-main" tabindex="-1">
       <div class="order__card" id="order-card" data-state="checking">
-        <h1 class="order__title">Start your project</h1>
-        <p class="order__account" id="order-account" hidden>Signed in as <strong id="order-account-email"></strong> · <button type="button" id="order-signout">Sign out</button></p>
+        <header class="order__header">
+          <h1 class="order__title">Start your project</h1>
+          <div class="order__account" id="order-account" hidden>
+            <button class="order__profile-button" id="order-profile-button" type="button" aria-expanded="false" aria-controls="order-profile-menu" aria-label="Open account menu"><span id="order-profile-initial" aria-hidden="true"></span></button>
+            <div class="order__profile-menu" id="order-profile-menu" role="menu" hidden>
+              <p class="order__profile-menu-title">Account</p>
+              <p class="order__profile-email" id="order-account-email"></p>
+              <hr>
+              <button type="button" id="order-signout" role="menuitem">Sign out</button>
+            </div>
+          </div>
+        </header>
         <p class="order__checking" role="status"><span class="order__spinner" aria-hidden="true"></span>Checking your account…</p>
         <noscript><p class="order__error">JavaScript is required to start a project. You can also email <a href="mailto:hello@fijly.com">hello@fijly.com</a>.</p></noscript>
 
         <ol class="order__progress" id="order-progress" aria-label="Project progress">
-          <li data-progress="1" aria-current="step">1. Project basics</li>
-          <li data-progress="2">2. Creative details</li>
-          <li data-progress="3">3. Script &amp; voice over</li>
-          <li data-progress="4">4. Review</li>
+          <li data-progress="1" aria-current="step"><span class="order__progress-number">01</span><span>Project basics</span></li>
+          <li data-progress="2"><span class="order__progress-number">02</span><span>Look &amp; feel</span></li>
+          <li data-progress="3"><span class="order__progress-number">03</span><span class="order__progress-long">Brief, script &amp; voice over</span><span class="order__progress-short">Brief &amp; script</span></li>
+          <li data-progress="4"><span class="order__progress-number">04</span><span>Review</span></li>
         </ol>
 
         <form id="order-form" novalidate>
           <!-- Step 1: project basics -->
           <section class="order__step" data-step="1" aria-labelledby="step-1-title">
-            <p class="order__step-label">STEP 1 OF 4</p>
             <h2 class="order__step-title" id="step-1-title" tabindex="-1">Project basics</h2>
             <p class="order__step-intro">The essentials, so we can set up your workspace and scope the video.</p>
-            <div class="order__fields">
-              <div>
+            <div class="order__fields order__step-one-fields">
+              <div class="order__field order__field--project">
                 <label class="order__label" for="order-title">Project name <span class="order__required" aria-hidden="true">*</span></label>
+                <span class="order__field-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg></span>
                 <input class="order__input" id="order-title" name="title" required maxlength="200" placeholder="e.g. Homepage explainer" aria-describedby="order-title-error">
                 <p class="order__field-error" id="order-title-error"></p>
               </div>
-              <div>
+              <div class="order__field order__field--company">
                 <label class="order__label" for="order-company">Company / brand name</label>
+                <span class="order__field-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 21V5a2 2 0 012-2h8a2 2 0 012 2v16M2 21h20M8 7h2M8 11h2M8 15h2M15 10h3M15 14h3M15 18h3"/></svg></span>
                 <input class="order__input" id="order-company" name="company" autocomplete="organization" maxlength="200" aria-describedby="order-company-hint order-company-error">
-                <p class="order__hint" id="order-company-hint">Optional. Leave empty to use your name.</p>
+                <p class="order__hint" id="order-company-hint" hidden>Optional. Leave empty to use your name.</p>
                 <p class="order__field-error" id="order-company-error"></p>
               </div>
-              <div>
+              <div class="order__field order__field--website">
                 <label class="order__label" for="order-website">Website</label>
+                <span class="order__field-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 007.07.07l2-2a5 5 0 00-7.07-7.07l-1.15 1.15M14 11a5 5 0 00-7.07-.07l-2 2A5 5 0 0012 20l1.15-1.15"/></svg></span>
                 <input class="order__input" id="order-website" name="companyWebsite" type="url" maxlength="300" placeholder="https://example.com" autocomplete="url" aria-describedby="order-website-hint order-website-error">
-                <p class="order__hint" id="order-website-hint">Optional. Start with https:// so we can open it.</p>
+                <p class="order__hint" id="order-website-hint" hidden>Optional. Start with https:// so we can open it.</p>
                 <p class="order__field-error" id="order-website-error"></p>
               </div>
-              <div>
+              <div class="order__field order__field--video">
                 <label class="order__label" for="order-type">Video type <span class="order__required" aria-hidden="true">*</span></label>
+                <span class="order__field-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M8 5v14M16 5v14M3 9h5M16 9h5M3 15h5M16 15h5"/></svg></span>
                 <select class="order__input" id="order-type" name="videoType" required aria-describedby="order-type-error">
                   <option value="">Choose a video type</option>
                   <option>Product Launch</option>
@@ -625,8 +847,8 @@
                 </select>
                 <p class="order__field-error" id="order-type-error"></p>
               </div>
-              <fieldset class="order__durations" aria-describedby="order-duration-error">
-                <legend class="order__label">Video length <span class="order__required" aria-hidden="true">*</span></legend>
+              <fieldset class="order__durations order__field--duration" aria-describedby="order-duration-error">
+                <legend class="order__label"><span class="order__field-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 8v5l3 2"/></svg></span>Video length <span class="order__required" aria-hidden="true">*</span></legend>
                 <div class="order__duration-grid">
                   <label class="order__duration"><input type="radio" name="duration" value="30" required><span class="order__duration-length">30 seconds</span></label>
                   <label class="order__duration"><input type="radio" name="duration" value="60"><span class="order__duration-length">60 seconds</span></label>
@@ -635,14 +857,14 @@
                 </div>
                 <p class="order__field-error" id="order-duration-error"></p>
               </fieldset>
-              <div>
-                <label class="order__label" for="order-delivery">Required delivery date</label>
+              <div class="order__field order__field--date">
+                <label class="order__label" for="order-delivery">Required delivery date <span class="order__optional">Optional</span></label>
                 <input class="order__input" id="order-delivery" name="deliveryDate" type="date" aria-describedby="order-delivery-hint order-delivery-error">
-                <p class="order__hint" id="order-delivery-hint">Optional. Tell us if you are working to a launch date.</p>
+                <p class="order__hint" id="order-delivery-hint" hidden>Optional. Tell us if you are working to a launch date.</p>
                 <p class="order__field-error" id="order-delivery-error"></p>
               </div>
             </div>
-            <div class="visually-hidden" aria-hidden="true"><label for="order-hp">Nickname</label><input type="text" name="nickname" id="order-hp" tabindex="-1" autocomplete="off"></div>
+            <div hidden aria-hidden="true"><label for="order-hp">Nickname</label><input type="text" name="nickname" id="order-hp" tabindex="-1" autocomplete="off"></div>
             <p class="order__error" id="order-step-1-error" role="alert" hidden></p>
             <div class="order__actions">
               <button class="order__button" type="button" data-next="2" aria-busy="false"><span class="order__spinner" aria-hidden="true"></span><span data-next-label="2">Continue</span> <span aria-hidden="true">&rarr;</span></button>
@@ -650,10 +872,11 @@
           </section>
 
           <!-- Step 2: creative details -->
+          <!-- Step 2: look and feel -->
           <section class="order__step" data-step="2" aria-labelledby="step-2-title" hidden>
             <p class="order__step-label">STEP 2 OF 4</p>
-            <h2 class="order__step-title" id="step-2-title" tabindex="-1">Creative details</h2>
-            <p class="order__step-intro">What the video has to achieve, and anything we should work from.</p>
+            <h2 class="order__step-title" id="step-2-title" tabindex="-1">Look &amp; feel</h2>
+            <p class="order__step-intro">What the video has to achieve, and the look we should aim for.</p>
 
             <div class="order__group">
               <h3 class="order__group-title">About the video</h3>
@@ -674,6 +897,12 @@
                   <textarea class="order__input" id="order-style" name="videoStyle" maxlength="2000" placeholder="e.g. Clean, modern motion graphics like Linear or Stripe" aria-describedby="order-style-hint order-style-error"></textarea>
                   <p class="order__hint" id="order-style-hint">Optional. Share the look and feel you have in mind.</p>
                   <p class="order__field-error" id="order-style-error"></p>
+                </div>
+                <div>
+                  <label class="order__label" for="order-references">Reference links</label>
+                  <textarea class="order__input" id="order-references" name="references" maxlength="2000" placeholder="One link per line, e.g. https://example.com/video" aria-describedby="order-references-hint order-references-error"></textarea>
+                  <p class="order__hint" id="order-references-hint">Optional. One complete http(s) link per line.</p>
+                  <p class="order__field-error" id="order-references-error"></p>
                 </div>
               </div>
             </div>
@@ -705,12 +934,25 @@
               </div>
             </div>
 
+            <p class="order__error" id="order-step-2-error" role="alert" hidden></p>
+            <div class="order__actions">
+              <button class="order__button" type="button" data-next="3" aria-busy="false"><span class="order__spinner" aria-hidden="true"></span><span data-next-label="3">Continue</span> <span aria-hidden="true">&rarr;</span></button>
+              <button class="order__link-button" type="button" data-back="1">&larr; Back to project basics</button>
+            </div>
+          </section>
+
+          <!-- Step 3: brief, script and voice over -->
+          <section class="order__step" data-step="3" aria-labelledby="step-3-title" hidden>
+            <p class="order__step-label">STEP 3 OF 4</p>
+            <h2 class="order__step-title" id="step-3-title" tabindex="-1">Brief, script &amp; voice over</h2>
+            <p class="order__step-intro">Tell us what the video should say. Share a brief, write the script yourself, or both.</p>
+
             <div class="order__group">
-              <h3 class="order__group-title">Brief</h3>
+              <h3 class="order__group-title">Project brief</h3>
               <div class="order__fields">
                 <fieldset class="order__choices" aria-describedby="order-brief-doc-hint order-brief-doc-error">
-                  <legend class="order__label">Project brief <span class="order__required" aria-hidden="true">*</span></legend>
-                  <p class="order__hint" id="order-brief-doc-hint">Share a document with everything we should know: product, goals, key messages, scenes you have in mind.</p>
+                  <legend class="order__label">Project brief</legend>
+                  <p class="order__hint" id="order-brief-doc-hint">Share a document with everything we should know: product, goals, key messages, scenes you have in mind. You can skip this if you are supplying your own script below.</p>
                   <div class="order__choice-grid">
                     <label class="order__choice"><input type="radio" name="briefChoice" value="link" checked><span class="order__choice-title">Link to a document</span><span class="order__choice-note">Google Docs, Notion, Dropbox and the like.</span></label>
                     <label class="order__choice"><input type="radio" name="briefChoice" value="upload"><span class="order__choice-title">Upload a PDF</span><span class="order__choice-note">PDF, DOC or DOCX.</span></label>
@@ -738,6 +980,74 @@
                     <p class="order__uploading" id="order-brief-progress" role="status" hidden><span class="order__spinner" aria-hidden="true"></span><span id="order-brief-progress-text"></span></p>
                   </div>
                 </fieldset>
+              </div>
+            </div>
+
+            <div class="order__group">
+              <h3 class="order__group-title">Script &amp; voice over</h3>
+              <div class="order__fields">
+                <fieldset class="order__choices" aria-describedby="order-script-error">
+                  <legend class="order__label">Script</legend>
+                  <div class="order__choice-grid">
+                    <label class="order__choice"><input type="radio" name="scriptChoice" value="own"><span class="order__choice-title">I have my own script</span><span class="order__choice-note">Upload it below.</span></label>
+                    <label class="order__choice"><input type="radio" name="scriptChoice" value="need" checked><span class="order__choice-title">I need a script written</span><span class="order__choice-note">We write it from your brief.</span></label>
+                  </div>
+                  <p class="order__field-error" id="order-script-error"></p>
+                  <div class="order__upload" id="order-script-upload" hidden>
+                    <label class="order__label" for="order-script-file">Your script file</label>
+                    <div class="order__drop" data-drop>
+                      <input class="order__drop-input" id="order-script-file" name="scriptFile" type="file" accept=".pdf,.doc,.docx,.txt" aria-describedby="order-script-file-hint order-script-file-error">
+                      <span class="order__drop-body" aria-hidden="true">
+                        <svg class="order__drop-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4m0 0L8 8m4-4l4 4"/><path d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg>
+                        <span class="order__drop-title">Choose a file or drag it here</span>
+                        <span class="order__drop-note">PDF, DOC, DOCX or TXT &middot; up to 50MB</span>
+                      </span>
+                    </div>
+                    <ul class="order__files" id="order-script-file-files"></ul>
+                    <p class="order__hint" id="order-script-file-hint">PDF, DOC, DOCX or TXT &middot; up to 50MB.</p>
+                    <p class="order__field-error" id="order-script-file-error"></p>
+                    <p class="order__uploading" id="order-script-progress" role="status" hidden><span class="order__spinner" aria-hidden="true"></span><span id="order-script-progress-text"></span></p>
+                  </div>
+                </fieldset>
+                <fieldset class="order__choices" aria-describedby="order-voice-error">
+                  <legend class="order__label">Voice over</legend>
+                  <div class="order__choice-grid">
+                    <label class="order__choice"><input type="radio" name="voiceChoice" value="own"><span class="order__choice-title">I have my own voice over</span><span class="order__choice-note">Upload the audio below.</span></label>
+                    <label class="order__choice"><input type="radio" name="voiceChoice" value="need" checked><span class="order__choice-title">I need a voice over</span><span class="order__choice-note">We cast and record it.</span></label>
+                  </div>
+                  <p class="order__field-error" id="order-voice-error"></p>
+                  <div class="order__upload" id="order-voice-upload" hidden>
+                    <label class="order__label" for="order-voice-file">Your voice over file</label>
+                    <div class="order__drop" data-drop>
+                      <input class="order__drop-input" id="order-voice-file" name="voiceFile" type="file" accept=".mp3,.wav,.m4a" aria-describedby="order-voice-file-hint order-voice-file-error">
+                      <span class="order__drop-body" aria-hidden="true">
+                        <svg class="order__drop-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4m0 0L8 8m4-4l4 4"/><path d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg>
+                        <span class="order__drop-title">Choose a file or drag it here</span>
+                        <span class="order__drop-note">MP3, WAV or M4A &middot; up to 50MB</span>
+                      </span>
+                    </div>
+                    <ul class="order__files" id="order-voice-file-files"></ul>
+                    <p class="order__hint" id="order-voice-file-hint">MP3, WAV or M4A &middot; up to 50MB.</p>
+                    <p class="order__field-error" id="order-voice-file-error"></p>
+                    <p class="order__uploading" id="order-voice-progress" role="status" hidden><span class="order__spinner" aria-hidden="true"></span><span id="order-voice-progress-text"></span></p>
+                  </div>
+                </fieldset>
+              </div>
+              <section class="order__breakdown" aria-labelledby="order-breakdown-title">
+                <h3 class="order__breakdown-title" id="order-breakdown-title">Your price</h3>
+                <dl class="order__lines" id="order-lines">
+                  <div><dt>Base video</dt><dd id="line-base">&mdash;</dd></div>
+                  <div><dt>Script writing</dt><dd id="line-script">&mdash;</dd></div>
+                  <div><dt>Voice over</dt><dd id="line-voice">&mdash;</dd></div>
+                </dl>
+                <p class="order__total"><span>Total</span><strong id="line-total">&mdash;</strong></p>
+                <p class="order__hint" id="order-pricing-note">Prices come from the FIJLY price list. The amount you are invoiced is confirmed when your project is saved.</p>
+              </section>
+            </div>
+
+            <div class="order__group">
+              <h3 class="order__group-title">Notes</h3>
+              <div class="order__fields">
                 <div>
                   <label class="order__label" for="order-brief">Notes</label>
                   <textarea class="order__input" id="order-brief" name="brief" maxlength="5000" placeholder="e.g. Please avoid stock footage, and keep the logo on screen at the end" aria-describedby="order-brief-hint order-brief-error"></textarea>
@@ -747,92 +1057,10 @@
               </div>
             </div>
 
-            <div class="order__group">
-              <h3 class="order__group-title">References</h3>
-              <div class="order__fields">
-                <div>
-                  <label class="order__label" for="order-references">Reference links</label>
-                  <textarea class="order__input" id="order-references" name="references" maxlength="2000" placeholder="One link per line, e.g. https://example.com/video" aria-describedby="order-references-hint order-references-error"></textarea>
-                  <p class="order__hint" id="order-references-hint">Optional. One complete http(s) link per line.</p>
-                  <p class="order__field-error" id="order-references-error"></p>
-                </div>
-              </div>
-            </div>
-
-            <p class="order__error" id="order-step-2-error" role="alert" hidden></p>
-            <div class="order__actions">
-              <button class="order__button" type="button" data-next="3" aria-busy="false"><span class="order__spinner" aria-hidden="true"></span><span data-next-label="3">Continue</span> <span aria-hidden="true">&rarr;</span></button>
-              <button class="order__link-button" type="button" data-back="1">&larr; Back to project basics</button>
-            </div>
-          </section>
-
-          <!-- Step 3: script and voice over -->
-          <section class="order__step" data-step="3" aria-labelledby="step-3-title" hidden>
-            <p class="order__step-label">STEP 3 OF 4</p>
-            <h2 class="order__step-title" id="step-3-title" tabindex="-1">Script &amp; voice over</h2>
-            <p class="order__step-intro">Bring your own, or let us write and record it for you.</p>
-            <div class="order__fields">
-              <fieldset class="order__choices" aria-describedby="order-script-error">
-                <legend class="order__label">Script</legend>
-                <div class="order__choice-grid">
-                  <label class="order__choice"><input type="radio" name="scriptChoice" value="own"><span class="order__choice-title">I have my own script</span><span class="order__choice-note">Upload it below.</span></label>
-                  <label class="order__choice"><input type="radio" name="scriptChoice" value="need" checked><span class="order__choice-title">I need a script written</span><span class="order__choice-note">We write it from your brief.</span></label>
-                </div>
-                <p class="order__field-error" id="order-script-error"></p>
-                <div class="order__upload" id="order-script-upload" hidden>
-                  <label class="order__label" for="order-script-file">Your script file</label>
-                  <div class="order__drop" data-drop>
-                    <input class="order__drop-input" id="order-script-file" name="scriptFile" type="file" accept=".pdf,.doc,.docx,.txt" aria-describedby="order-script-file-hint order-script-file-error">
-                    <span class="order__drop-body" aria-hidden="true">
-                      <svg class="order__drop-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4m0 0L8 8m4-4l4 4"/><path d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg>
-                      <span class="order__drop-title">Choose a file or drag it here</span>
-                      <span class="order__drop-note">PDF, DOC, DOCX or TXT &middot; up to 50MB</span>
-                    </span>
-                  </div>
-                  <ul class="order__files" id="order-script-file-files"></ul>
-                  <p class="order__hint" id="order-script-file-hint">PDF, DOC, DOCX or TXT &middot; up to 50MB.</p>
-                  <p class="order__field-error" id="order-script-file-error"></p>
-                  <p class="order__uploading" id="order-script-progress" role="status" hidden><span class="order__spinner" aria-hidden="true"></span><span id="order-script-progress-text"></span></p>
-                </div>
-              </fieldset>
-              <fieldset class="order__choices" aria-describedby="order-voice-error">
-                <legend class="order__label">Voice over</legend>
-                <div class="order__choice-grid">
-                  <label class="order__choice"><input type="radio" name="voiceChoice" value="own"><span class="order__choice-title">I have my own voice over</span><span class="order__choice-note">Upload the audio below.</span></label>
-                  <label class="order__choice"><input type="radio" name="voiceChoice" value="need" checked><span class="order__choice-title">I need a voice over</span><span class="order__choice-note">We cast and record it.</span></label>
-                </div>
-                <p class="order__field-error" id="order-voice-error"></p>
-                <div class="order__upload" id="order-voice-upload" hidden>
-                  <label class="order__label" for="order-voice-file">Your voice over file</label>
-                  <div class="order__drop" data-drop>
-                    <input class="order__drop-input" id="order-voice-file" name="voiceFile" type="file" accept=".mp3,.wav,.m4a" aria-describedby="order-voice-file-hint order-voice-file-error">
-                    <span class="order__drop-body" aria-hidden="true">
-                      <svg class="order__drop-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4m0 0L8 8m4-4l4 4"/><path d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg>
-                      <span class="order__drop-title">Choose a file or drag it here</span>
-                      <span class="order__drop-note">MP3, WAV or M4A &middot; up to 50MB</span>
-                    </span>
-                  </div>
-                  <ul class="order__files" id="order-voice-file-files"></ul>
-                  <p class="order__hint" id="order-voice-file-hint">MP3, WAV or M4A &middot; up to 50MB.</p>
-                  <p class="order__field-error" id="order-voice-file-error"></p>
-                  <p class="order__uploading" id="order-voice-progress" role="status" hidden><span class="order__spinner" aria-hidden="true"></span><span id="order-voice-progress-text"></span></p>
-                </div>
-              </fieldset>
-            </div>
-            <section class="order__breakdown" aria-labelledby="order-breakdown-title">
-              <h3 class="order__breakdown-title" id="order-breakdown-title">Your price</h3>
-              <dl class="order__lines" id="order-lines">
-                <div><dt>Base video</dt><dd id="line-base">&mdash;</dd></div>
-                <div><dt>Script writing</dt><dd id="line-script">&mdash;</dd></div>
-                <div><dt>Voice over</dt><dd id="line-voice">&mdash;</dd></div>
-              </dl>
-              <p class="order__total"><span>Total</span><strong id="line-total">&mdash;</strong></p>
-              <p class="order__hint" id="order-pricing-note">Prices come from the FIJLY price list. The amount you are invoiced is confirmed when your project is saved.</p>
-            </section>
             <p class="order__error" id="order-step-3-error" role="alert" hidden></p>
             <div class="order__actions">
               <button class="order__button" type="button" data-next="4" aria-busy="false"><span class="order__spinner" aria-hidden="true"></span><span data-next-label="4">Continue</span> <span aria-hidden="true">&rarr;</span></button>
-              <button class="order__link-button" type="button" data-back="2">&larr; Back to creative details</button>
+              <button class="order__link-button" type="button" data-back="2">&larr; Back to look &amp; feel</button>
             </div>
           </section>
 
@@ -852,12 +1080,12 @@
                 <div><dt>Purpose</dt><dd id="summary-purpose"></dd></div>
                 <div><dt>Audience</dt><dd id="summary-audience"></dd></div>
                 <div><dt>Style</dt><dd id="summary-style"></dd></div>
-                <div><dt>Brand colors</dt><dd id="summary-colors"></dd></div>
                 <div><dt>References</dt><dd id="summary-references"></dd></div>
+                <div><dt>Brand colors</dt><dd id="summary-colors"></dd></div>
                 <div><dt>Files</dt><dd id="summary-attachments"></dd></div>
+                <div><dt>Brief</dt><dd id="summary-brief-doc"></dd></div>
                 <div><dt>Script</dt><dd id="summary-script"></dd></div>
                 <div><dt>Voice over</dt><dd id="summary-voice"></dd></div>
-                <div><dt>Brief</dt><dd id="summary-brief-doc"></dd></div>
                 <div><dt>Notes</dt><dd id="summary-brief"></dd></div>
                 <div><dt>Account</dt><dd id="summary-account"></dd></div>
               </dl>
@@ -886,7 +1114,7 @@
             </div>
             <p class="order__legal">By submitting, you agree to our <a href="terms.html">Terms</a> and <a href="privacy.html">Privacy Notice</a>. Nothing is charged until we confirm your invoice.</p>
             <div class="order__actions">
-              <button class="order__link-button" type="button" data-back="3">&larr; Back to script &amp; voice over</button>
+              <button class="order__link-button" type="button" data-back="3">&larr; Back to brief, script &amp; voice over</button>
             </div>
           </section>
         </form>
