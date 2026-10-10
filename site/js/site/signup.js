@@ -1,5 +1,7 @@
-/* Landing page sign-up (#contact). Creates a FIJLY Studio account with
-   Supabase Auth, then continues to order.html for the video details.
+/* Create account — the second tab on login.html. Creates a FIJLY Studio
+   account with Supabase Auth, then continues to order.html for the video
+   details. The sign-in half of the page lives in login.html's inline script;
+   this file only owns the create-account form.
 
    While public sign-up is disabled in Supabase, the request is saved to
    `contact_submissions` (project_type "Account request") so the studio can
@@ -20,17 +22,17 @@
   var honeypot = document.getElementById('fijly-hp');
   var google = document.getElementById('google-signin');
   var googleNote = document.getElementById('google-signin-note');
-  var pending = false, chosen = null;
+  var pending = false;
   submit.disabled = false;
 
-  // A pricing card's "Get started" remembers its length for the order page.
-  document.querySelectorAll('a[data-duration]').forEach(function (link) {
-    link.addEventListener('click', function () { chosen = link.dataset.duration; });
-  });
+  // The length picked on a pricing card arrives as ?duration= and is handed on
+  // to the wizard, so the customer does not choose it twice.
+  var chosen = (new URLSearchParams(location.search).get('duration') || '').replace(/[^0-9]/g, '') || null;
   function orderUrl() { return new URL('order.html' + (chosen ? '?duration=' + encodeURIComponent(chosen) : ''), location.href).href; }
 
   function link(href, text) { var a = document.createElement('a'); a.href = href; a.textContent = text; return a; }
-  function say(parts) {
+  function say(parts, isError) {
+    status.className = isError ? 'login__error' : 'login__ok';
     status.replaceChildren.apply(status, parts.map(function (part) { return typeof part === 'string' ? document.createTextNode(part) : part; }));
     status.hidden = false;
     status.focus({ preventScroll: true });
@@ -45,7 +47,12 @@
     ({
       pending: function () { say(['Thanks, ' + name + '. We’ve received your request. We’ll create your FIJLY Studio account and email your login details to ' + email + ' within 24 hours.']); },
       confirm: function () { say(['Check your email — we sent a confirmation link to ' + email + '. Click it to continue to your video details.']); },
-      exists: function () { say([email + ' already has a FIJLY Studio account. ', link('login.html?next=order.html', 'Sign in to continue'), '.']); }
+      // Already registered: hand the visitor to the Sign in tab, email filled in.
+      exists: function () {
+        status.hidden = true;
+        if (window.FijlyAccount && window.FijlyAccount.showSignIn) window.FijlyAccount.showSignIn(email);
+        else say([email + ' already has a FIJLY Studio account. ', link('login.html', 'Sign in to continue'), '.']);
+      }
     })[kind]();
   }
   function problem(error) {
@@ -100,7 +107,7 @@
         done('confirm', values.name, values.email);
       }
     } catch (error) {
-      say(problem(error));
+      say(problem(error), true);
     }
     setBusy(false);
   });
@@ -108,6 +115,7 @@
   toggle.addEventListener('click', function () {
     var reveal = password.type === 'password';
     password.type = reveal ? 'text' : 'password';
+    toggle.textContent = reveal ? 'Hide' : 'Show';
     toggle.setAttribute('aria-pressed', String(reveal));
     toggle.setAttribute('aria-label', reveal ? 'Hide password' : 'Show password');
   });

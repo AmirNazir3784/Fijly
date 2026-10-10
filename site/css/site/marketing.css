@@ -964,6 +964,90 @@ section[id] {
   color: var(--text-muted);
 }
 
+/* Account creation moved to login.html, so #contact is now a CTA band. It
+   keeps the violet panel the sign-up column used, so the page still ends on
+   the same colour; only the layout is new. */
+.contact-cta {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow: hidden;
+  padding: 64px 56px;
+  border-radius: 27px;
+  background: radial-gradient(ellipse at 0 0, #7768ff66, transparent 65%),
+    radial-gradient(ellipse at 100% 100%, #6954ee88, transparent 65%),
+    linear-gradient(145deg, #4b3dd0, #302477);
+  color: var(--surface-white);
+  text-align: center;
+}
+
+.contact--cta { outline: none; }
+
+.contact-cta .contact__brand { margin-bottom: var(--space-lg); }
+
+.contact-cta .eyebrow {
+  margin-bottom: 14px;
+  color: #ddd8ff;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: .17em;
+}
+
+.contact-cta h2 {
+  max-width: 18ch;
+  font-size: clamp(1.9rem, 3.2vw, 2.6rem);
+  line-height: 1.15;
+  letter-spacing: -.045em;
+  text-wrap: balance;
+}
+
+.contact-cta h2 span { color: #d8d1ff; }
+
+.contact-cta__lead {
+  max-width: 54ch;
+  margin-top: 16px;
+  color: #e0dcf8;
+  font-size: 16px;
+  line-height: 1.7;
+}
+
+.contact-cta__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 14px 22px;
+  margin-top: 28px;
+}
+
+.contact-cta__signin {
+  color: #e7e3ff;
+  font-size: 14.5px;
+  font-weight: var(--weight-semibold);
+}
+
+.contact-cta__signin:hover { color: var(--surface-white); text-decoration: underline; text-underline-offset: 4px; }
+
+.contact-cta__support {
+  margin-top: 26px;
+  color: #cfc8f0;
+  font-size: 14px;
+}
+
+/* The white-on-violet email link already reads correctly here. */
+.contact-cta__support .contact__email { padding-block: 0; font-size: 14px; }
+
+@media (max-width: 767px) {
+  .contact-cta { padding: 44px 24px; border-radius: 20px; }
+}
+
+@media (max-width: 479px) {
+  .contact-cta__actions { flex-direction: column; align-items: stretch; }
+  .contact-cta__actions .btn { width: 100%; }
+}
+
 /* 12. Footer ============================================================= */
 /* Three parts: the .footer-cta conversion banner, the four-column
    .footer__grid, and the .footer__bottom copyright bar. Colours come from the

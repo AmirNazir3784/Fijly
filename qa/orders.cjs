@@ -145,7 +145,7 @@ let launched = null;
   // A fresh context: the signed-in sign-up above left a session in `guest`.
   const out = watch(await (await browser.newContext({ fijlyAuth: null })).newPage(), 'signed-out');
   await out.goto(base + 'order.html?duration=90');
-  await out.waitForURL('**/index.html#contact');
+  await out.waitForURL('**/login.html?mode=signup&next=order.html');
   assert.equal(await out.locator('#signup-form').count(), 1, 'signed-out visitors are sent to sign up');
   await out.goto(base + 'login.html?next=order.html');
   await out.locator('#login-email').fill(qaUsers.client.email); await out.locator('#login-password').fill(qaUsers.client.password);

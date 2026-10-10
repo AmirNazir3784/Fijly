@@ -219,7 +219,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 40px var(--space-xl);
+      padding: 30px var(--space-xl);
       background: var(--login-panel);
     }
 
@@ -239,7 +239,7 @@
       z-index: 1;
       width: 100%;
       max-width: 520px;
-      padding: 36px;
+      padding: 32px;
       border: 1px solid #EFEDFA;
       border-radius: 20px;
       background: var(--surface-white);
@@ -260,21 +260,71 @@
       color: var(--text-muted);
     }
 
-    /* The card has two jobs: sign in, and request a reset link. The sign-in
-       form is painted straight away — the session check never gates it. */
+    /* Forms are painted straight away — the session check never gates them.
+       The tab panels carry their own [hidden], so only the reset-link form
+       needs a rule of its own. */
     .login__form {
-      display: none;
+      display: grid;
       gap: 18px;
       margin-top: 22px;
     }
 
-    .login__card[data-view="signin"] #login-form,
-    .login__card[data-view="forgot"] #forgot-form,
-    .login__card[data-view="reset"] #reset-form { display: grid; }
+    #forgot-form { display: none; }
+    .login__card[data-view="forgot"] #forgot-form { display: grid; }
 
-    /* Google and the "new to FIJLY" line belong to the sign-in view only. */
-    .login__card[data-view="forgot"] .login__oauth,
-    .login__card[data-view="forgot"] .login__newto { display: none; }
+    /* "Forgot password?" is a step inside Sign in, not a third tab. */
+    .login__card[data-view="forgot"] .login__tabs { display: none; }
+
+    /* Sign in | Create account */
+    .login__tabs {
+      display: flex;
+      gap: 4px;
+      margin-top: 20px;
+      padding: 4px;
+      border-radius: 12px;
+      background: var(--surface-light);
+    }
+
+    .login__tab {
+      flex: 1;
+      min-height: 40px;
+      padding: 0 10px;
+      border: 0;
+      border-radius: 9px;
+      background: none;
+      color: var(--text-muted);
+      font: var(--weight-semibold) var(--text-meta) var(--font-body);
+      cursor: pointer;
+      transition: background-color .15s ease, color .15s ease;
+    }
+
+    .login__tab:hover { color: var(--text-primary); }
+
+    .login__tab[aria-selected="true"] {
+      background: var(--surface-white);
+      color: var(--text-primary);
+      box-shadow: 0 1px 2px #17152F14;
+    }
+
+    .login__terms {
+      font-size: var(--text-small);
+      line-height: var(--leading-normal);
+      color: var(--text-light);
+      text-align: center;
+    }
+
+    .login__terms a { color: var(--text-muted); text-decoration: underline; }
+    .login__terms a:hover { color: var(--primary); }
+
+    /* The create-account tab carries a third field, a hint and the terms line,
+       so it runs a tighter rhythm than the two-field sign-in tab. */
+    .login__card[data-view="signup"] .login__oauth { margin-top: 16px; }
+    .login__card[data-view="signup"] .login__form { gap: 13px; margin-top: 16px; }
+    .login__card[data-view="signup"] .login__newto { margin-top: 12px; }
+    .login__card[data-view="signup"] .login__back { margin-top: 14px; }
+
+    /* The create-account outcome message (shared with signup.js). */
+    #signup-status:not([hidden]) { display: block; }
 
     /* Google sign-in, matching the landing page's component. */
     .login__oauth { margin-top: 22px; }
@@ -525,14 +575,6 @@
     /* ---- Responsive ------------------------------------------------------ */
     /* Short desktop viewports (1366x768 and friends): tighten the vertical
        rhythm so the whole card still fits without the page scrolling. */
-    @media (min-width: 900px) and (max-height: 820px) {
-      .login__panel { padding-block: 24px; }
-      .login__card { padding: 32px; }
-      .login__oauth { margin-top: 18px; }
-      .login__form { margin-top: 18px; }
-      .login__newto { margin-top: 14px; }
-      .login__back { margin-top: 16px; }
-    }
 
     @media (min-width: 1400px) {
       .login__pitch { max-width: 400px; }
@@ -603,6 +645,20 @@
       .login__field--password .login__input { padding-right: 66px; }
     }
 
+    /* Short viewports (1366x768 and friends). Placed after the width rules
+       so it is not undone by them. */
+    @media (min-width: 900px) and (max-height: 820px) {
+      .login__panel { padding-block: 8px; }
+      .login__card { padding: 22px 30px; }
+      .login__title { font-size: 27px; }
+      .login__tabs { margin-top: 14px; }
+      .login__oauth { margin-top: 12px; }
+      .login__form { gap: 13px; margin-top: 12px; }
+      .login__newto { margin-top: 10px; }
+      .login__back { margin-top: 10px; }
+      .login__card[data-view="signup"] .login__form { gap: 11px; margin-top: 12px; }
+    }
+
     @media (prefers-reduced-motion: reduce) {
       .login__spinner { animation-duration: 1.4s; }
       .login__input, .login__icon, .login__submit, .login__toggle { transition: none; }
@@ -616,46 +672,99 @@
         <h1 class="login__title" id="login-title">Sign in to FIJLY Studio</h1>
         <p class="login__subtitle" id="login-subtitle">Access your video production dashboard</p>
 
-        <noscript><p class="login__error">JavaScript is required to sign in to FIJLY Studio.</p></noscript>
-
-        <!-- Sign in -->
-        <div class="login__oauth" id="login-oauth">
-          <button class="btn-google" type="button" id="google-signin" aria-describedby="google-signin-note">
-            <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.27-4.74 3.27-8.1z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84A11 11 0 0 0 12 23z"/><path fill="#FBBC05" d="M5.84 14.1A6.6 6.6 0 0 1 5.5 12c0-.73.13-1.44.34-2.1V7.06H2.18A11 11 0 0 0 1 12c0 1.78.43 3.45 1.18 4.94l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1A11 11 0 0 0 2.18 7.06l3.66 2.84C6.71 7.31 9.14 5.38 12 5.38z"/></svg>
-            <span>Continue with Google</span>
-          </button>
-          <p class="login__hint login__hint--center" id="google-signin-note" hidden></p>
-          <div class="auth-divider"><span>or</span></div>
+        <div class="login__tabs" role="tablist" aria-label="Account">
+          <button class="login__tab" type="button" role="tab" id="tab-signin" aria-controls="panel-signin" aria-selected="true" tabindex="0">Sign in</button>
+          <button class="login__tab" type="button" role="tab" id="tab-signup" aria-controls="panel-signup" aria-selected="false" tabindex="-1">Create account</button>
         </div>
 
-        <form class="login__form" id="login-form">
-          <p class="login__error" id="login-error" role="alert" hidden></p>
-          <p class="login__ok" id="login-notice" role="status" hidden></p>
-          <div>
-            <label class="login__label" for="login-email">Email</label>
-            <div class="login__field">
-              <span class="login__icon"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="4.5" width="19" height="15" rx="3"/><path d="m3 7 8.1 5.4a2 2 0 0 0 2.2 0L21 7"/></svg></span>
-              <input class="login__input" id="login-email" name="email" type="email" autocomplete="username" inputmode="email" autocapitalize="none" spellcheck="false" placeholder="you@company.com" required>
+        <noscript><p class="login__error">JavaScript is required to use FIJLY Studio.</p></noscript>
+
+        <!-- Sign in -->
+        <div id="panel-signin" role="tabpanel" aria-labelledby="tab-signin">
+          <div class="login__oauth">
+            <button class="btn-google" type="button" id="signin-google" aria-describedby="signin-google-note">
+              <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.27-4.74 3.27-8.1z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84A11 11 0 0 0 12 23z"/><path fill="#FBBC05" d="M5.84 14.1A6.6 6.6 0 0 1 5.5 12c0-.73.13-1.44.34-2.1V7.06H2.18A11 11 0 0 0 1 12c0 1.78.43 3.45 1.18 4.94l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1A11 11 0 0 0 2.18 7.06l3.66 2.84C6.71 7.31 9.14 5.38 12 5.38z"/></svg>
+              <span>Continue with Google</span>
+            </button>
+            <p class="login__hint login__hint--center" id="signin-google-note" hidden></p>
+            <div class="auth-divider"><span>or</span></div>
+          </div>
+
+          <form class="login__form" id="login-form">
+            <p class="login__error" id="login-error" role="alert" hidden></p>
+            <p class="login__ok" id="login-notice" role="status" hidden></p>
+            <div>
+              <label class="login__label" for="login-email">Email</label>
+              <div class="login__field">
+                <span class="login__icon"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="4.5" width="19" height="15" rx="3"/><path d="m3 7 8.1 5.4a2 2 0 0 0 2.2 0L21 7"/></svg></span>
+                <input class="login__input" id="login-email" name="email" type="email" autocomplete="username" inputmode="email" autocapitalize="none" spellcheck="false" placeholder="you@company.com" required>
+              </div>
             </div>
-          </div>
-          <div>
-            <label class="login__label" for="login-password">Password</label>
-            <div class="login__field login__field--password">
-              <span class="login__icon"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="10.5" width="17" height="10.5" rx="3"/><path d="M7.5 10.5V7.8a4.5 4.5 0 0 1 9 0v2.7"/></svg></span>
-              <input class="login__input" id="login-password" name="password" type="password" autocomplete="current-password" required>
-              <button class="login__toggle" id="login-toggle" type="button" aria-controls="login-password" aria-pressed="false" aria-label="Show password">Show</button>
+            <div>
+              <label class="login__label" for="login-password">Password</label>
+              <div class="login__field login__field--password">
+                <span class="login__icon"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="10.5" width="17" height="10.5" rx="3"/><path d="M7.5 10.5V7.8a4.5 4.5 0 0 1 9 0v2.7"/></svg></span>
+                <input class="login__input" id="login-password" name="password" type="password" autocomplete="current-password" required>
+                <button class="login__toggle" id="login-toggle" type="button" aria-controls="login-password" aria-pressed="false" aria-label="Show password">Show</button>
+              </div>
             </div>
+            <div class="login__options">
+              <label class="login__keep" for="login-keep">
+                <input type="checkbox" id="login-keep" name="keep" checked>
+                Keep me signed in
+              </label>
+              <button class="login__link" id="login-forgot" type="button">Forgot password?</button>
+            </div>
+            <button class="login__submit" id="login-submit" type="submit" aria-busy="false"><span class="login__spinner" aria-hidden="true"></span><span id="login-submit-label">Sign in</span></button>
+          </form>
+
+          <p class="login__newto">New to FIJLY? <button class="login__link" type="button" data-go="signup">Create an account</button></p>
+        </div>
+
+        <!-- Create account -->
+        <div id="panel-signup" role="tabpanel" aria-labelledby="tab-signup" hidden>
+          <div class="login__oauth">
+            <button class="btn-google" type="button" id="google-signin" aria-describedby="google-signin-note">
+              <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.27-4.74 3.27-8.1z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84A11 11 0 0 0 12 23z"/><path fill="#FBBC05" d="M5.84 14.1A6.6 6.6 0 0 1 5.5 12c0-.73.13-1.44.34-2.1V7.06H2.18A11 11 0 0 0 1 12c0 1.78.43 3.45 1.18 4.94l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1A11 11 0 0 0 2.18 7.06l3.66 2.84C6.71 7.31 9.14 5.38 12 5.38z"/></svg>
+              <span>Continue with Google</span>
+            </button>
+            <p class="login__hint login__hint--center" id="google-signin-note" hidden></p>
+            <div class="auth-divider"><span>or</span></div>
           </div>
-          <div class="login__options">
-            <label class="login__keep" for="login-keep">
-              <input type="checkbox" id="login-keep" name="keep" checked>
-              Keep me signed in
-            </label>
-            <button class="login__link" id="login-forgot" type="button">Forgot password?</button>
-          </div>
-          <button class="login__submit" id="login-submit" type="submit" aria-busy="false"><span class="login__spinner" aria-hidden="true"></span><span id="login-submit-label">Sign in</span></button>
-          <p class="login__note">Accounts are created by the FIJLY team. Need access? Ask your producer.</p>
-        </form>
+
+          <form class="login__form" id="signup-form" novalidate>
+            <div class="login__ok" id="signup-status" role="status" tabindex="-1" hidden></div>
+            <div>
+              <label class="login__label" for="signup-name">Name</label>
+              <div class="login__field">
+                <span class="login__icon"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20.5a7.5 7.5 0 0 1 15 0"/></svg></span>
+                <input class="login__input" id="signup-name" name="name" autocomplete="name" required maxlength="200" placeholder="Your name">
+              </div>
+            </div>
+            <div>
+              <label class="login__label" for="signup-email">Work email</label>
+              <div class="login__field">
+                <span class="login__icon"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="4.5" width="19" height="15" rx="3"/><path d="m3 7 8.1 5.4a2 2 0 0 0 2.2 0L21 7"/></svg></span>
+                <input class="login__input" id="signup-email" name="email" type="email" autocomplete="email" autocapitalize="none" spellcheck="false" required maxlength="320" placeholder="you@company.com">
+              </div>
+            </div>
+            <div>
+              <label class="login__label" for="signup-password">Password</label>
+              <div class="login__field login__field--password">
+                <span class="login__icon"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="10.5" width="17" height="10.5" rx="3"/><path d="M7.5 10.5V7.8a4.5 4.5 0 0 1 9 0v2.7"/></svg></span>
+                <input class="login__input" id="signup-password" name="password" type="password" autocomplete="new-password" required minlength="8" maxlength="72" aria-describedby="signup-password-hint">
+                <button class="login__toggle password-toggle" type="button" aria-controls="signup-password" aria-pressed="false" aria-label="Show password">Show</button>
+              </div>
+              <p class="login__hint" id="signup-password-hint">At least 8 characters</p>
+            </div>
+            <div class="visually-hidden" aria-hidden="true"><label for="fijly-hp">Website</label><input type="text" name="website" id="fijly-hp" tabindex="-1" autocomplete="off"></div>
+            <button class="login__submit" type="submit" id="signup-submit" disabled>Create account &amp; choose your video <span aria-hidden="true">→</span></button>
+            <p class="login__terms">By creating an account you agree to our <a href="terms.html">Terms of Service</a> and <a href="privacy.html">Privacy Policy</a>.</p>
+            <noscript><p class="login__hint">Creating an account requires JavaScript. You can also email <a href="mailto:hello@fijly.com">hello@fijly.com</a>.</p></noscript>
+          </form>
+
+          <p class="login__newto">Already have an account? <button class="login__link" type="button" data-go="signin">Sign in</button></p>
+        </div>
 
         <!-- Request a recovery link -->
         <form class="login__form" id="forgot-form">
@@ -675,7 +784,6 @@
           </div>
         </form>
 
-        <p class="login__newto" id="login-newto">New to FIJLY? <a href="index.html#contact">Start a project →</a></p>
         <a class="login__back" href="index.html">← Back to fijly.com</a>
       </div>
     </main>
@@ -703,8 +811,10 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.116.0/dist/umd/supabase.js" integrity="sha384-iLddHTLokph6Omwoyid4XKxHaWa6w41BnoEj0q5oOrzmYPpHIKt1wyjReA7s//pP" crossorigin="anonymous"></script>
   <script src="js/core/config.js"></script>
   <script src="js/core/supabase-client.js"></script>
+  <script src="js/site/signup.js" defer></script>
   <script>
-    // Login page logic
+    // Account page: sign in and create account, as two tabs on one URL.
+    // login.html is fixed — the Supabase redirect URLs point at it.
     (function () {
       'use strict';
       var config = window.FIJLY_CONFIG || {};
@@ -718,8 +828,8 @@
       var error = document.getElementById('login-error');
       var notice = document.getElementById('login-notice');
       var keep = document.getElementById('login-keep');
-      var google = document.getElementById('google-signin');
-      var googleNote = document.getElementById('google-signin-note');
+      var google = document.getElementById('signin-google');
+      var googleNote = document.getElementById('signin-google-note');
 
       var forgotForm = document.getElementById('forgot-form');
       var forgotEmail = document.getElementById('forgot-email');
@@ -731,31 +841,108 @@
       var title = document.getElementById('login-title');
       var subtitle = document.getElementById('login-subtitle');
 
+      var tabs = [document.getElementById('tab-signin'), document.getElementById('tab-signup')];
+      var panels = {
+        signin: document.getElementById('panel-signin'),
+        signup: document.getElementById('panel-signup')
+      };
+
       // How long the background session check may run before the page simply
       // stays on the form. Nothing here ever blocks the form from being usable.
       var SESSION_CHECK_MS = 5000;
+
+      var params = new URLSearchParams(window.location.search);
+      // ?next=order.html (from an order-page bounce) returns there after
+      // signing in; no other destination is accepted.
+      var next = params.get('next') === 'order.html' ? 'order.html' : null;
+      var startMode = params.get('mode') === 'signup' ? 'signup' : 'signin';
 
       function showError(message) { error.textContent = message; error.hidden = false; }
       function clearError() { error.hidden = true; error.textContent = ''; }
 
       var VIEW_TEXT = {
         signin: ['Sign in to FIJLY Studio', 'Access your video production dashboard'],
+        signup: ['Create your FIJLY Studio account', 'Then tell us about the video you need'],
         forgot: ['Reset your password', 'We’ll email you a link to set a new one']
       };
 
-      function view(name) {
+      /* Tabs ------------------------------------------------------------------
+         setView drives the heading, the tablist state and which panel is shown.
+         "forgot" is a sub-view of Sign in, so it hides the tablist. */
+      function setView(name, opts) {
+        var options = opts || {};
         card.dataset.view = name;
         title.textContent = VIEW_TEXT[name][0];
         subtitle.textContent = VIEW_TEXT[name][1];
+
+        panels.signin.hidden = name !== 'signin';
+        panels.signup.hidden = name !== 'signup';
+
+        if (name !== 'forgot') {
+          tabs.forEach(function (tab) {
+            var on = tab.id === 'tab-' + name;
+            tab.setAttribute('aria-selected', String(on));
+            tab.tabIndex = on ? 0 : -1;
+          });
+          // Keep the URL shareable without reloading the page.
+          var url = new URLSearchParams(window.location.search);
+          if (name === 'signup') url.set('mode', 'signup'); else url.delete('mode');
+          var query = url.toString();
+          history.replaceState(null, '', window.location.pathname + (query ? '?' + query : ''));
+        }
+        if (options.focus) {
+          var first = (name === 'signup' ? panels.signup : panels.signin).querySelector('input:not([type="hidden"]):not([tabindex="-1"])');
+          if (first) first.focus();
+        }
       }
 
-      // ?next=order.html (from the landing page sign-up) returns there after
-      // signing in; no other destination is accepted.
-      var next = new URLSearchParams(window.location.search).get('next') === 'order.html' ? 'order.html' : null;
-      function portalFor(profile) { var portal = profile ? PORTAL_FOR_ROLE[profile.role] : null; return portal && next ? next : portal; }
+      tabs.forEach(function (tab, index) {
+        tab.addEventListener('click', function () { setView(index === 0 ? 'signin' : 'signup', { focus: true }); });
+        tab.addEventListener('keydown', function (event) {
+          var move = event.key === 'ArrowRight' || event.key === 'ArrowDown' ? 1
+            : event.key === 'ArrowLeft' || event.key === 'ArrowUp' ? -1
+              : event.key === 'Home' ? 'first' : event.key === 'End' ? 'last' : 0;
+          if (!move) return;
+          event.preventDefault();
+          var to = move === 'first' ? 0 : move === 'last' ? tabs.length - 1
+            : (index + move + tabs.length) % tabs.length;
+          tabs[to].focus();
+          setView(to === 0 ? 'signin' : 'signup');
+        });
+      });
+
+      card.querySelectorAll('[data-go]').forEach(function (button) {
+        button.addEventListener('click', function () { setView(button.dataset.go, { focus: true }); });
+      });
+
+      // signup.js uses this when Supabase reports the email already exists.
+      window.FijlyAccount = {
+        showSignIn: function (prefill) {
+          if (prefill) email.value = prefill;
+          setView('signin');
+          notice.textContent = prefill
+            ? prefill + ' already has a FIJLY Studio account. Sign in to continue.'
+            : 'That email already has an account. Sign in to continue.';
+          notice.hidden = false;
+          password.focus();
+        }
+      };
+
+      /* Where a signed-in account belongs -------------------------------------
+         Admins always go to the Admin portal. A client who arrived to create an
+         account (or was bounced from the order page) continues to the wizard;
+         otherwise they land in their workspace. */
+      function portalFor(profile) {
+        var role = profile && profile.role;
+        if (!role || !PORTAL_FOR_ROLE[role]) return null;
+        if (role === 'admin') return 'admin.html';
+        if (next) return next;
+        if (startMode === 'signup') return 'order.html';
+        return PORTAL_FOR_ROLE[role];
+      }
 
       // Carries the message set by reset-password.html after a successful reset.
-      if (new URLSearchParams(window.location.search).get('reset') === '1') {
+      if (params.get('reset') === '1') {
         notice.textContent = 'Password updated. Please sign in.';
         notice.hidden = false;
       }
@@ -808,14 +995,17 @@
         forgotError.hidden = true;
         forgotOk.hidden = true;
         forgotEmail.value = email.value.trim();
-        view('forgot');
+        setView('forgot');
         forgotEmail.focus();
       });
 
       document.getElementById('forgot-cancel').addEventListener('click', function () {
-        view('signin');
+        setView('signin');
         email.focus();
       });
+
+      // Open on the tab the URL asked for.
+      setView(startMode);
 
       var db = initSupabase();
       if (!db) {
@@ -848,7 +1038,7 @@
           // Signed in but with no portal role: drop the dead session quietly.
           await signOut({ redirect: false });
         } catch (err) {
-          console.error('FIJLY: background session check did not complete; leaving the sign-in form usable.', err);
+          console.error('FIJLY: background session check did not complete; leaving the form usable.', err);
         }
       })();
 
@@ -904,7 +1094,7 @@
       });
 
       /* Google sign-in --------------------------------------------------------
-         Same flag and same disabled copy as the landing page sign-up form. */
+         Same flag and same disabled copy as the create-account tab. */
       if (!config.googleSignIn) {
         google.disabled = true;
         googleNote.textContent = 'Google sign-in will be available soon. Please use email for now.';

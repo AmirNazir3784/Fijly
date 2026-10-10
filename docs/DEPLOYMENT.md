@@ -10,7 +10,7 @@ Only the contents of `site/` are deployed. Keep `qa/`, `docs/`, `scripts/`, `sup
 - **Privacy and Terms are live** (no longer placeholders). Both pages are indexable and listed in `sitemap.xml`. They commit FIJLY to specific practices (12-month retention of contact submissions, portal data kept for the service agreement plus 90 days, a 30-day response to data requests, a liability cap), so confirm these match how the business actually operates.
 - The portals (`studio.html`, `admin.html`) require sign-in through `login.html` (Supabase Auth). Admins go to the Admin portal, clients to the Client portal. Both portals read and write the Supabase database. A client account must be linked to its workspace (`profiles.client_id`); without one the Client portal shows a "workspace is being set up" message. Asset files are uploaded to the private Supabase Storage bucket `client-assets` (one folder per client, 50MB limit, downloads through one-hour signed links). Video draft versions still store file names only. Search, notification, date-selection, storyboard-editing, and logo-change controls remain unavailable.
 - **Enable leaked password protection in Supabase** (Dashboard → Authentication → Settings). The Supabase security advisor reports it as disabled; it rejects passwords known from data breaches.
-- **Enable public sign-up in Supabase before launch** (Authentication → Sign In / Providers → "Allow new users to sign up" on). The landing page sign-up form creates the customer's account, and `order.html` requires one. While sign-up stays off, every sign-up is saved as an account request instead (see "Sign-up and orders") and the customer can't reach the order page until you create their account. The `handle_new_user` trigger now always creates `client` profiles, so open sign-up can't create admins. New accounts have no workspace until you link one; the Client portal shows "workspace being set up" meanwhile.
+- **Enable public sign-up in Supabase before launch** (Authentication → Sign In / Providers → "Allow new users to sign up" on). The Create account tab on `login.html` creates the customer's account, and `order.html` requires one. While sign-up stays off, every sign-up is saved as an account request instead (see "Sign-up and orders") and the customer can't reach the order page until you create their account. The `handle_new_user` trigger now always creates `client` profiles, so open sign-up can't create admins. New accounts have no workspace until you link one; the Client portal shows "workspace being set up" meanwhile.
 - Portfolio stills, product brands, results, and the testimonial are explicitly marked as sample/concept content. Supply approved films and verified client evidence before representing these as real engagements. Prices and existing sample metrics have been preserved.
 - Unavailable About, Careers, LinkedIn, X / Twitter, and YouTube links have been removed. Add social links only when real URLs are supplied.
 - The OG image is included at `assets/images/og-image.png` (1200 × 630), derived from the existing homepage; no replacement is required unless the owner prefers another image.
@@ -79,7 +79,9 @@ Browser tests use locally available Playwright tooling solely for QA; it is not 
 
 ## Sign-up and orders
 
-**The flow:** every "Start Your Video" button and pricing card leads to the sign-up form at the bottom of the homepage (`#contact`): name, work email and password, or Google. With an account, the customer continues to `order.html`: video type, length (no prices shown), company and brief, then a review step that shows the price. "Submit brief" saves the order to the `orders` table with status `pending`. Payment isn't connected; the Pay button is a disabled placeholder. Signed-out visitors to `order.html` are sent to the sign-up form; "Already have an account? Sign in" uses `login.html?next=order.html` to come back.
+**The flow:** every "Start Your Video" button leads to `login.html?mode=signup`, and each pricing card adds the length it offers (`&duration=60`). `login.html` is the one account page: a **Sign in** tab and a **Create account** tab (name, work email and password, or Google), with `?mode=signup` opening the second one and tab switches rewriting `?mode=` through `history.replaceState`. With an account, the customer continues to `order.html` — which pre-selects the length carried in `?duration=` — then video type, company and brief, and a review step that shows the price. "Submit brief" saves the order to the `orders` table with status `pending`. Payment isn't connected; the Pay button is a disabled placeholder. Signed-out visitors to `order.html` are sent to `login.html?mode=signup&next=order.html` and come straight back after signing in.
+
+The homepage's `#contact` section is now a CTA band ("Ready to make your product video?") rather than a form, so old links and bookmarks to `#contact` still land somewhere sensible.
 
 **Email confirmation is on**, so a new customer first gets a confirmation email; its link signs them in and opens `order.html`. Add `https://fijly.com/order.html` to Supabase → Authentication → URL Configuration → Redirect URLs (and set the Site URL to `https://fijly.com`), or the link will land on the Site URL instead.
 
@@ -88,7 +90,7 @@ Browser tests use locally available Playwright tooling solely for QA; it is not 
 **Processing an order:** open Admin → Orders. If the customer has no workspace yet, create one in Admin → Clients and link it to their account (`profiles.client_id`). Move the order to Processing, then Completed. The database rejects any order whose price doesn't match its length (`check_order_price`).
 
 - Sign-up and orders have honeypots and field-length limits but **no CAPTCHA or rate limit**; with open sign-up, consider Supabase Auth's CAPTCHA (Authentication → Attack Protection) and watch for spam accounts and orders.
-- General questions now go to email: the sign-up form links to hello@fijly.com.
+- General questions now go to email: the homepage CTA links to hello@fijly.com.
 
 ## Supabase redirect URLs
 
@@ -125,6 +127,6 @@ the customer cannot set a new password.
 6. Make sure `https://fijly.com/order.html` and `https://fijly.com/login.html` are in Authentication → URL Configuration → Redirect URLs (Google sign-in returns to whichever page it started from).
 7. In `site/js/core/config.js`, set `googleSignIn: true` and upload the file.
 
-Until step 7, the "Continue with Google" button on both the landing page sign-up form and `login.html` is disabled with the note "Google sign-in will be available soon. Please use email for now." Google sign-in also needs public sign-up enabled for new customers.
+Until step 7, the "Continue with Google" button on both tabs of `login.html` is disabled with the note "Google sign-in will be available soon. Please use email for now." Google sign-in also needs public sign-up enabled for new customers.
 
 Current interaction evidence: `qa/refinement-check-results.json` and `qa/functional-results.json`. The refinement covers 1440, 1280, 1024, 768, 390, and 375 pixel layouts. Files in `qa/` are not deployment files.

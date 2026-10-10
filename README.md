@@ -62,8 +62,9 @@ inside each page is what the cascade depends on, so keep it when editing.
 
 Plain HTML + CSS + JavaScript. No build step, no framework, no dependencies.
 Fonts are self-hosted. The landing page makes no external calls; the portals and
-sign-in page load the pinned Supabase JS SDK from jsDelivr (with subresource integrity)
-and authenticate against Supabase. The Admin portal reads and writes the Supabase
+account page load the pinned Supabase JS SDK from jsDelivr (with subresource integrity)
+and authenticate against Supabase. `login.html` is the single account page: sign in
+and create account as two tabs, with `?mode=signup` opening the second. The Admin portal reads and writes the Supabase
 database (`js/core/supabase-data.js`); so does the Client portal, scoped to the signed-in
 client's workspace (`profiles.client_id`). Starter data and schema notes: [supabase/README.md](supabase/README.md).
 
