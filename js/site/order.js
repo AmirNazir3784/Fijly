@@ -25,7 +25,7 @@
    job of the task that turns that flag on. */
 (function () {
   'use strict';
-  var SIGN_UP = 'index.html#contact';
+  var SIGN_UP = 'login.html?mode=signup&next=order.html';
   var CONTACT_EMAIL = (window.FIJLY_CONFIG && window.FIJLY_CONFIG.contactEmail) || 'hello@fijly.com';
   var LAST_STEP = 4;
   var BUCKET = 'client-assets', MAX_FILE_SIZE = 50 * 1024 * 1024;
