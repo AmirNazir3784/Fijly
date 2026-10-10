@@ -11,14 +11,14 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 let supabaseClient = null;
 
 // Each role has exactly one portal.
-const PORTAL_FOR_ROLE = { admin: 'admin.html', client: 'studio.html' };
+const PORTAL_FOR_ROLE = { admin: '/admin', client: '/studio' };
 
 // One redirect to sign in, even when sign-out and the auth listener both ask.
 let leavingForLogin = false;
 function goToLogin() {
   if (leavingForLogin) return;
   leavingForLogin = true;
-  window.location.replace('login.html');
+  window.location.replace('/login');
 }
 
 // Where the session is kept. "local" survives closing the browser ("Keep me
@@ -115,8 +115,11 @@ async function signOut(options) {
   return { error };
 }
 
+// The clean path for whatever is being served: "/studio", "/studio.html"
+// and a trailing slash all normalise to the same value.
 function currentPage() {
-  return window.location.pathname.split('/').pop() || 'index.html';
+  const path = window.location.pathname.replace(/\.html$/, '').replace(/\/+$/, '');
+  return path === '' || path === '/index' ? '/' : path;
 }
 
 // Auth guard — call on every protected page
@@ -150,7 +153,7 @@ function onAuthStateChange(callback) {
   return supabaseClient.auth.onAuthStateChange((event, session) => {
     if (event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED') {
       const page = currentPage();
-      if (!session && page !== 'login.html' && page !== 'index.html') goToLogin();
+      if (!session && page !== '/login' && page !== '/signup' && page !== '/') goToLogin();
     }
     if (callback) callback(event, session);
   });
