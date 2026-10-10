@@ -454,35 +454,15 @@
       </div>
     </section>
 
-    <!-- SIGN UP / FINAL CTA -->
-    <!-- Account creation lives on login.html now; this keeps #contact working
-         for older links and for the concept dialog's "discuss a video" button. -->
-    <section class="contact contact--cta" id="contact" aria-labelledby="contact-title" tabindex="-1">
-      <div class="container contact-cta">
-        <div class="contact__brand" aria-label="FIJLY Studio">
-          <span class="contact__brand-mark"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg></span>
-          <span>FIJLY <span class="contact__brand-studio">Studio</span></span>
-        </div>
-        <span class="eyebrow">GET STARTED</span>
-        <h2 id="contact-title">Ready to make your <span>product video?</span></h2>
-        <p class="contact-cta__lead">Create your account, tell us about your product, and we&rsquo;ll take it from script to final delivery.</p>
-        <div class="contact-cta__actions">
-          <a class="btn btn-primary btn--md" href="login.html?mode=signup">Start your project<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
-          <a class="contact-cta__signin" href="login.html">Already a client? Sign in</a>
-        </div>
-        <p class="contact-cta__support">Questions? <a class="contact__email" href="mailto:hello@fijly.com">hello@fijly.com</a></p>
-      </div>
-    </section>
-
   </main>
 
   <!-- FOOTER -->
   <footer class="footer">
 
-    <!-- Section A: conversion banner. Both CTAs point at the existing #contact
-         sign-up / project inquiry form further up this page. -->
+    <!-- Section A: conversion banner. It carries id="contact" so older links
+         and the concept dialog still land on a call to action. -->
     <div class="container">
-      <section class="footer-cta" aria-labelledby="footer-cta-title">
+      <section class="footer-cta" id="contact" aria-labelledby="footer-cta-title" tabindex="-1">
         <div class="footer-cta__text">
           <h2 class="footer-cta__title" id="footer-cta-title">Great software deserves a great story.</h2>
           <p class="footer-cta__sub">Show customers what makes your product worth choosing.</p>
@@ -492,6 +472,7 @@
             Start a Project
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h13M12 5l7 7-7 7"/></svg>
           </a>
+          <a class="footer-cta__signin" href="login.html">Already a client? Sign in</a>
         </div>
         <svg class="footer-cta__decor" viewBox="0 0 104 104" fill="none" aria-hidden="true">
           <circle cx="52" cy="52" r="50" stroke="currentColor" stroke-width="1.2" opacity=".2"/>
@@ -569,6 +550,7 @@
           Discuss Your Video
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h13M12 5l7 7-7 7"/></svg>
         </a>
+        <p class="footer__connect-email"><a href="mailto:hello@fijly.com">hello@fijly.com</a></p>
       </div>
     </div>
 
