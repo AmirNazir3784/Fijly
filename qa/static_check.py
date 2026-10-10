@@ -5,6 +5,19 @@ import html5lib, re, json
 
 root=Path('site').resolve()
 issues=[]
+
+# The site is served with clean URLs (see site/.htaccess): "/" is index.html,
+# "/signup" is login.html, and any other extensionless path is <name>.html.
+def clean_url_target(dest,path):
+    if dest.is_file():return dest
+    if path in ('/','') or dest.is_dir():
+        index=(dest if dest.is_dir() else root)/'index.html'
+        if index.is_file():return index
+    if path.rstrip('/').endswith('/signup'):
+        return root/'login.html'
+    withext=dest.with_name(dest.name+'.html')
+    return withext if withext.is_file() else dest
+
 pages={p:BeautifulSoup(p.read_text(encoding='utf-8'),'html.parser') for p in root.glob('*.html')}
 for p,soup in pages.items():
     parser=html5lib.HTMLParser()
@@ -19,6 +32,7 @@ for p,soup in pages.items():
         if url.scheme or url.netloc or value=='#':continue
         dest=(root/url.path.lstrip('/')) if url.path.startswith('/') else (p.parent/url.path)
         if not url.path:dest=p
+        dest=clean_url_target(dest,url.path)
         dest=dest.resolve()
         if not dest.is_file():issues.append(f'{p.name}: missing {value}')
         elif url.fragment:

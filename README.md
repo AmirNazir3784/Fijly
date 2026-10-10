@@ -15,8 +15,9 @@ FIJLY/
 │   ├── CODE-INVENTORY.md   File, function and CSS class map
 │   └── audits/             Historical QA and milestone reports
 ├── scripts/
-│   ├── serve.bat           Local server (Windows)
-│   └── serve.sh            Local server (Mac/Linux)
+│   ├── devserver.py        Local server with clean-URL routing
+│   ├── serve.bat           Runs devserver.py (Windows)
+│   └── serve.sh            Runs devserver.py (Mac/Linux)
 ├── qa/                     Test scripts, fixtures, results and qa/README.md
 ├── site/                   Everything that gets deployed
 └── supabase/               seed-data.sql and schema notes
@@ -34,7 +35,8 @@ Supabase redirect URLs, `sitemap.xml` and SEO depend on those URLs.
 
 ```
 site/
-├── *.html                 index, login, order, studio, admin, privacy, terms, 404
+├── *.html                 index, login, order, studio, admin, privacy, terms,
+│                       reset-password, 404 — served as clean URLs (/login, /signup…)
 ├── .htaccess              Compression and cache headers
 ├── robots.txt             Crawler rules
 ├── sitemap.xml            Page list for search engines
@@ -63,8 +65,8 @@ inside each page is what the cascade depends on, so keep it when editing.
 Plain HTML + CSS + JavaScript. No build step, no framework, no dependencies.
 Fonts are self-hosted. The landing page makes no external calls; the portals and
 account page load the pinned Supabase JS SDK from jsDelivr (with subresource integrity)
-and authenticate against Supabase. `login.html` is the single account page: sign in
-and create account as two tabs, with `?mode=signup` opening the second. The Admin portal reads and writes the Supabase
+and authenticate against Supabase. `/login` is the single account page: sign in
+and create account as two tabs, with `/signup` opening the second. The Admin portal reads and writes the Supabase
 database (`js/core/supabase-data.js`); so does the Client portal, scoped to the signed-in
 client's workspace (`profiles.client_id`). Starter data and schema notes: [supabase/README.md](supabase/README.md).
 
@@ -73,12 +75,10 @@ client's workspace (`profiles.client_id`). Starter data and schema notes: [supab
 Run `scripts/serve.bat` (Windows) or `./scripts/serve.sh` (Mac/Linux), then
 open http://localhost:8000. Either script works from any directory.
 
-Or serve `site/` yourself:
-
-```bash
-cd site
-python -m http.server 8000
-```
+Both scripts run `scripts/devserver.py`, which mimics the `.htaccess` rewrites
+so the clean URLs (`/login`, `/signup`, `/order`…) work locally. A plain
+`python -m http.server` inside `site/` will serve the files but 404 on those
+paths, because it does not read `.htaccess`.
 
 ## Deployment
 

@@ -759,7 +759,7 @@
             </div>
             <div class="visually-hidden" aria-hidden="true"><label for="fijly-hp">Website</label><input type="text" name="website" id="fijly-hp" tabindex="-1" autocomplete="off"></div>
             <button class="login__submit" type="submit" id="signup-submit" disabled>Create account &amp; choose your video <span aria-hidden="true">→</span></button>
-            <p class="login__terms">By creating an account you agree to our <a href="terms.html">Terms of Service</a> and <a href="privacy.html">Privacy Policy</a>.</p>
+            <p class="login__terms">By creating an account you agree to our <a href="/terms">Terms of Service</a> and <a href="/privacy">Privacy Policy</a>.</p>
             <noscript><p class="login__hint">Creating an account requires JavaScript. You can also email <a href="mailto:hello@fijly.com">hello@fijly.com</a>.</p></noscript>
           </form>
 
@@ -784,13 +784,13 @@
           </div>
         </form>
 
-        <a class="login__back" href="index.html">← Back to fijly.com</a>
+        <a class="login__back" href="/">← Back to fijly.com</a>
       </div>
     </main>
 
     <aside class="login__brand" aria-label="FIJLY Studio">
       <div class="login__art" aria-hidden="true"></div>
-      <a class="login__logo" href="index.html" aria-label="FIJLY home">
+      <a class="login__logo" href="/" aria-label="FIJLY home">
         <span class="login__mark"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M8 5v14l11-7z" fill="currentColor"/></svg></span>
         <span class="login__wordmark"><span class="login__word">FIJLY</span><span class="login__sub">STUDIO</span></span>
       </a>
@@ -814,7 +814,8 @@
   <script src="js/site/signup.js" defer></script>
   <script>
     // Account page: sign in and create account, as two tabs on one URL.
-    // login.html is fixed — the Supabase redirect URLs point at it.
+    // The /login and /signup paths are fixed — the Supabase redirect URLs
+    // point at them.
     (function () {
       'use strict';
       var config = window.FIJLY_CONFIG || {};
@@ -852,10 +853,14 @@
       var SESSION_CHECK_MS = 5000;
 
       var params = new URLSearchParams(window.location.search);
-      // ?next=order.html (from an order-page bounce) returns there after
-      // signing in; no other destination is accepted.
-      var next = params.get('next') === 'order.html' ? 'order.html' : null;
-      var startMode = params.get('mode') === 'signup' ? 'signup' : 'signin';
+      // ?next=/order (from an order-page bounce) returns there after signing
+      // in; no other destination is accepted.
+      var NEXT_ALLOWED = ['/order'];
+      var next = NEXT_ALLOWED.indexOf(params.get('next')) > -1 ? params.get('next') : null;
+      // /signup opens the create-account tab; ?mode=signup still works for
+      // links made before the clean URLs.
+      var onSignupPath = /^\/signup\/?$/.test(window.location.pathname);
+      var startMode = (onSignupPath || params.get('mode') === 'signup') ? 'signup' : 'signin';
 
       function showError(message) { error.textContent = message; error.hidden = false; }
       function clearError() { error.hidden = true; error.textContent = ''; }
@@ -884,11 +889,12 @@
             tab.setAttribute('aria-selected', String(on));
             tab.tabIndex = on ? 0 : -1;
           });
-          // Keep the URL shareable without reloading the page.
+          // Keep the URL shareable without reloading. ?mode= is dropped: the
+          // path now carries the tab, and duration / next ride along.
           var url = new URLSearchParams(window.location.search);
-          if (name === 'signup') url.set('mode', 'signup'); else url.delete('mode');
+          url.delete('mode');
           var query = url.toString();
-          history.replaceState(null, '', window.location.pathname + (query ? '?' + query : ''));
+          history.replaceState(null, '', (name === 'signup' ? '/signup' : '/login') + (query ? '?' + query : ''));
         }
         if (options.focus) {
           var first = (name === 'signup' ? panels.signup : panels.signin).querySelector('input:not([type="hidden"]):not([tabindex="-1"])');
@@ -935,13 +941,13 @@
       function portalFor(profile) {
         var role = profile && profile.role;
         if (!role || !PORTAL_FOR_ROLE[role]) return null;
-        if (role === 'admin') return 'admin.html';
+        if (role === 'admin') return '/admin';
         if (next) return next;
-        if (startMode === 'signup') return 'order.html';
+        if (startMode === 'signup') return '/order';
         return PORTAL_FOR_ROLE[role];
       }
 
-      // Carries the message set by reset-password.html after a successful reset.
+      // Carries the message set by /reset-password after a successful reset.
       if (params.get('reset') === '1') {
         notice.textContent = 'Password updated. Please sign in.';
         notice.hidden = false;
@@ -1073,7 +1079,7 @@
         forgotError.hidden = true;
         forgotOk.hidden = true;
         busyOn(forgotSubmit, forgotLabel, true, 'Sending…', 'Send reset link');
-        var target = window.location.origin + window.location.pathname.replace('login.html', 'reset-password.html');
+        var target = window.location.origin + '/reset-password';
         try {
           var result = await db.auth.resetPasswordForEmail(forgotEmail.value.trim(), { redirectTo: target });
           if (result.error) throw result.error;
@@ -1105,7 +1111,7 @@
           try {
             var result = await db.auth.signInWithOAuth({
               provider: 'google',
-              options: { redirectTo: window.location.origin + window.location.pathname + (next ? '?next=' + next : '') }
+              options: { redirectTo: window.location.origin + (next || '/login') }
             });
             if (result.error) throw result.error;
           } catch (_) {

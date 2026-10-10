@@ -600,14 +600,14 @@
     var requests=api.client.records('requests'), videos=api.client.records('videos');
     var list=document.querySelector('[data-request-list]'),heading=el('h2','Your requests','panel__title');heading.id='h-open-requests';list.replaceChildren(heading);
     requests.slice().sort(function(a,b){return b.requestedAt.localeCompare(a.requestedAt);}).forEach(function(r){var card=el('article',undefined,'list-card workflow-request-card');card.append(el('h3',r.title,'list-card__title'),stageBadge(r.stage),el('p',r.videoType+' · '+(r.durationSeconds?r.durationSeconds+' seconds · ':'')+api.formatMoney(r.prices.total,'Price to confirm')+' · Requested '+date(r.requestedAt),'admin-muted'),button('View project',function(){show('requests',r.id);}));list.append(card);});
-    if(!requests.length){var first=el('a','Start a new project','btn btn-primary btn--sm');first.href='order.html';list.append(el('p','No projects yet. Start your first project to get going.','admin-muted'),first);}
+    if(!requests.length){var first=el('a','Start a new project','btn btn-primary btn--sm');first.href='/order';list.append(el('p','No projects yet. Start your first project to get going.','admin-muted'),first);}
     var count=requests.filter(function(r){return ['Submitted','Under Review'].includes(r.status);}).length;var counter=document.querySelector('[data-request-count]');counter.textContent=count;counter.setAttribute('aria-label',count+' open requests');
     var search=document.querySelector('#client-project-search').value.trim().toLowerCase();
     // The stage is what a client follows; the video status drives the filters.
     var rows=requests.map(function(r){var v=videos.find(function(v){return v.requestId===r.id;});return {request:r,video:v,status:v?v.status:r.status,stage:r.stage};});
     var shown=rows.filter(function(item){return (clientFilter==='all'||chipStatuses[clientFilter].includes(item.status))&&item.request.title.toLowerCase().includes(search);});
     var tbody=document.querySelector('.projects-table tbody');tbody.replaceChildren();shown.forEach(function(item){var r=item.request,v=item.video,row=el('tr'),title=el('td');title.append(button(r.title,function(){show(v?'videos':'requests',v?v.id:r.id);}));var status=el('td');status.append(stageBadge(item.stage));if(v)status.append(el('span',item.status,'admin-muted admin-block'));row.append(title,el('td',r.videoType),status,el('td',date(r.deadline)),el('td',v&&v.versions.length?'V'+api.latest(v).number:'No draft'));tbody.append(row);});
-    if(!rows.length){var start=el('a','Start a new project','btn btn-primary btn--sm');start.href='order.html';tableMessage(tbody,'No projects yet — start your first project to get going',start);}
+    if(!rows.length){var start=el('a','Start a new project','btn btn-primary btn--sm');start.href='/order';tableMessage(tbody,'No projects yet — start your first project to get going',start);}
     else if(!shown.length)tableMessage(tbody,'No videos match this filter',button('Clear filters',function(){clearClientFilters();renderClient();}));
   }
   window.FijlyWorkflow = { open: show };
@@ -637,7 +637,7 @@
   else {
     document.querySelectorAll('.filter-chip[data-filter]').forEach(function(chip){chip.onclick=function(){clientFilter=chip.dataset.filter;document.querySelectorAll('.filter-chip').forEach(function(c){c.setAttribute('aria-pressed',String(c===chip));});renderClient();};});
     // The old in-portal request form is gone: clients may no longer insert
-    // into requests. Projects start in the wizard on order.html, which calls
+    // into requests. Projects start in the wizard on /order, which calls
     // submit_project() so the price and the milestone payments are set by the
     // database. This screen keeps the history list and links to the wizard.
     renderClient();

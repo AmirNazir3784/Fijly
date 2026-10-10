@@ -77,7 +77,7 @@
     focusScreen();
   });
 
-  // Deep links: studio.html#projects
+  // Deep links: /studio#projects
   var initial = location.hash.slice(1);
   showScreen(initial || defaultScreen, false);
   window.addEventListener('hashchange', function () {

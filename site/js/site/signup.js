@@ -1,5 +1,5 @@
 /* Create account — the second tab on login.html. Creates a FIJLY Studio
-   account with Supabase Auth, then continues to order.html for the video
+   account with Supabase Auth, then continues to /order for the video
    details. The sign-in half of the page lives in login.html's inline script;
    this file only owns the create-account form.
 
@@ -7,7 +7,7 @@
    `contact_submissions` (project_type "Account request") so the studio can
    create the account by hand; the password is never saved. Once sign-up is
    enabled, accounts are created here directly (with email confirmation, the
-   link in the email returns the customer to order.html). */
+   link in the email returns the customer to /order). */
 (function () {
   'use strict';
   var config = window.FIJLY_CONFIG || {};
@@ -28,7 +28,7 @@
   // The length picked on a pricing card arrives as ?duration= and is handed on
   // to the wizard, so the customer does not choose it twice.
   var chosen = (new URLSearchParams(location.search).get('duration') || '').replace(/[^0-9]/g, '') || null;
-  function orderUrl() { return new URL('order.html' + (chosen ? '?duration=' + encodeURIComponent(chosen) : ''), location.href).href; }
+  function orderUrl() { return location.origin + '/order' + (chosen ? '?duration=' + encodeURIComponent(chosen) : ''); }
 
   function link(href, text) { var a = document.createElement('a'); a.href = href; a.textContent = text; return a; }
   function say(parts, isError) {
@@ -51,7 +51,7 @@
       exists: function () {
         status.hidden = true;
         if (window.FijlyAccount && window.FijlyAccount.showSignIn) window.FijlyAccount.showSignIn(email);
-        else say([email + ' already has a FIJLY Studio account. ', link('login.html', 'Sign in to continue'), '.']);
+        else say([email + ' already has a FIJLY Studio account. ', link('/login', 'Sign in to continue'), '.']);
       }
     })[kind]();
   }

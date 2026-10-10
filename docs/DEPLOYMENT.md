@@ -8,9 +8,9 @@ Only the contents of `site/` are deployed. Keep `qa/`, `docs/`, `scripts/`, `sup
 
 - The source supplied `fijly.com` and `hello@fijly.com`; ownership and mailbox availability have not been confirmed. If the purchased domain differs, update the canonical URL, `og:url`, and `og:image` in `site/index.html`, plus the URLs in `site/robots.txt` and `site/sitemap.xml`. Confirm or replace the marketing email links.
 - **Privacy and Terms are live** (no longer placeholders). Both pages are indexable and listed in `sitemap.xml`. They commit FIJLY to specific practices (12-month retention of contact submissions, portal data kept for the service agreement plus 90 days, a 30-day response to data requests, a liability cap), so confirm these match how the business actually operates.
-- The portals (`studio.html`, `admin.html`) require sign-in through `login.html` (Supabase Auth). Admins go to the Admin portal, clients to the Client portal. Both portals read and write the Supabase database. A client account must be linked to its workspace (`profiles.client_id`); without one the Client portal shows a "workspace is being set up" message. Asset files are uploaded to the private Supabase Storage bucket `client-assets` (one folder per client, 50MB limit, downloads through one-hour signed links). Video draft versions still store file names only. Search, notification, date-selection, storyboard-editing, and logo-change controls remain unavailable.
+- The portals (`/studio`, `/admin`) require sign-in through `/login` (Supabase Auth). Admins go to the Admin portal, clients to the Client portal. Both portals read and write the Supabase database. A client account must be linked to its workspace (`profiles.client_id`); without one the Client portal shows a "workspace is being set up" message. Asset files are uploaded to the private Supabase Storage bucket `client-assets` (one folder per client, 50MB limit, downloads through one-hour signed links). Video draft versions still store file names only. Search, notification, date-selection, storyboard-editing, and logo-change controls remain unavailable.
 - **Enable leaked password protection in Supabase** (Dashboard → Authentication → Settings). The Supabase security advisor reports it as disabled; it rejects passwords known from data breaches.
-- **Enable public sign-up in Supabase before launch** (Authentication → Sign In / Providers → "Allow new users to sign up" on). The Create account tab on `login.html` creates the customer's account, and `order.html` requires one. While sign-up stays off, every sign-up is saved as an account request instead (see "Sign-up and orders") and the customer can't reach the order page until you create their account. The `handle_new_user` trigger now always creates `client` profiles, so open sign-up can't create admins. New accounts have no workspace until you link one; the Client portal shows "workspace being set up" meanwhile.
+- **Enable public sign-up in Supabase before launch** (Authentication → Sign In / Providers → "Allow new users to sign up" on). The Create account tab at `/signup` creates the customer's account, and `/order` requires one. While sign-up stays off, every sign-up is saved as an account request instead (see "Sign-up and orders") and the customer can't reach the order page until you create their account. The `handle_new_user` trigger now always creates `client` profiles, so open sign-up can't create admins. New accounts have no workspace until you link one; the Client portal shows "workspace being set up" meanwhile.
 - Portfolio stills, product brands, results, and the testimonial are explicitly marked as sample/concept content. Supply approved films and verified client evidence before representing these as real engagements. Prices and existing sample metrics have been preserved.
 - Unavailable About, Careers, LinkedIn, X / Twitter, and YouTube links have been removed. Add social links only when real URLs are supplied.
 - The OG image is included at `assets/images/og-image.png` (1200 × 630), derived from the existing homepage; no replacement is required unless the owner prefers another image.
@@ -57,11 +57,35 @@ the website root: `index.html`, `.htaccess`, `robots.txt`, `sitemap.xml`,
 `assets/`, `css/`, `js/`. If `site/` appears as a folder on `deploy`, the
 subtree split did not run and Hostinger is serving the wrong level.
 
+## Clean URLs
+
+Pages are served without their `.html` extension: `/`, `/login`, `/signup`,
+`/order`, `/studio`, `/admin`, `/privacy`, `/terms`, `/reset-password`.
+
+`site/.htaccess` does the work:
+
+- `/index.html` and `/index` 301 to `/`.
+- Any other `/page.html` 301s to `/page`, keeping the query string. Only GET is
+  redirected, and `css/`, `js/` and `assets/` are excluded, so no asset or form
+  post is touched. The match is on `THE_REQUEST` rather than `REQUEST_URI`, so
+  the internal rewrites below cannot re-trigger it and loop.
+- `/signup` is served from `login.html` internally — no redirect, so the
+  address bar keeps saying `/signup`.
+- Any other extensionless path serves `<name>.html` when that file exists.
+- `ErrorDocument 404 /404.html` still answers everything else.
+
+Old `.html` links keep working through the 301s, so existing bookmarks and
+any links already published are safe.
+
+**Locally**, Python's `http.server` ignores `.htaccess`, so `scripts/serve.sh`
+and `scripts/serve.bat` now run `scripts/devserver.py` (standard library only),
+which mirrors these rules on port 8000.
+
 ## Hosting checks
 
 **The HTTPS redirect is now in `.htaccess`.** Activate the domain's SSL certificate in Hostinger *before* uploading `.htaccess`; otherwise every visit is redirected to an HTTPS address that doesn't work yet. Hostinger's own "Force HTTPS" setting is not needed as well.
 
-After upload, check the homepage, `login.html`, `studio.html#settings`, both legal pages, and an unknown URL. The unknown URL should return HTTP 404 and show the custom page. Confirm `http://` addresses redirect to `https://`.
+After upload, check the homepage, `/login`, `/signup`, `/studio#settings`, both legal pages, and an unknown URL. Also confirm a legacy `/privacy.html` address 301-redirects to `/privacy`. The unknown URL should return HTTP 404 and show the custom page. Confirm `http://` addresses redirect to `https://`.
 
 `.htaccess` supplies the HTTPS redirect, HSTS (one year, including subdomains), a custom 404, compression, cache lifetimes (CSS/JS/images 7 days, fonts and favicon 30 days), and basic security headers. HSTS makes browsers refuse plain HTTP for a year, and `includeSubDomains` applies that to every subdomain of the domain, so make sure any subdomain in use also has SSL. Because CSS and JS are cached for 7 days without versioned file names, returning visitors may see old files for up to a week after an update; rename or add a query string to changed files if that matters. Verify the Apache behavior on Hostinger; the local test server serves static files and does not interpret `.htaccess`.
 
@@ -79,11 +103,11 @@ Browser tests use locally available Playwright tooling solely for QA; it is not 
 
 ## Sign-up and orders
 
-**The flow:** every "Start Your Video" button leads to `login.html?mode=signup`, and each pricing card adds the length it offers (`&duration=60`). `login.html` is the one account page: a **Sign in** tab and a **Create account** tab (name, work email and password, or Google), with `?mode=signup` opening the second one and tab switches rewriting `?mode=` through `history.replaceState`. With an account, the customer continues to `order.html` — which pre-selects the length carried in `?duration=` — then video type, company and brief, and a review step that shows the price. "Submit brief" saves the order to the `orders` table with status `pending`. Payment isn't connected; the Pay button is a disabled placeholder. Signed-out visitors to `order.html` are sent to `login.html?mode=signup&next=order.html` and come straight back after signing in.
+**The flow:** every "Start Your Video" button leads to `/signup`, and each pricing card adds the length it offers (`/signup?duration=60`). One account page serves both tabs: `/login` is **Sign in** and `/signup` is **Create account** (name, work email and password, or Google). Switching tabs rewrites the path through `history.replaceState`, keeping `duration` and `next`; the older `?mode=signup` links still open the second tab. With an account, the customer continues to `/order` — which pre-selects the length carried in `?duration=` — then video type, company and brief, and a review step that shows the price. "Submit brief" saves the order to the `orders` table with status `pending`. Payment isn't connected; the Pay button is a disabled placeholder. Signed-out visitors to `/order` are sent to `/signup?next=/order` and come straight back after signing in.
 
 The homepage's `#contact` section is now a CTA band ("Ready to make your product video?") rather than a form, so old links and bookmarks to `#contact` still land somewhere sensible.
 
-**Email confirmation is on**, so a new customer first gets a confirmation email; its link signs them in and opens `order.html`. Add `https://fijly.com/order.html` to Supabase → Authentication → URL Configuration → Redirect URLs (and set the Site URL to `https://fijly.com`), or the link will land on the Site URL instead.
+**Email confirmation is on**, so a new customer first gets a confirmation email; its link signs them in and opens `/order`. Add `https://fijly.com/order` to Supabase → Authentication → URL Configuration → Redirect URLs (and set the Site URL to `https://fijly.com`), or the link will land on the Site URL instead.
 
 **While sign-up is disabled:** the form saves an **account request** to `contact_submissions` (project type "Account request", the chosen length if any, never the password) and tells the customer you'll email their login within 24 hours. These requests aren't shown in the Admin portal: check Supabase → Table Editor → `contact_submissions`. Create the account (Authentication → Add user), their client workspace (Admin → Clients), link the two (`profiles.client_id`), and email the login; they can then sign in and order.
 
@@ -100,20 +124,20 @@ Authentication → URL Configuration → Redirect URLs**. Site URL: `https://fij
 
 | URL | Used by |
 |---|---|
-| `https://fijly.com/order.html` | Sign-up confirmation email, and Google sign-in from the landing page |
-| `https://fijly.com/reset-password.html` | "Forgot password?" recovery email from `login.html` |
-| `https://fijly.com/login.html` | Google sign-in from the sign-in page |
+| `https://fijly.com/order` | Sign-up confirmation email, and Google sign-in from the Create account tab |
+| `https://fijly.com/reset-password` | "Forgot password?" recovery email from `/login` |
+| `https://fijly.com/login` | Google sign-in from the Sign in tab |
 
 Add the local equivalents too, so the same flows can be tested before deploying:
 
 ```
-http://localhost:8000/order.html
-http://localhost:8000/reset-password.html
-http://localhost:8000/login.html
+http://localhost:8000/order
+http://localhost:8000/reset-password
+http://localhost:8000/login
 ```
 
 Use whatever port `scripts/serve.sh` / `scripts/serve.bat` prints if you changed
-it from 8000. **Until `reset-password.html` is on this list the recovery email
+it from 8000. **Until `/reset-password` is on this list the recovery email
 still sends, but its link lands on the Site URL instead of the reset form**, and
 the customer cannot set a new password.
 
@@ -124,9 +148,9 @@ the customer cannot set a new password.
 3. Copy the Client ID and Client Secret.
 4. In the Supabase dashboard → Authentication → Providers → Google → Enable.
 5. Paste the Client ID and Secret, and save.
-6. Make sure `https://fijly.com/order.html` and `https://fijly.com/login.html` are in Authentication → URL Configuration → Redirect URLs (Google sign-in returns to whichever page it started from).
+6. Make sure `https://fijly.com/order` and `https://fijly.com/login` are in Authentication → URL Configuration → Redirect URLs (Google sign-in returns to whichever tab it started from).
 7. In `site/js/core/config.js`, set `googleSignIn: true` and upload the file.
 
-Until step 7, the "Continue with Google" button on both tabs of `login.html` is disabled with the note "Google sign-in will be available soon. Please use email for now." Google sign-in also needs public sign-up enabled for new customers.
+Until step 7, the "Continue with Google" button on both tabs of the account page is disabled with the note "Google sign-in will be available soon. Please use email for now." Google sign-in also needs public sign-up enabled for new customers.
 
 Current interaction evidence: `qa/refinement-check-results.json` and `qa/functional-results.json`. The refinement covers 1440, 1280, 1024, 768, 390, and 375 pixel layouts. Files in `qa/` are not deployment files.

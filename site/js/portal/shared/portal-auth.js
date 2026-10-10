@@ -31,7 +31,7 @@
     var actions = document.createElement('div'); actions.className = 'auth-loading__actions';
     var retry = document.createElement('button'); retry.type = 'button'; retry.className = 'btn btn-primary btn--md'; retry.textContent = 'Try again';
     retry.addEventListener('click', function () { window.location.reload(); });
-    var login = document.createElement('a'); login.className = 'btn btn-outline btn--md'; login.href = 'login.html'; login.textContent = 'Go to sign in';
+    var login = document.createElement('a'); login.className = 'btn btn-outline btn--md'; login.href = '/login'; login.textContent = 'Go to sign in';
     actions.append(retry, login);
     inner.replaceChildren(text, actions);
     retry.focus();
@@ -50,14 +50,14 @@
     if (role === 'admin') {
       heading.textContent = 'This is the Client portal';
       text.textContent = 'You are signed in as a studio admin. Clients see their workspace here when they sign in; manage every client from the Admin portal.';
-      var adminLink = document.createElement('a'); adminLink.className = 'btn btn-primary btn--md'; adminLink.href = 'admin.html'; adminLink.textContent = 'Open the Admin portal';
+      var adminLink = document.createElement('a'); adminLink.className = 'btn btn-primary btn--md'; adminLink.href = '/admin'; adminLink.textContent = 'Open the Admin portal';
       actions.append(adminLink, out);
     } else {
       heading.textContent = 'Welcome to FIJLY Studio';
       text.textContent = 'Your workspace is being set up. Contact the FIJLY team if you need access.';
       actions.append(out);
     }
-    var back = document.createElement('a'); back.className = 'auth-loading__back'; back.href = 'index.html'; back.textContent = '← Back to fijly.com';
+    var back = document.createElement('a'); back.className = 'auth-loading__back'; back.href = '/'; back.textContent = '← Back to fijly.com';
     box.append(heading, text, actions, back);
     overlay.setAttribute('role', 'region'); overlay.setAttribute('aria-label', heading.textContent);
     // The portal stays closed, so its skip link would lead nowhere.
