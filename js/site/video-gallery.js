@@ -38,67 +38,68 @@
 }
 
   var CATEGORIES = {
-    launch: {
-      title: 'SaaS Launch Videos',
-      desc: 'Big-moment films that turn a launch day into real demand.',
-      clips: [
-        clip('How to Explain a Feature-Packed App in 33 Seconds (UI Motion Showcase)', '0:33', 'violet', 'lFHUANLHmh8'),
-        clip('Northbeam — Series A announce', '0:52', 'indigo'),
-        clip('Layerbase — Product reveal', '1:24', 'plum'),
-        clip('TaskPilot — Feature drop', '0:45', 'grape')
-      ]
-    },
-    promo: {
-      title: 'Product Promo Videos',
-      desc: 'Short, punchy promos engineered for paid and social.',
-      clips: [
-        clip('SaaS Product Demo Video by Fijly | Video TOK', '', 'amber', 'dNoROqwQl-Q'),
-        clip('Finly — 15s pre-roll', '0:15', 'sunset'),
-        clip('AIFlow — LinkedIn promo', '0:28', 'clay'),
-        clip('Northbeam — Retargeting set', '0:20', 'ember')
-      ]
-    },
-    demo: {
-      title: 'Product Demo Videos',
-      desc: 'Guided walkthroughs that show real product workflows.',
-      clips: [
-        clip('Arrowster — SaaS Product Demo', '', 'teal', '8eDRSduIpSc'),
-        clip('CloudDesk — Admin walkthrough', '1:55', 'jade'),
-        clip('Finly — Reporting deep dive', '2:10', 'sea'),
-        clip('Layerbase — Integrations demo', '1:32', 'moss')
-      ]
-    },
-    explainer: {
-      title: 'Explainer Videos',
-      desc: 'Make a complex product click in under 60 seconds.',
-      clips: [
-        clip('Your SaaS Makes Sense to You. Do Buyers Get It?', '', 'azure', 'FB8DfBNwcGE'),
-        clip('AIFlow — What is agentic support?', '0:46', 'sky'),
-        clip('Finly — Cash flow, explained', '1:02', 'cobalt'),
-        clip('Layerbase — Data model in 60s', '0:59', 'steel')
-      ]
-    },
-    tutorial: {
-      title: 'Tutorial Videos',
-      desc: 'Reduce support load with clear, on-brand how-tos.',
-      clips: [
-        clip('FIJLY Made This: From App Screens to a Fintech Promo', '', 'rose', '_9WBfa3Is4s'),
-        clip('CloudDesk — Invite your team', '0:54', 'blush'),
-        clip('TaskPilot — Build a workflow', '1:46', 'mauve'),
-        clip('AIFlow — Train your assistant', '2:04', 'orchid')
-      ]
-    },
-    homepage: {
-      title: 'Homepage Videos',
-      desc: 'The hero video that earns the signup above the fold.',
-      clips: [
-        clip('CloudDesk — Hero explainer', '1:05', 'violet'),
-        clip('Layerbase — Above the fold', '0:48', 'plum'),
-        clip('Northbeam — Homepage loop', '0:22', 'indigo'),
-        clip('TaskPilot — Hero cut', '0:57', 'grape')
-      ]
-    }
-  };
+  launch: {
+    title: 'SaaS Launch Videos',
+    desc: 'Big-moment films that turn a launch day into real demand.',
+    clips: [
+      clip('How to Explain a Feature-Packed App in 33 Seconds (UI Motion Showcase)', '0:33', 'violet', 'lFHUANLHmh8'),
+      clip('Your SaaS Makes Sense to You. Do Buyers Get It?', '', 'indigo', 'FB8DfBNwcGE'),
+      clip('Arrowster — SaaS Product Demo', '', 'plum', '8eDRSduIpSc'),
+      clip('SaaS Product Demo Video by Fijly | Video TOK', '', 'grape', 'dNoROqwQl-Q')
+    ]
+  },
+  promo: {
+    title: 'Product Promo Videos',
+    desc: 'Short, punchy promos engineered for paid and social.',
+    clips: [
+      clip('SaaS Product Demo Video by Fijly | Video TOK', '', 'amber', 'dNoROqwQl-Q'),
+      clip('How to Explain a Feature-Packed App in 33 Seconds (UI Motion Showcase)', '0:33', 'sunset', 'lFHUANLHmh8'),
+      clip('FIJLY Made This: From App Screens to a Fintech Promo', '', 'clay', '_9WBfa3Is4s'),
+      clip('Your SaaS Makes Sense to You. Do Buyers Get It?', '', 'ember', 'FB8DfBNwcGE')
+    ]
+  },
+  demo: {
+    title: 'Product Demo Videos',
+    desc: 'Guided walkthroughs that show real product workflows.',
+    clips: [
+      clip('Arrowster — SaaS Product Demo', '', 'teal', '8eDRSduIpSc'),
+      clip('SaaS Product Demo Video by Fijly | Video TOK', '', 'jade', 'dNoROqwQl-Q'),
+      clip('How to Explain a Feature-Packed App in 33 Seconds (UI Motion Showcase)', '0:33', 'sea', 'lFHUANLHmh8'),
+      clip('FIJLY Made This: From App Screens to a Fintech Promo', '', 'moss', '_9WBfa3Is4s')
+    ]
+  },
+  explainer: {
+    title: 'Explainer Videos',
+    desc: 'Make a complex product click in under 60 seconds.',
+    clips: [
+      clip('Your SaaS Makes Sense to You. Do Buyers Get It?', '', 'azure', 'FB8DfBNwcGE'),
+      clip('FIJLY Made This: From App Screens to a Fintech Promo', '', 'sky', '_9WBfa3Is4s'),
+      clip('Arrowster — SaaS Product Demo', '', 'cobalt', '8eDRSduIpSc'),
+      clip('How to Explain a Feature-Packed App in 33 Seconds (UI Motion Showcase)', '0:33', 'steel', 'lFHUANLHmh8')
+    ]
+  },
+  tutorial: {
+    title: 'Tutorial Videos',
+    desc: 'Reduce support load with clear, on-brand how-tos.',
+    clips: [
+      clip('FIJLY Made This: From App Screens to a Fintech Promo', '', 'rose', '_9WBfa3Is4s'),
+      clip('Your SaaS Makes Sense to You. Do Buyers Get It?', '', 'blush', 'FB8DfBNwcGE'),
+      clip('SaaS Product Demo Video by Fijly | Video TOK', '', 'mauve', 'dNoROqwQl-Q'),
+      clip('Arrowster — SaaS Product Demo', '', 'orchid', '8eDRSduIpSc')
+    ]
+  },
+  homepage: {
+    title: 'Homepage Videos',
+    desc: 'The hero video that earns the signup above the fold.',
+    clips: [
+      clip('CloudDesk — Hero explainer', '1:05', 'violet'),
+      clip('Layerbase — Above the fold', '0:48', 'plum'),
+      clip('Northbeam — Homepage loop', '0:22', 'indigo'),
+      clip('TaskPilot — Hero cut', '0:57', 'grape')
+    ]
+  }
+};
+
 
   /* ---- state ---------------------------------------------------------- */
   var panels = {};          // key -> { buttons: [] }, built once per category
