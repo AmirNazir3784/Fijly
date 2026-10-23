@@ -29,9 +29,13 @@
   if (!triggers.length) return;
 
   /* ---- data ----------------------------------------------------------- */
-  function clip(title, runtime, tone) {
-    return { title: title, runtime: runtime, tone: tone, poster: '', src: '' };
-  }
+  function clip(title, runtime, tone, youtube) {
+  return {
+    title: title, runtime: runtime, tone: tone,
+    poster: youtube ? 'https://i.ytimg.com/vi/' + youtube + '/hqdefault.jpg' : '',
+    src: '', youtube: youtube || ''
+  };
+}
 
   var CATEGORIES = {
     launch: {
@@ -48,7 +52,7 @@
       title: 'Product Promo Videos',
       desc: 'Short, punchy promos engineered for paid and social.',
       clips: [
-        clip('CloudDesk — Paid social cut', '0:30', 'amber'),
+        clip('SaaS Product Demo Video by Fijly | Video TOK', '', 'amber', 'dNoROqwQl-Q'),
         clip('Finly — 15s pre-roll', '0:15', 'sunset'),
         clip('AIFlow — LinkedIn promo', '0:28', 'clay'),
         clip('Northbeam — Retargeting set', '0:20', 'ember')
@@ -58,7 +62,7 @@
       title: 'Product Demo Videos',
       desc: 'Guided walkthroughs that show real product workflows.',
       clips: [
-        clip('TaskPilot — Full product tour', '2:40', 'teal'),
+        clip('Arrowster — SaaS Product Demo', '', 'teal', '8eDRSduIpSc'),
         clip('CloudDesk — Admin walkthrough', '1:55', 'jade'),
         clip('Finly — Reporting deep dive', '2:10', 'sea'),
         clip('Layerbase — Integrations demo', '1:32', 'moss')
@@ -68,7 +72,7 @@
       title: 'Explainer Videos',
       desc: 'Make a complex product click in under 60 seconds.',
       clips: [
-        clip('Northbeam — How attribution works', '0:58', 'azure'),
+        clip('Your SaaS Makes Sense to You. Do Buyers Get It?', '', 'azure', 'FB8DfBNwcGE'),
         clip('AIFlow — What is agentic support?', '0:46', 'sky'),
         clip('Finly — Cash flow, explained', '1:02', 'cobalt'),
         clip('Layerbase — Data model in 60s', '0:59', 'steel')
@@ -78,7 +82,7 @@
       title: 'Tutorial Videos',
       desc: 'Reduce support load with clear, on-brand how-tos.',
       clips: [
-        clip('Finly — Connect your bank', '1:18', 'rose'),
+        clip('FIJLY Made This: From App Screens to a Fintech Promo', '', 'rose', '_9WBfa3Is4s'),
         clip('CloudDesk — Invite your team', '0:54', 'blush'),
         clip('TaskPilot — Build a workflow', '1:46', 'mauve'),
         clip('AIFlow — Train your assistant', '2:04', 'orchid')
@@ -122,9 +126,22 @@
   }
 
   function buildPlayer(item) {
-    teardownPlayer();
+  teardownPlayer();
 
-    if (!item.src) {
+  if (item.youtube) {
+    var frame = document.createElement('iframe');
+    frame.className = 'vgal__video';
+    frame.src = 'https://www.youtube-nocookie.com/embed/' + item.youtube + '?rel=0';
+    frame.title = item.title;
+    frame.allow = 'accelerometer; autoplay; encrypted-media; picture-in-picture; web-share';
+    frame.allowFullscreen = true;
+    frame.referrerPolicy = 'strict-origin-when-cross-origin';
+    player.appendChild(frame);
+    return;
+  }
+
+  if (!item.src) {
+
       var placeholder = document.createElement('div');
       placeholder.className = 'vgal__poster vgal__poster--' + item.tone;
       var play = document.createElement('button');
